@@ -1,0 +1,18 @@
+.trustgate-verification-control {
+	display: grid;
+	gap: 8px;
+}
+
+#trustgate_verification_status {
+	display: block;
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+#trustgate_verification_status[data-state="verified"] {
+	color: #047857;
+}
+
+#trustgate_verification_status[data-state="failed"] {
+	color: #b91c1c;
+}

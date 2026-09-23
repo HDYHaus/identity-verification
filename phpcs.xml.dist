@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<ruleset name="TrustGate Registration">
+	<description>WordPress Coding Standards for TrustGate Registration.</description>
+
+	<file>.</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="parallel" value="8"/>
+	<arg value="ps"/>
+
+	<config name="testVersion" value="8.1-"/>
+	<config name="minimum_supported_wp_version" value="6.4"/>
+
+	<rule ref="WordPress">
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+	</rule>
+	<rule ref="WordPress-Extra"/>
+	<rule ref="WordPress-Docs"/>
+	<rule ref="PHPCompatibilityWP"/>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="trustgate"/>
+				<element value="TRUSTGATE"/>
+				<element value="HDYHaus"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

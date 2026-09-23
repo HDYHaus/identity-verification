@@ -1,0 +1,5 @@
+/vendor/
+/node_modules/
+/.phpcs-cache
+.DS_Store
+*.log
