@@ -90,7 +90,10 @@ final class SettingsPage {
 			'mode'             => __( 'Mode', 'trustgate-registration' ),
 			'test_public_key'  => __( 'Test Public Key', 'trustgate-registration' ),
 			'live_public_key'  => __( 'Live Public Key', 'trustgate-registration' ),
+			'secret_key'       => __( 'Secret API Key', 'trustgate-registration' ),
+			'app_id'           => __( 'App ID', 'trustgate-registration' ),
 			'configuration_id' => __( 'Configuration ID', 'trustgate-registration' ),
+			'status_endpoint'  => __( 'Status Endpoint', 'trustgate-registration' ),
 			'success_redirect' => __( 'Success Redirect URL', 'trustgate-registration' ),
 		);
 
@@ -123,7 +126,10 @@ final class SettingsPage {
 			'mode'             => $mode,
 			'test_public_key'  => sanitize_text_field( (string) ( $settings['test_public_key'] ?? '' ) ),
 			'live_public_key'  => sanitize_text_field( (string) ( $settings['live_public_key'] ?? '' ) ),
+			'secret_key'       => sanitize_text_field( (string) ( $settings['secret_key'] ?? '' ) ),
+			'app_id'           => sanitize_text_field( (string) ( $settings['app_id'] ?? '' ) ),
 			'configuration_id' => sanitize_text_field( (string) ( $settings['configuration_id'] ?? '' ) ),
+			'status_endpoint'  => esc_url_raw( (string) ( $settings['status_endpoint'] ?? '' ) ),
 			'success_redirect' => esc_url_raw( (string) ( $settings['success_redirect'] ?? '' ) ),
 		);
 	}
@@ -154,7 +160,12 @@ final class SettingsPage {
 			return;
 		}
 
-		$type = 'success_redirect' === $key ? 'url' : 'text';
+		$type        = in_array( $key, array( 'status_endpoint', 'success_redirect' ), true ) ? 'url' : 'text';
+		$description = '';
+
+		if ( 'status_endpoint' === $key ) {
+			$description = __( 'Optional. Defaults to https://api.prembly.com/verification/{id}/status. Use {id} where the verification reference should be inserted.', 'trustgate-registration' );
+		}
 		?>
 		<input
 			type="<?php echo esc_attr( $type ); ?>"
@@ -162,6 +173,9 @@ final class SettingsPage {
 			value="<?php echo esc_attr( $value ); ?>"
 			class="regular-text"
 		/>
+		<?php if ( '' !== $description ) : ?>
+			<p class="description"><?php echo esc_html( $description ); ?></p>
+		<?php endif; ?>
 		<?php
 	}
 

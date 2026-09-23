@@ -21,13 +21,17 @@ The first production goal is to block default WordPress registration until a vis
 1. Upload the plugin to `/wp-content/plugins/trustgate-registration`.
 2. Activate TrustGate Registration.
 3. Go to Settings > TrustGate Registration.
-4. Configure the Prembly provider.
+4. Configure the Prembly public key, secret key, configuration ID, and optional App ID.
 
 == Frequently Asked Questions ==
 
 = Does this plugin send data to third parties? =
 
 Yes. When configured with a provider such as Prembly, registration details required for verification may be sent to that provider.
+
+= Are Prembly secret keys exposed to visitors? =
+
+No. The public widget key is sent to the browser, but the secret API key is used only by WordPress for server-side status confirmation.
 
 = Is this production ready? =
 

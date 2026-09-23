@@ -61,7 +61,9 @@
 				is_test: !! provider.isTest,
 				config_id: provider.configurationId,
 				callback: function ( response ) {
-					const reference = response && ( response.reference || response.user_ref || response.id );
+					const verification = response && response.verification ? response.verification : {};
+					const data = response && response.data ? response.data : {};
+					const reference = verification.reference || data.reference || response.reference || response.user_ref || response.id;
 
 					if ( reference ) {
 						confirmReference( reference );
