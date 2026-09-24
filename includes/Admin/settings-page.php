@@ -160,18 +160,29 @@ final class SettingsPage {
 			return;
 		}
 
-		$type        = in_array( $key, array( 'status_endpoint', 'success_redirect' ), true ) ? 'url' : 'text';
-		$description = '';
+		$type = in_array( $key, array( 'status_endpoint', 'success_redirect' ), true ) ? 'url' : 'text';
 
-		if ( 'status_endpoint' === $key ) {
-			$description = __( 'Optional. Defaults to https://api.prembly.com/verification/{id}/status. Use {id} where the verification reference should be inserted.', 'trustgate-registration' );
+		if ( 'secret_key' === $key ) {
+			$type = 'password';
 		}
+
+		$descriptions = array(
+			'test_public_key'  => __( 'Prembly API Integrations > Public Key while the dashboard is in Sandbox mode.', 'trustgate-registration' ),
+			'live_public_key'  => __( 'Prembly API Integrations > Public Key while the dashboard is in Live/Production mode.', 'trustgate-registration' ),
+			'secret_key'       => __( 'Prembly API Integrations > Secret Key for the selected mode. This key is used only for server-side requests.', 'trustgate-registration' ),
+			'app_id'           => __( 'Optional. Leave blank unless Prembly or a legacy Identitypass account provides an App ID.', 'trustgate-registration' ),
+			'configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the verification widget.', 'trustgate-registration' ),
+			'status_endpoint'  => __( 'Optional. Defaults to https://api.prembly.com/verification/{id}/status. Use {id} where the verification reference should be inserted.', 'trustgate-registration' ),
+			'success_redirect' => __( 'Optional. The page to visit after a verified account is registered.', 'trustgate-registration' ),
+		);
+		$description  = $descriptions[ $key ] ?? '';
 		?>
 		<input
 			type="<?php echo esc_attr( $type ); ?>"
 			name="<?php echo esc_attr( $name ); ?>"
 			value="<?php echo esc_attr( $value ); ?>"
 			class="regular-text"
+			<?php echo 'secret_key' === $key ? ' autocomplete="new-password"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 		/>
 		<?php if ( '' !== $description ) : ?>
 			<p class="description"><?php echo esc_html( $description ); ?></p>

@@ -12,7 +12,7 @@ TrustGate Registration is a WordPress plugin for verified account registration. 
 
 ## Current Status
 
-This repository is in early development. The first scaffold includes the plugin bootstrap, settings page, registration form hooks, provider interface, and Prembly adapter placeholder. The Prembly server-side status confirmation still needs to be completed before this can be used for production registration gating.
+This repository is in early development. The plugin includes the bootstrap, settings page, registration form hooks, provider interface, Prembly widget integration, and server-side verification status confirmation. Replay protection and end-to-end registration testing must still be completed before production use.
 
 ## Prembly Settings
 
@@ -22,6 +22,8 @@ The Prembly provider uses the public key and configuration ID in the browser to 
 - `Secret API Key`: sent only from WordPress to Prembly as `x-api-key`.
 - `App ID`: optional compatibility header for older Identitypass accounts.
 - `Status Endpoint`: optional override. Defaults to `https://api.prembly.com/verification/{id}/status`.
+
+See [Prembly setup](docs/prembly-setup.md) for the recommended sandbox widget configuration and a field-by-field dashboard mapping.
 
 ## Development
 
