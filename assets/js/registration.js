@@ -79,7 +79,9 @@
 						return;
 					}
 
-					setStatus( config.i18n.failed, 'failed' );
+					const detail = provider.isTest && response && response.message ? ' (' + response.message + ')' : '';
+
+					setStatus( config.i18n.failed + detail, 'failed' );
 				}
 			} );
 		} );
