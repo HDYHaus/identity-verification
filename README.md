@@ -12,7 +12,7 @@ TrustGate Registration is a WordPress plugin for verified account registration. 
 
 ## Current Status
 
-This repository is in early development. The plugin includes the bootstrap, settings page, registration form hooks, provider interface, Prembly widget integration, and server-side verification status confirmation. Replay protection and end-to-end registration testing must still be completed before production use.
+This repository is in early development. The plugin includes the bootstrap, settings page, registration form hooks, provider interface, Prembly widget integration, server-side verification status confirmation, and one-time registration attempt protection. End-to-end registration testing must still be completed before production use.
 
 ## Prembly Settings
 

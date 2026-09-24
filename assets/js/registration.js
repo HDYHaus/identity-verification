@@ -19,23 +19,28 @@
 		$.post( config.ajaxUrl, {
 			action: 'trustgate_confirm_verification',
 			nonce: config.nonce,
-			reference: reference
+			reference: reference,
+			token: getFieldValue( '#trustgate_attempt_token' ),
+			email: getFieldValue( '#user_email' )
 		} )
 			.done( function ( response ) {
 				const data = response && response.data ? response.data : {};
 
 				$( '#trustgate_reference' ).val( data.reference || reference );
-				$( '#trustgate_verified' ).val( '1' );
 				setStatus( config.i18n.verified, 'verified' );
 			} )
 			.fail( function () {
 				$( '#trustgate_reference' ).val( '' );
-				$( '#trustgate_verified' ).val( '0' );
 				setStatus( config.i18n.failed, 'failed' );
 			} );
 	}
 
 	$( function () {
+		$( '#user_email, #trustgate_first_name, #trustgate_last_name' ).on( 'change', function () {
+			$( '#trustgate_reference' ).val( '' );
+			setStatus( '', '' );
+		} );
+
 		$( '#trustgate_verify_button' ).on( 'click', function () {
 			const email = getFieldValue( '#user_email' );
 			const firstName = getFieldValue( '#trustgate_first_name' );
