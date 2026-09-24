@@ -20,7 +20,7 @@ Use these settings:
    - Brand name: the site or community name. The development widget uses `TrustGate Registration`.
    - Description: `Verify your identity to complete account registration.`
    - Theme: choose a color that meets the site's contrast and brand requirements.
-   - Redirect URL: the WordPress registration URL. For the Local development site, this is `http://trustgate-registration.local/wp-login.php?action=register`.
+   - Redirect URL: the WordPress registration URL. For the Local development site, this is `http://localhost:10043/wp-login.php?action=register`.
    - Webhook URL: leave blank until TrustGate implements and documents a webhook receiver.
 3. Security/Fraud Check
    - PEP screening: Off for the baseline identity check. Enable it only when the site's compliance policy requires AML or politically exposed person screening.
@@ -51,6 +51,12 @@ Open **Settings > TrustGate Registration** in WordPress and map the fields as fo
 | Success Redirect URL | Optional page to visit after verified WordPress registration |
 
 The current plugin has one Secret API Key field. Replace it with the matching production secret when switching TrustGate from Test to Live mode.
+
+## Local Camera Testing
+
+The development site uses Local's `localhost` Router Mode because SSL certificate trust is unavailable on the current machine. Browsers treat `http://localhost` as a trustworthy local origin for camera access even though Local does not provide HTTPS in this mode.
+
+After changing Local's Router Mode, use Local's **Fix it** action to update the WordPress `home` and `siteurl` values to the assigned localhost address. Confirm that the registration page, its asset URLs, and `admin-ajax.php` all use the same localhost origin. Localhost ports may differ between installations, so use the port shown by Local and update the Prembly Redirect URL accordingly.
 
 ## Why This Baseline
 

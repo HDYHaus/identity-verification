@@ -38,7 +38,8 @@ composer phpcs
 The intended Local by Flywheel site is:
 
 - Site name: `TrustGate Registration`
-- Domain: `trustgate-registration.local`
+- Router mode: `localhost`
+- Development URL: `http://localhost:10043`
 - Plugin folder: `wp-content/plugins/trustgate-registration`
 
 ## License
