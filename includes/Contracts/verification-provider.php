@@ -37,8 +37,9 @@ interface VerificationProvider {
 	/**
 	 * Confirm whether a provider reference represents an approved verification.
 	 *
-	 * @param string $reference Provider reference or session identifier.
+	 * @param string               $reference Provider reference or session identifier.
+	 * @param array<string, mixed> $context Verification context.
 	 * @return array{verified: bool, status: string, reference: string, raw?: array<string, mixed>}
 	 */
-	public function confirm_verification( string $reference ): array;
+	public function confirm_verification( string $reference, array $context = array() ): array;
 }

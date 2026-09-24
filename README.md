@@ -16,12 +16,13 @@ This repository is in early development. The plugin includes the bootstrap, sett
 
 ## Prembly Settings
 
-The Prembly provider uses the public key and configuration ID in the browser to launch the widget, then uses the secret key from WordPress to confirm the returned verification reference server-side.
+The Prembly provider uses the public key and configuration ID in the browser to launch the widget. After completion, WordPress retrieves the returned SDK session and confirms its status, widget, and available email data before allowing registration.
 
 - `Test Public Key` / `Live Public Key`: Prembly widget public keys.
-- `Secret API Key`: sent only from WordPress to Prembly as `x-api-key`.
+- `Secret API Key`: sent only from WordPress to Prembly for authenticated session lookups.
+- `Organisation ID`: paired with the secret key as `x-organisation-id` when available.
 - `App ID`: optional compatibility header for older Identitypass accounts.
-- `Status Endpoint`: optional override. Defaults to `https://api.prembly.com/verification/{id}/status`.
+- `Status Endpoint`: optional override. Defaults to `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{id}/`.
 
 See [Prembly setup](docs/prembly-setup.md) for the recommended sandbox widget configuration and a field-by-field dashboard mapping.
 

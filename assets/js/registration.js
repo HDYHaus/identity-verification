@@ -29,9 +29,12 @@
 				$( '#trustgate_reference' ).val( data.reference || reference );
 				setStatus( config.i18n.verified, 'verified' );
 			} )
-			.fail( function () {
+			.fail( function ( xhr ) {
+				const data = xhr && xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data : {};
+				const detail = config.provider && config.provider.isTest && data.status ? ' (' + data.status + ')' : '';
+
 				$( '#trustgate_reference' ).val( '' );
-				setStatus( config.i18n.failed, 'failed' );
+				setStatus( config.i18n.failed + detail, 'failed' );
 			} );
 	}
 
@@ -65,12 +68,13 @@
 				user_ref: 'trustgate_' + Date.now(),
 				is_test: !! provider.isTest,
 				config_id: provider.configurationId,
-				callback: function ( response ) {
+				callback: function ( response, rawData ) {
 					const verification = response && response.verification ? response.verification : {};
 					const data = response && response.data ? response.data : {};
-					const reference = verification.reference || data.reference || response.reference || response.user_ref || response.id;
+					const callbackData = rawData || {};
+					const reference = callbackData.widgetId || callbackData.session_id || data.widgetId || data.session_id || verification.reference || data.reference || response.reference || response.user_ref || response.id;
 
-					if ( reference ) {
+					if ( response && 'success' === response.status && '00' === response.code && reference ) {
 						confirmReference( reference );
 						return;
 					}

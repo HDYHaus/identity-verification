@@ -220,7 +220,12 @@ final class RegistrationController {
 			);
 		}
 
-		$result = $this->provider->confirm_verification( $reference );
+		$result = $this->provider->confirm_verification(
+			$reference,
+			array(
+				'email' => $email,
+			)
+		);
 
 		if ( ! $result['verified'] ) {
 			wp_send_json_error(

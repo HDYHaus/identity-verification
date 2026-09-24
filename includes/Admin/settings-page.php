@@ -91,6 +91,7 @@ final class SettingsPage {
 			'test_public_key'  => __( 'Test Public Key', 'trustgate-registration' ),
 			'live_public_key'  => __( 'Live Public Key', 'trustgate-registration' ),
 			'secret_key'       => __( 'Secret API Key', 'trustgate-registration' ),
+			'organisation_id'  => __( 'Organisation ID', 'trustgate-registration' ),
 			'app_id'           => __( 'App ID', 'trustgate-registration' ),
 			'configuration_id' => __( 'Configuration ID', 'trustgate-registration' ),
 			'status_endpoint'  => __( 'Status Endpoint', 'trustgate-registration' ),
@@ -127,6 +128,7 @@ final class SettingsPage {
 			'test_public_key'  => sanitize_text_field( (string) ( $settings['test_public_key'] ?? '' ) ),
 			'live_public_key'  => sanitize_text_field( (string) ( $settings['live_public_key'] ?? '' ) ),
 			'secret_key'       => sanitize_text_field( (string) ( $settings['secret_key'] ?? '' ) ),
+			'organisation_id'  => sanitize_text_field( (string) ( $settings['organisation_id'] ?? '' ) ),
 			'app_id'           => sanitize_text_field( (string) ( $settings['app_id'] ?? '' ) ),
 			'configuration_id' => sanitize_text_field( (string) ( $settings['configuration_id'] ?? '' ) ),
 			'status_endpoint'  => esc_url_raw( (string) ( $settings['status_endpoint'] ?? '' ) ),
@@ -170,9 +172,10 @@ final class SettingsPage {
 			'test_public_key'  => __( 'Prembly API Integrations > Public Key while the dashboard is in Sandbox mode.', 'trustgate-registration' ),
 			'live_public_key'  => __( 'Prembly API Integrations > Public Key while the dashboard is in Live/Production mode.', 'trustgate-registration' ),
 			'secret_key'       => __( 'Prembly API Integrations > Secret Key for the selected mode. This key is used only for server-side requests.', 'trustgate-registration' ),
+			'organisation_id'  => __( 'Optional for sandbox testing. Prembly requires this value with the Secret API Key for authenticated SDK session lookups.', 'trustgate-registration' ),
 			'app_id'           => __( 'Optional. Leave blank unless Prembly or a legacy Identitypass account provides an App ID.', 'trustgate-registration' ),
 			'configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the verification widget.', 'trustgate-registration' ),
-			'status_endpoint'  => __( 'Optional. Defaults to https://api.prembly.com/verification/{id}/status. Use {id} where the verification reference should be inserted.', 'trustgate-registration' ),
+			'status_endpoint'  => __( 'Optional. Defaults to Prembly\'s SDK session endpoint. Use {id} where the SDK session ID should be inserted.', 'trustgate-registration' ),
 			'success_redirect' => __( 'Optional. The page to visit after a verified account is registered.', 'trustgate-registration' ),
 		);
 		$description  = $descriptions[ $key ] ?? '';

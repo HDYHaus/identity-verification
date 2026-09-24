@@ -20,9 +20,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class PremblyProvider implements VerificationProvider {
 	/**
-	 * Default verification status endpoint.
+	 * Default SDK session endpoint.
 	 */
-	private const DEFAULT_STATUS_ENDPOINT = 'https://api.prembly.com/verification/{id}/status';
+	private const DEFAULT_STATUS_ENDPOINT = 'https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{id}/';
 
 	/**
 	 * Settings option name.
@@ -75,30 +75,18 @@ final class PremblyProvider implements VerificationProvider {
 	/**
 	 * Confirm whether the verification is approved.
 	 *
-	 * @param string $reference Provider reference.
+	 * @param string               $reference Provider reference.
+	 * @param array<string, mixed> $context Verification context.
 	 * @return array{verified: bool, status: string, reference: string, raw?: array<string, mixed>}
 	 */
-	public function confirm_verification( string $reference ): array {
+	public function confirm_verification( string $reference, array $context = array() ): array {
 		$reference = sanitize_text_field( $reference );
 
 		if ( '' === $reference ) {
 			return $this->build_result( false, 'missing_reference', $reference );
 		}
 
-		$settings   = $this->get_settings();
-		$secret_key = isset( $settings['secret_key'] ) ? (string) $settings['secret_key'] : '';
-
-		if ( '' === $secret_key ) {
-			return $this->build_result( false, 'missing_secret_key', $reference );
-		}
-
-		$response = $this->request_status( $reference, $secret_key, $settings, 'POST' );
-
-		if ( 'method_not_allowed' === $response['status'] ) {
-			$response = $this->request_status( $reference, $secret_key, $settings, 'GET' );
-		}
-
-		return $response;
+		return $this->request_status( $reference, $this->get_settings(), $context );
 	}
 
 	/**
@@ -116,21 +104,26 @@ final class PremblyProvider implements VerificationProvider {
 	 * Request verification status from Prembly.
 	 *
 	 * @param string               $reference Verification reference.
-	 * @param string               $secret_key Secret API key.
 	 * @param array<string, mixed> $settings Plugin settings.
-	 * @param string               $method HTTP method.
+	 * @param array<string, mixed> $context Verification context.
 	 * @return array{verified: bool, status: string, reference: string, raw?: array<string, mixed>}
 	 */
-	private function request_status( string $reference, string $secret_key, array $settings, string $method ): array {
-		$endpoint = isset( $settings['status_endpoint'] ) && '' !== $settings['status_endpoint']
+	private function request_status( string $reference, array $settings, array $context ): array {
+		$endpoint        = isset( $settings['status_endpoint'] ) && '' !== $settings['status_endpoint']
 			? (string) $settings['status_endpoint']
 			: self::DEFAULT_STATUS_ENDPOINT;
-		$url      = str_replace( '{id}', rawurlencode( $reference ), $endpoint );
-		$headers  = array(
-			'Accept'    => 'application/json',
-			'x-api-key' => $secret_key,
+		$url             = str_replace( '{id}', rawurlencode( $reference ), $endpoint );
+		$headers         = array(
+			'Accept' => 'application/json',
 		);
-		$app_id   = isset( $settings['app_id'] ) ? (string) $settings['app_id'] : '';
+		$secret_key      = isset( $settings['secret_key'] ) ? (string) $settings['secret_key'] : '';
+		$organisation_id = isset( $settings['organisation_id'] ) ? (string) $settings['organisation_id'] : '';
+		$app_id          = isset( $settings['app_id'] ) ? (string) $settings['app_id'] : '';
+
+		if ( '' !== $secret_key && '' !== $organisation_id ) {
+			$headers['x-api-key']         = $secret_key;
+			$headers['x-organisation-id'] = $organisation_id;
+		}
 
 		if ( '' !== $app_id ) {
 			$headers['app-id'] = $app_id;
@@ -139,18 +132,9 @@ final class PremblyProvider implements VerificationProvider {
 
 		$args = array(
 			'headers' => $headers,
-			'method'  => $method,
+			'method'  => 'GET',
 			'timeout' => 20,
 		);
-
-		if ( 'POST' === $method ) {
-			$args['body']                    = wp_json_encode(
-				array(
-					'reference' => $reference,
-				)
-			);
-			$args['headers']['Content-Type'] = 'application/json';
-		}
 
 		$response = wp_remote_request( $url, $args );
 
@@ -159,10 +143,6 @@ final class PremblyProvider implements VerificationProvider {
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
-
-		if ( 405 === $code ) {
-			return $this->build_result( false, 'method_not_allowed', $reference );
-		}
 
 		if ( $code < 200 || $code >= 300 ) {
 			return $this->build_result( false, 'http_' . $code, $reference );
@@ -174,7 +154,7 @@ final class PremblyProvider implements VerificationProvider {
 			return $this->build_result( false, 'invalid_response', $reference );
 		}
 
-		return $this->normalize_status( $body, $reference );
+		return $this->normalize_status( $body, $reference, $settings, $context );
 	}
 
 	/**
@@ -182,32 +162,89 @@ final class PremblyProvider implements VerificationProvider {
 	 *
 	 * @param array<string, mixed> $body Response body.
 	 * @param string               $fallback_reference Fallback reference.
+	 * @param array<string, mixed> $settings Plugin settings.
+	 * @param array<string, mixed> $context Verification context.
 	 * @return array{verified: bool, status: string, reference: string, raw?: array<string, mixed>}
 	 */
-	private function normalize_status( array $body, string $fallback_reference ): array {
-		$data                = isset( $body['data'] ) && is_array( $body['data'] ) ? $body['data'] : array();
-		$verification        = isset( $body['verification'] ) && is_array( $body['verification'] ) ? $body['verification'] : array();
-		$response_code       = (string) ( $data['response_code'] ?? $body['response_code'] ?? '' );
-		$verification_status = strtoupper( (string) ( $data['verification_status'] ?? $verification['status'] ?? '' ) );
-		$reference           = sanitize_text_field( (string) ( $data['reference'] ?? $verification['reference'] ?? $fallback_reference ) );
+	private function normalize_status( array $body, string $fallback_reference, array $settings, array $context ): array {
+		$data                  = isset( $body['data'] ) && is_array( $body['data'] ) ? $body['data'] : array();
+		$verification          = isset( $data['verification'] ) && is_array( $data['verification'] ) ? $data['verification'] : array();
+		$verification_response = isset( $data['verification_response'] ) && is_array( $data['verification_response'] ) ? $data['verification_response'] : array();
+		$widget_info           = isset( $data['widget_info'] ) && is_array( $data['widget_info'] ) ? $data['widget_info'] : array();
+		$widget_config         = isset( $data['widget_config'] ) && is_array( $data['widget_config'] ) ? $data['widget_config'] : array();
+		$metadata              = isset( $data['metadata'] ) && is_array( $data['metadata'] ) ? $data['metadata'] : array();
+		$status                = strtoupper(
+			$this->first_string(
+				array(
+					$data['verification_status'] ?? null,
+					$data['status'] ?? null,
+					$verification['status'] ?? null,
+					$verification_response['status'] ?? null,
+					$body['verification_status'] ?? null,
+					$body['status'] ?? null,
+				)
+			)
+		);
+		$reference             = sanitize_text_field(
+			$this->first_string(
+				array(
+					$data['session_id'] ?? null,
+					$data['id'] ?? null,
+					$widget_info['session_id'] ?? null,
+					$body['session_id'] ?? null,
+					$fallback_reference,
+				)
+			)
+		);
+		$configured_widget     = isset( $settings['configuration_id'] ) ? (string) $settings['configuration_id'] : '';
+		$response_widget       = $this->first_string(
+			array(
+				$data['widget_id'] ?? null,
+				$widget_info['widget_id'] ?? null,
+				$widget_info['id'] ?? null,
+				$widget_config['id'] ?? null,
+			)
+		);
 
-		if ( '00' === $response_code && 'VERIFIED' === $verification_status ) {
+		if ( '' !== $configured_widget && '' !== $response_widget && ! hash_equals( $configured_widget, $response_widget ) ) {
+			return $this->build_result( false, 'widget_mismatch', $reference, $body );
+		}
+
+		$expected_email = isset( $context['email'] ) ? sanitize_email( (string) $context['email'] ) : '';
+		$response_email = sanitize_email( $this->first_string( array( $data['email'] ?? null, $metadata['email'] ?? null ) ) );
+
+		if ( '' !== $expected_email && '' !== $response_email && ! hash_equals( strtolower( $expected_email ), strtolower( $response_email ) ) ) {
+			return $this->build_result( false, 'email_mismatch', $reference, $body );
+		}
+
+		if ( in_array( $status, array( 'COMPLETED', 'VERIFIED', 'SUCCESS', 'SUCCESSFUL', 'APPROVED' ), true ) ) {
 			return $this->build_result( true, 'verified', $reference, $body );
 		}
 
-		if ( 'PENDING' === $verification_status ) {
+		if ( in_array( $status, array( 'CREATED', 'INITIATED', 'IN_PROGRESS', 'PENDING', 'PROCESSING' ), true ) ) {
 			return $this->build_result( false, 'pending', $reference, $body );
 		}
 
-		if ( 'NOT-VERIFIED' === $verification_status || 'NOT_VERIFIED' === $verification_status ) {
+		if ( in_array( $status, array( 'CANCELLED', 'FAILED', 'NOT-VERIFIED', 'NOT_VERIFIED', 'REJECTED' ), true ) ) {
 			return $this->build_result( false, 'not_verified', $reference, $body );
 		}
 
-		if ( '00' !== $response_code && '' !== $response_code ) {
-			return $this->build_result( false, 'response_code_' . sanitize_key( $response_code ), $reference, $body );
+		return $this->build_result( false, 'unknown_status', $reference, $body );
+	}
+
+	/**
+	 * Return the first non-empty string in a list.
+	 *
+	 * @param array<int, mixed> $values Candidate values.
+	 */
+	private function first_string( array $values ): string {
+		foreach ( $values as $value ) {
+			if ( is_string( $value ) && '' !== trim( $value ) ) {
+				return trim( $value );
+			}
 		}
 
-		return $this->build_result( false, 'unverified', $reference, $body );
+		return '';
 	}
 
 	/**
