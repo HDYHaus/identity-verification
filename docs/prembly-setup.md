@@ -67,6 +67,7 @@ Document verification works across the broadest set of countries and identity do
 
 ## Production Checklist
 
+- Repeat the successful sandbox smoke test with production credentials in a controlled pre-launch environment.
 - Complete Prembly's business onboarding requirements and obtain live credentials.
 - Replace the Local redirect URL with the production HTTPS registration URL.
 - Confirm the production domain is permitted by Prembly.
