@@ -3,3 +3,4 @@
 /.phpcs-cache
 .DS_Store
 *.log
+/*.zip

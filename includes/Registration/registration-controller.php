@@ -77,7 +77,7 @@ final class RegistrationController {
 			return;
 		}
 
-		wp_enqueue_script( 'trustgate-prembly-widget', 'https://js.prembly.com/v1/inline/widget.js', array(), '1.0.0', true );
+		wp_enqueue_script( 'trustgate-prembly-widget', 'https://js.prembly.com/v1/inline/widget-v3.js', array(), '3.0.0', true );
 		wp_enqueue_script(
 			'trustgate-registration',
 			TRUSTGATE_REGISTRATION_URL . 'assets/js/registration.js',

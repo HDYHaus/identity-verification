@@ -61,13 +61,13 @@
 			}
 
 			window.IdentityKYC.verify( {
-				merchant_key: provider.publicKey,
+				widget_key: provider.publicKey,
+				widget_id: provider.configurationId,
 				first_name: firstName,
 				last_name: lastName,
 				email: email,
 				user_ref: 'trustgate_' + Date.now(),
 				is_test: !! provider.isTest,
-				config_id: provider.configurationId,
 				callback: function ( response, rawData ) {
 					const verification = response && response.verification ? response.verification : {};
 					const data = response && response.data ? response.data : {};

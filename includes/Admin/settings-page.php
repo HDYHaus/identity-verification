@@ -88,8 +88,8 @@ final class SettingsPage {
 
 		$fields = array(
 			'mode'             => __( 'Mode', 'trustgate-registration' ),
-			'test_public_key'  => __( 'Test Public Key', 'trustgate-registration' ),
-			'live_public_key'  => __( 'Live Public Key', 'trustgate-registration' ),
+			'test_public_key'  => __( 'Test Widget Key', 'trustgate-registration' ),
+			'live_public_key'  => __( 'Live Widget Key', 'trustgate-registration' ),
 			'secret_key'       => __( 'Secret API Key', 'trustgate-registration' ),
 			'organisation_id'  => __( 'Organisation ID', 'trustgate-registration' ),
 			'app_id'           => __( 'App ID', 'trustgate-registration' ),
@@ -169,8 +169,8 @@ final class SettingsPage {
 		}
 
 		$descriptions = array(
-			'test_public_key'  => __( 'Prembly API Integrations > Public Key while the dashboard is in Sandbox mode.', 'trustgate-registration' ),
-			'live_public_key'  => __( 'Prembly API Integrations > Public Key while the dashboard is in Live/Production mode.', 'trustgate-registration' ),
+			'test_public_key'  => __( 'Prembly SDK Setup > Integration > Widget Key while the dashboard is in Sandbox mode.', 'trustgate-registration' ),
+			'live_public_key'  => __( 'Prembly SDK Setup > Integration > Widget Key while the dashboard is in Live/Production mode.', 'trustgate-registration' ),
 			'secret_key'       => __( 'Prembly API Integrations > Secret Key for the selected mode. This key is used only for server-side requests.', 'trustgate-registration' ),
 			'organisation_id'  => __( 'Optional for sandbox testing. Prembly requires this value with the Secret API Key for authenticated SDK session lookups.', 'trustgate-registration' ),
 			'app_id'           => __( 'Optional. Leave blank unless Prembly or a legacy Identitypass account provides an App ID.', 'trustgate-registration' ),

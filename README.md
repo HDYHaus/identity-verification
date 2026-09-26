@@ -16,9 +16,9 @@ This repository is in early development. The plugin includes the bootstrap, sett
 
 ## Prembly Settings
 
-The Prembly provider uses the public key and configuration ID in the browser to launch the widget. After completion, WordPress retrieves the returned SDK session and confirms its status, widget, and available email data before allowing registration.
+The Prembly provider uses the widget key and configuration ID in the browser to launch the widget. After completion, WordPress retrieves the returned SDK session and confirms its status, widget, and available email data before allowing registration.
 
-- `Test Public Key` / `Live Public Key`: Prembly widget public keys.
+- `Test Widget Key` / `Live Widget Key`: copied from the saved widget's **SDK Setup > Integration** panel. Do not use the API Integrations public key here.
 - `Secret API Key`: sent only from WordPress to Prembly for authenticated session lookups.
 - `Organisation ID`: paired with the secret key as `x-organisation-id` when available.
 - `App ID`: optional compatibility header for older Identitypass accounts.

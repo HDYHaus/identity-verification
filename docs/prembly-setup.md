@@ -33,7 +33,7 @@ Use these settings:
    - Logo: optional.
 5. Review the summary and choose **Setup SDK**.
 
-The saved widget appears under **Integrations > SDK Setup**. Use **Copy Config ID** to copy its complete configuration ID.
+The saved widget appears under **Integrations > SDK Setup**. Use **Copy Config ID** to copy its complete configuration ID. Open the widget's row menu and choose **Integration** to find its Widget Key.
 
 ## WordPress Settings
 
@@ -42,8 +42,8 @@ Open **Settings > TrustGate Registration** in WordPress and map the fields as fo
 | TrustGate field | Prembly source |
 | --- | --- |
 | Mode | `Test` while the Prembly dashboard is in Sandbox mode |
-| Test Public Key | **API Integrations > Public Key** while Sandbox is selected |
-| Live Public Key | **API Integrations > Public Key** while Live/Production is selected |
+| Test Widget Key | **SDK Setup > Integration > Widget Key** for a widget created while Sandbox is selected |
+| Live Widget Key | **SDK Setup > Integration > Widget Key** for a widget created while Live/Production is selected |
 | Secret API Key | **API Integrations > Secret Key** for the currently selected TrustGate mode |
 | Organisation ID | Your Prembly organisation identifier, when shown in the dashboard or supplied by Prembly support |
 | App ID | Leave blank unless Prembly support or a legacy Identitypass account explicitly provides one |
@@ -52,6 +52,8 @@ Open **Settings > TrustGate Registration** in WordPress and map the fields as fo
 | Success Redirect URL | Optional page to visit after verified WordPress registration |
 
 The current plugin has one Secret API Key field. Replace it with the matching production secret when switching TrustGate from Test to Live mode. TrustGate pairs that secret with the Organisation ID for Prembly's documented authenticated SDK session lookup. In sandbox, the current Prembly SDK also exposes the session to its embedded widget; TrustGate still retrieves it from WordPress and checks the returned widget ID and email when those values are present.
+
+The Widget Key begins with `wdgt_`. Prembly's API Integrations public key begins with a different prefix and cannot initialize an SDK widget; using it produces an `Invalid widget ID or key` error.
 
 ## Local Camera Testing
 
