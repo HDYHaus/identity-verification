@@ -37,21 +37,24 @@ The saved widget appears under **Integrations > SDK Setup**. Use **Copy Config I
 
 ## WordPress Settings
 
-Open **Settings > TrustGate Registration** in WordPress and map the fields as follows:
+Open **TrustGate > Settings** in WordPress and map the fields as follows:
 
 | TrustGate field | Prembly source |
 | --- | --- |
 | Mode | `Test` while the Prembly dashboard is in Sandbox mode |
-| Test Widget Key | **SDK Setup > Integration > Widget Key** for a widget created while Sandbox is selected |
+| Sandbox Widget Key | **SDK Setup > Integration > Widget Key** for a widget created while Sandbox is selected |
+| Sandbox Configuration ID | **SDK Setup > Copy Config ID** for the Sandbox widget |
+| Sandbox Secret API Key | **API Integrations > Secret Key** while Sandbox is selected |
+| Sandbox Organisation ID | Your Prembly organisation identifier for authenticated Sandbox session lookups |
 | Live Widget Key | **SDK Setup > Integration > Widget Key** for a widget created while Live/Production is selected |
-| Secret API Key | **API Integrations > Secret Key** for the currently selected TrustGate mode |
-| Organisation ID | Your Prembly organisation identifier, when shown in the dashboard or supplied by Prembly support |
-| App ID | Leave blank unless Prembly support or a legacy Identitypass account explicitly provides one |
-| Configuration ID | **SDK Setup > Copy Config ID** for the saved widget |
-| Status Endpoint | Leave blank to use TrustGate's current Prembly SDK session endpoint |
+| Live Configuration ID | **SDK Setup > Copy Config ID** for the Live widget |
+| Live Secret API Key | **API Integrations > Secret Key** while Live/Production is selected |
+| Live Organisation ID | Your Prembly organisation identifier for authenticated Live session lookups |
 | Success Redirect URL | Optional page to visit after verified WordPress registration |
+| Legacy App ID | Leave blank unless Prembly support or a legacy Identitypass endpoint explicitly requires one |
+| Status Endpoint Override | Leave blank to use TrustGate's current Prembly SDK session endpoint |
 
-The current plugin has one Secret API Key field. Replace it with the matching production secret when switching TrustGate from Test to Live mode. TrustGate pairs that secret with the Organisation ID for Prembly's documented authenticated SDK session lookup. In sandbox, the current Prembly SDK also exposes the session to its embedded widget; TrustGate still retrieves it from WordPress and checks the returned widget ID and email when those values are present.
+TrustGate stores Sandbox and Live credentials independently. Prembly documents both `x-api-key` and `x-organisation-id` for authenticated SDK session lookups, so configure the Organisation ID before relying on Live mode. The Legacy App ID is not part of that SDK session request and should normally remain blank. The Status Endpoint Override should also remain blank unless Prembly changes the endpoint or support supplies a different URL.
 
 The Widget Key begins with `wdgt_`. Prembly's API Integrations public key begins with a different prefix and cannot initialize an SDK widget; using it produces an `Invalid widget ID or key` error.
 

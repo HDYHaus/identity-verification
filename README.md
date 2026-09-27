@@ -20,11 +20,14 @@ On September 26, 2026, the sandbox flow completed an end-to-end smoke test on th
 
 The Prembly provider uses the widget key and configuration ID in the browser to launch the widget. After completion, WordPress retrieves the returned SDK session and confirms its status, widget, and available email data before allowing registration.
 
-- `Test Widget Key` / `Live Widget Key`: copied from the saved widget's **SDK Setup > Integration** panel. Do not use the API Integrations public key here.
-- `Secret API Key`: sent only from WordPress to Prembly for authenticated session lookups.
-- `Organisation ID`: paired with the secret key as `x-organisation-id` when available.
+- `Sandbox Widget Key` / `Live Widget Key`: copied from the matching saved widget's **SDK Setup > Integration** panel. Do not use the API Integrations public key here.
+- `Sandbox Configuration ID` / `Live Configuration ID`: copied from the matching SDK Setup widget.
+- `Sandbox Secret API Key` / `Live Secret API Key`: sent only from WordPress to Prembly for authenticated session lookups.
+- `Sandbox Organisation ID` / `Live Organisation ID`: paired with the matching secret key as `x-organisation-id`.
 - `App ID`: optional compatibility header for older Identitypass accounts.
 - `Status Endpoint`: optional override. Defaults to `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{id}/`.
+
+TrustGate has its own top-level WordPress admin menu with separate Provider, Registration, and Advanced tabs. Sandbox and Live credentials are stored independently, so changing environments does not overwrite a working configuration.
 
 See [Prembly setup](docs/prembly-setup.md) for the recommended sandbox widget configuration and a field-by-field dashboard mapping.
 

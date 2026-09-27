@@ -63,12 +63,13 @@ final class PremblyProvider implements VerificationProvider {
 		$settings = $this->get_settings();
 		$mode     = isset( $settings['mode'] ) ? (string) $settings['mode'] : 'test';
 		$key      = 'live' === $mode ? ( $settings['live_public_key'] ?? '' ) : ( $settings['test_public_key'] ?? '' );
+		$config   = $this->get_environment_value( $settings, $mode, 'configuration_id', 'configuration_id' );
 
 		return array(
 			'mode'            => $mode,
 			'isTest'          => 'test' === $mode,
 			'publicKey'       => (string) $key,
-			'configurationId' => (string) ( $settings['configuration_id'] ?? '' ),
+			'configurationId' => $config,
 		);
 	}
 
@@ -109,6 +110,7 @@ final class PremblyProvider implements VerificationProvider {
 	 * @return array{verified: bool, status: string, reference: string, raw?: array<string, mixed>}
 	 */
 	private function request_status( string $reference, array $settings, array $context ): array {
+		$mode            = isset( $settings['mode'] ) && 'live' === $settings['mode'] ? 'live' : 'test';
 		$endpoint        = isset( $settings['status_endpoint'] ) && '' !== $settings['status_endpoint']
 			? (string) $settings['status_endpoint']
 			: self::DEFAULT_STATUS_ENDPOINT;
@@ -116,8 +118,8 @@ final class PremblyProvider implements VerificationProvider {
 		$headers         = array(
 			'Accept' => 'application/json',
 		);
-		$secret_key      = isset( $settings['secret_key'] ) ? (string) $settings['secret_key'] : '';
-		$organisation_id = isset( $settings['organisation_id'] ) ? (string) $settings['organisation_id'] : '';
+		$secret_key      = $this->get_environment_value( $settings, $mode, 'secret_key', 'secret_key' );
+		$organisation_id = $this->get_environment_value( $settings, $mode, 'organisation_id', 'organisation_id' );
 		$app_id          = isset( $settings['app_id'] ) ? (string) $settings['app_id'] : '';
 
 		if ( '' !== $secret_key && '' !== $organisation_id ) {
@@ -196,7 +198,8 @@ final class PremblyProvider implements VerificationProvider {
 				)
 			)
 		);
-		$configured_widget     = isset( $settings['configuration_id'] ) ? (string) $settings['configuration_id'] : '';
+		$mode                  = isset( $settings['mode'] ) && 'live' === $settings['mode'] ? 'live' : 'test';
+		$configured_widget     = $this->get_environment_value( $settings, $mode, 'configuration_id', 'configuration_id' );
 		$response_widget       = $this->first_string(
 			array(
 				$data['widget_id'] ?? null,
@@ -230,6 +233,24 @@ final class PremblyProvider implements VerificationProvider {
 		}
 
 		return $this->build_result( false, 'unknown_status', $reference, $body );
+	}
+
+	/**
+	 * Get an environment-specific setting with a legacy fallback.
+	 *
+	 * @param array<string, mixed> $settings Settings array.
+	 * @param string               $mode Active environment.
+	 * @param string               $key Setting suffix.
+	 * @param string               $legacy_key Legacy setting key.
+	 */
+	private function get_environment_value( array $settings, string $mode, string $key, string $legacy_key ): string {
+		$environment_key = sprintf( '%s_%s', 'live' === $mode ? 'live' : 'test', $key );
+
+		if ( isset( $settings[ $environment_key ] ) ) {
+			return (string) $settings[ $environment_key ];
+		}
+
+		return isset( $settings[ $legacy_key ] ) ? (string) $settings[ $legacy_key ] : '';
 	}
 
 	/**
