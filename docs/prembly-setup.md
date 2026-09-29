@@ -56,9 +56,11 @@ Open the **Prembly** tab and select **Enable Prembly**. TrustGate permits one ac
 | Legacy App ID | Leave blank unless Prembly support or a legacy Identitypass endpoint explicitly requires one |
 | Status Endpoint Override | Leave blank to use TrustGate's current Prembly SDK session endpoint |
 
-TrustGate stores Sandbox and Live credentials independently. Prembly documents both `x-api-key` and `x-organisation-id` for authenticated SDK session lookups, so configure the Organisation ID before relying on Live mode. The Legacy App ID is not part of that SDK session request and should normally remain blank. The Status Endpoint Override should also remain blank unless Prembly changes the endpoint or support supplies a different URL.
+TrustGate stores Sandbox and Live credentials independently. The Organisation ID is not required to launch the widget. Prembly documents both `x-api-key` and `x-organisation-id` for the secure backend SDK session lookup; if either value is absent, TrustGate makes an unauthenticated status request. The Sandbox endpoint may currently accept that request, but configure both values before relying on Live mode. The Legacy App ID is not part of that SDK session request and should normally remain blank. The Status Endpoint Override should also remain blank unless Prembly changes the endpoint or support supplies a different URL.
 
 Legacy App ID and Status Endpoint Override are in the **Advanced Prembly Settings** section on the Prembly tab. The Success Redirect URL remains on the global **Registration** tab.
+
+The Success Redirect URL must be on an allowed WordPress host. WordPress uses it after the verified account has been created successfully; completing the Prembly widget alone does not redirect the visitor. TrustGate appends `trustgate_registration=complete` and displays a notice telling the new user to check their email for the password setup link.
 
 The Widget Key begins with `wdgt_`. Prembly's API Integrations public key begins with a different prefix and cannot initialize an SDK widget; using it produces an `Invalid widget ID or key` error.
 

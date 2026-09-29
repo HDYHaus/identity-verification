@@ -4,7 +4,7 @@ Tags: kyc, identity verification, registration, prembly
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.1.4
+Stable tag: 0.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,10 @@ No. The public widget key is sent to the browser, but the secret API key is used
 Not yet. The first scaffold is for development and integration work.
 
 == Changelog ==
+
+= 0.1.5 =
+
+Apply the configured same-site redirect with email activation instructions and clarify Prembly server authentication requirements.
 
 = 0.1.4 =
 

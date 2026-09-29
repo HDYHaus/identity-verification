@@ -29,6 +29,10 @@ The Prembly provider uses the widget key and configuration ID in the browser to 
 
 TrustGate has its own top-level WordPress admin menu with a global Registration tab and one tab per verification provider. Enable Prembly from its tab to require KYC during registration. Only one provider can be active at a time; disabling every provider restores normal WordPress registration without deleting saved credentials. Sandbox and Live credentials are stored independently, and Prembly-specific advanced settings remain on the Prembly tab.
 
+The Organisation ID is not needed to launch the browser widget. Prembly's documented secure backend session lookup uses both the Secret API Key and Organisation ID; without the complete pair, TrustGate's status request is unauthenticated. Configure both before production use.
+
+The optional Success Redirect URL must be on the WordPress site's allowed hosts. It runs after WordPress successfully creates the verified account, not immediately after the Prembly widget completes. TrustGate adds a completion marker and prepends an account-created notice reminding the user to check their email for the password setup link.
+
 See [Prembly setup](docs/prembly-setup.md) for the recommended sandbox widget configuration and a field-by-field dashboard mapping.
 
 ## Provider Adapters

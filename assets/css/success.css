@@ -1,0 +1,20 @@
+.trustgate-registration-success {
+	margin: 0 0 32px;
+	padding: 20px 24px;
+	border-left: 4px solid #008a20;
+	background: #f0f6fc;
+	color: #1d2327;
+}
+
+.trustgate-registration-success h2 {
+	margin: 0 0 8px;
+	font-size: 1.5rem;
+}
+
+.trustgate-registration-success p {
+	margin: 0 0 12px;
+}
+
+.trustgate-registration-success p:last-child {
+	margin-bottom: 0;
+}

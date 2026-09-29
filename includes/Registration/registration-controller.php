@@ -62,6 +62,9 @@ final class RegistrationController {
 		add_action( 'login_enqueue_scripts', array( $this, 'enqueue_registration_assets' ) );
 		add_action( 'register_form', array( $this, 'render_registration_fields' ) );
 		add_filter( 'registration_errors', array( $this, 'validate_registration' ), 10, 3 );
+		add_filter( 'registration_redirect', array( $this, 'filter_registration_redirect' ), 10, 2 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_success_assets' ) );
+		add_filter( 'the_content', array( $this, 'prepend_registration_success_notice' ) );
 		add_action( 'user_register', array( $this, 'store_user_meta' ), 10, 1 );
 		add_action( 'wp_ajax_nopriv_trustgate_confirm_verification', array( $this, 'confirm_verification' ) );
 		add_action( 'wp_ajax_trustgate_confirm_verification', array( $this, 'confirm_verification' ) );
@@ -166,6 +169,77 @@ final class RegistrationController {
 		}
 
 		return $errors;
+	}
+
+	/**
+	 * Use the configured same-site destination after successful registration.
+	 *
+	 * WordPress writes this value to its redirect_to registration field and
+	 * redirects to it only after register_new_user() succeeds.
+	 *
+	 * @param string       $redirect_to Existing registration redirect URL.
+	 * @param int|WP_Error $errors User ID or registration errors.
+	 */
+	public function filter_registration_redirect( string $redirect_to, int|WP_Error $errors ): string {
+		unset( $errors );
+
+		if ( '' !== $redirect_to ) {
+			return $redirect_to;
+		}
+
+		$settings = get_option( $this->option_name, array() );
+		$settings = is_array( $settings ) ? $settings : array();
+		$redirect = isset( $settings['success_redirect'] ) ? (string) $settings['success_redirect'] : '';
+
+		$redirect = wp_validate_redirect( $redirect, '' );
+
+		return '' !== $redirect ? add_query_arg( 'trustgate_registration', 'complete', $redirect ) : '';
+	}
+
+	/**
+	 * Enqueue the success notice styles only on the redirect destination.
+	 */
+	public function enqueue_success_assets(): void {
+		if ( ! $this->is_success_request() ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'trustgate-registration-success',
+			TRUSTGATE_REGISTRATION_URL . 'assets/css/success.css',
+			array(),
+			TRUSTGATE_REGISTRATION_VERSION
+		);
+	}
+
+	/**
+	 * Prepend account activation instructions to the redirect page.
+	 *
+	 * @param string $content Page content.
+	 */
+	public function prepend_registration_success_notice( string $content ): string {
+		if ( ! $this->is_success_request() || ! is_singular() || ! in_the_loop() || ! is_main_query() ) {
+			return $content;
+		}
+
+		$notice = sprintf(
+			'<div class="trustgate-registration-success" role="status"><h2>%1$s</h2><p>%2$s</p><p><a class="wp-element-button" href="%3$s">%4$s</a></p></div>',
+			esc_html__( 'Registration complete', 'trustgate-registration' ),
+			esc_html__( 'Your account has been created. Check your email for the link to set your password, then sign in.', 'trustgate-registration' ),
+			esc_url( wp_login_url() ),
+			esc_html__( 'Go to login', 'trustgate-registration' )
+		);
+
+		return $notice . $content;
+	}
+
+	/**
+	 * Determine whether this request is the post-registration destination.
+	 */
+	private function is_success_request(): bool {
+		$status = isset( $_GET['trustgate_registration'] ) ? sanitize_key( wp_unslash( $_GET['trustgate_registration'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		return 'complete' === $status;
 	}
 
 	/**

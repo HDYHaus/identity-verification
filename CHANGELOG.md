@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+- Apply the configured same-site redirect after WordPress creates a verified account and show email activation instructions.
+- Clarify the difference between widget configuration and authenticated Prembly session confirmation.
+
 ## 0.1.4
 
 - Replace the provider dropdown with exclusive provider tabs and enable checkboxes.
