@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.4
+
+- Replace the provider dropdown with exclusive provider tabs and enable checkboxes.
+- Add a provider registry that resolves at most one active verification adapter.
+- Allow normal WordPress registration when no provider is enabled.
+- Move Prembly-specific advanced settings into the Prembly tab.
+- Preserve existing Prembly activation and credentials during upgrade.
+
 ## 0.1.1
 
 - Support Prembly's V3 SDK callback and session identifier.

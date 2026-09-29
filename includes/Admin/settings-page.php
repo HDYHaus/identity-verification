@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace HDYHaus\TrustGateRegistration\Admin;
 
 use HDYHaus\TrustGateRegistration\Contracts\VerificationProvider;
+use HDYHaus\TrustGateRegistration\Providers\ProviderRegistry;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -32,21 +33,21 @@ final class SettingsPage {
 	private string $option_name;
 
 	/**
-	 * Verification provider.
+	 * Verification provider registry.
 	 *
-	 * @var VerificationProvider
+	 * @var ProviderRegistry
 	 */
-	private VerificationProvider $provider;
+	private ProviderRegistry $registry;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param string               $option_name Settings option name.
-	 * @param VerificationProvider $provider Verification provider.
+	 * @param string           $option_name Settings option name.
+	 * @param ProviderRegistry $registry Verification provider registry.
 	 */
-	public function __construct( string $option_name, VerificationProvider $provider ) {
+	public function __construct( string $option_name, ProviderRegistry $registry ) {
 		$this->option_name = $option_name;
-		$this->provider    = $provider;
+		$this->registry    = $registry;
 	}
 
 	/**
@@ -133,26 +134,26 @@ final class SettingsPage {
 			)
 		);
 
-		$this->register_provider_fields();
+		$this->register_prembly_fields();
+		$this->register_external_provider_fields();
 		$this->register_registration_fields();
-		$this->register_advanced_fields();
 	}
 
 	/**
-	 * Register provider fields.
+	 * Register Prembly fields.
 	 */
-	private function register_provider_fields(): void {
-		$page = self::PAGE_SLUG . '-provider';
+	private function register_prembly_fields(): void {
+		$page = self::PAGE_SLUG . '-prembly';
 
 		add_settings_section(
-			'trustgate_registration_provider',
-			__( 'Provider', 'trustgate-registration' ),
-			array( $this, 'render_provider_section' ),
+			'trustgate_registration_prembly',
+			__( 'Prembly', 'trustgate-registration' ),
+			array( $this, 'render_prembly_section' ),
 			$page
 		);
 
 		$fields = array(
-			'provider'              => __( 'Verification provider', 'trustgate-registration' ),
+			'provider'              => __( 'Enable Prembly', 'trustgate-registration' ),
 			'mode'                  => __( 'Active environment', 'trustgate-registration' ),
 			'test_public_key'       => __( 'Sandbox Widget Key', 'trustgate-registration' ),
 			'test_configuration_id' => __( 'Sandbox Configuration ID', 'trustgate-registration' ),
@@ -164,7 +165,66 @@ final class SettingsPage {
 			'live_organisation_id'  => __( 'Live Organisation ID', 'trustgate-registration' ),
 		);
 
-		$this->add_fields( $page, 'trustgate_registration_provider', $fields );
+		$this->add_fields( $page, 'trustgate_registration_prembly', $fields, 'prembly' );
+
+		add_settings_section(
+			'trustgate_registration_prembly_advanced',
+			__( 'Advanced Prembly Settings', 'trustgate-registration' ),
+			array( $this, 'render_prembly_advanced_section' ),
+			$page
+		);
+
+		$this->add_fields(
+			$page,
+			'trustgate_registration_prembly_advanced',
+			array(
+				'app_id'          => __( 'Legacy App ID', 'trustgate-registration' ),
+				'status_endpoint' => __( 'Status Endpoint Override', 'trustgate-registration' ),
+			)
+		);
+	}
+
+	/**
+	 * Register activation fields and extension hooks for additional providers.
+	 */
+	private function register_external_provider_fields(): void {
+		foreach ( $this->registry->all() as $slug => $provider ) {
+			if ( 'prembly' === $slug ) {
+				continue;
+			}
+
+			$page    = self::PAGE_SLUG . '-' . $slug;
+			$section = 'trustgate_registration_provider_' . $slug;
+
+			add_settings_section(
+				$section,
+				$provider->get_label(),
+				'__return_empty_string',
+				$page
+			);
+
+			$this->add_fields(
+				$page,
+				$section,
+				array(
+					'provider' => sprintf(
+						/* translators: %s: provider name */
+						__( 'Enable %s', 'trustgate-registration' ),
+						$provider->get_label()
+					),
+				),
+				$slug
+			);
+
+			/**
+			 * Fires while an external provider's settings tab is being registered.
+			 *
+			 * @param string $slug Provider slug.
+			 * @param string $page Settings API page identifier.
+			 * @param string $option_name TrustGate option name.
+			 */
+			do_action( 'trustgate_registration_register_provider_settings', $slug, $page, $this->option_name );
+		}
 	}
 
 	/**
@@ -190,36 +250,14 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Register advanced fields.
-	 */
-	private function register_advanced_fields(): void {
-		$page = self::PAGE_SLUG . '-advanced';
-
-		add_settings_section(
-			'trustgate_registration_advanced',
-			__( 'Advanced', 'trustgate-registration' ),
-			array( $this, 'render_advanced_section' ),
-			$page
-		);
-
-		$this->add_fields(
-			$page,
-			'trustgate_registration_advanced',
-			array(
-				'app_id'          => __( 'Legacy App ID', 'trustgate-registration' ),
-				'status_endpoint' => __( 'Status Endpoint Override', 'trustgate-registration' ),
-			)
-		);
-	}
-
-	/**
 	 * Register a list of fields.
 	 *
 	 * @param string                $page Page identifier.
 	 * @param string                $section Section identifier.
 	 * @param array<string, string> $fields Field labels keyed by setting name.
+	 * @param string                $provider_slug Provider slug for activation controls.
 	 */
-	private function add_fields( string $page, string $section, array $fields ): void {
+	private function add_fields( string $page, string $section, array $fields, string $provider_slug = '' ): void {
 		foreach ( $fields as $field => $label ) {
 			add_settings_field(
 				$field,
@@ -228,8 +266,9 @@ final class SettingsPage {
 				$page,
 				$section,
 				array(
-					'key'   => $field,
-					'label' => $label,
+					'key'           => $field,
+					'label'         => $label,
+					'provider_slug' => $provider_slug,
 				)
 			);
 		}
@@ -246,6 +285,56 @@ final class SettingsPage {
 		$current  = get_option( $this->option_name, array() );
 		$current  = is_array( $current ) ? $current : array();
 		$clean    = array_map( 'strval', $current );
+		$tab      = isset( $settings['settings_tab'] ) && is_string( $settings['settings_tab'] )
+			? sanitize_key( $settings['settings_tab'] )
+			: '';
+
+		if ( 'registration' === $tab ) {
+			if ( array_key_exists( 'success_redirect', $settings ) ) {
+				$clean['success_redirect'] = esc_url_raw( (string) $settings['success_redirect'] );
+			}
+
+			return $clean;
+		}
+
+		$tab_provider = $this->registry->get( $tab );
+
+		if ( null === $tab_provider ) {
+			return $clean;
+		}
+
+		if ( array_key_exists( 'provider', $settings ) ) {
+			$submitted_provider = is_string( $settings['provider'] ) ? sanitize_key( $settings['provider'] ) : '';
+
+			if ( $tab === $submitted_provider ) {
+				$clean['provider'] = $tab;
+			} else {
+				add_settings_error(
+					$this->option_name,
+					'trustgate_provider_conflict',
+					__( 'TrustGate rejected conflicting provider settings. Only one provider can be enabled.', 'trustgate-registration' ),
+					'error'
+				);
+			}
+		} else {
+			$current_provider = $this->registry->get_active_slug( $current );
+
+			if ( '' === $current_provider || $tab === $current_provider ) {
+				$clean['provider'] = '';
+			}
+		}
+
+		if ( 'prembly' !== $tab ) {
+			/**
+			 * Filters sanitized settings submitted from an external provider tab.
+			 *
+			 * @param array<string, string> $clean Preserved and sanitized settings.
+			 * @param array<string, mixed>  $settings Submitted settings.
+			 * @param string                $tab Provider slug.
+			 * @param VerificationProvider  $tab_provider Provider instance.
+			 */
+			return apply_filters( 'trustgate_registration_sanitize_provider_settings', $clean, $settings, $tab, $tab_provider );
+		}
 
 		$text_fields = array(
 			'test_public_key',
@@ -265,18 +354,12 @@ final class SettingsPage {
 			}
 		}
 
-		if ( array_key_exists( 'provider', $settings ) ) {
-			$clean['provider'] = 'prembly';
-		}
-
 		if ( array_key_exists( 'mode', $settings ) ) {
 			$clean['mode'] = 'live' === $settings['mode'] ? 'live' : 'test';
 		}
 
-		foreach ( array( 'status_endpoint', 'success_redirect' ) as $field ) {
-			if ( array_key_exists( $field, $settings ) ) {
-				$clean[ $field ] = esc_url_raw( (string) $settings[ $field ] );
-			}
+		if ( array_key_exists( 'status_endpoint', $settings ) ) {
+			$clean['status_endpoint'] = esc_url_raw( (string) $settings['status_endpoint'] );
 		}
 
 		if ( array_key_exists( 'test_secret_key', $settings ) ) {
@@ -287,9 +370,9 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Render the provider section description.
+	 * Render the Prembly section description.
 	 */
-	public function render_provider_section(): void {
+	public function render_prembly_section(): void {
 		printf(
 			'<p>%s</p>',
 			esc_html__( 'Keep Sandbox and Live credentials separate. Changing the active environment never overwrites the other environment.', 'trustgate-registration' )
@@ -307,9 +390,9 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Render the advanced section description.
+	 * Render the advanced Prembly section description.
 	 */
-	public function render_advanced_section(): void {
+	public function render_prembly_advanced_section(): void {
 		printf(
 			'<p>%s</p>',
 			esc_html__( 'Leave these values blank unless Prembly support or a legacy integration specifically requires them.', 'trustgate-registration' )
@@ -327,11 +410,32 @@ final class SettingsPage {
 		$name  = sprintf( '%s[%s]', $this->option_name, $key );
 
 		if ( 'provider' === $key ) {
+			$settings      = $this->get_settings();
+			$provider_slug = sanitize_key( $args['provider_slug'] ?? '' );
+			$provider      = $this->registry->get( $provider_slug );
+			$is_enabled    = $provider_slug === $this->registry->get_active_slug( $settings );
+
+			if ( null === $provider ) {
+				return;
+			}
 			?>
-			<select name="<?php echo esc_attr( $name ); ?>">
-				<option value="prembly" selected><?php esc_html_e( 'Prembly', 'trustgate-registration' ); ?></option>
-			</select>
-			<p class="description"><?php esc_html_e( 'Additional providers will appear here as their adapters are added.', 'trustgate-registration' ); ?></p>
+			<label for="trustgate-provider-<?php echo esc_attr( $provider_slug ); ?>">
+				<input
+					type="checkbox"
+					id="trustgate-provider-<?php echo esc_attr( $provider_slug ); ?>"
+					name="<?php echo esc_attr( $name ); ?>"
+					value="<?php echo esc_attr( $provider_slug ); ?>"
+					<?php checked( $is_enabled ); ?>
+				/>
+				<?php
+				printf(
+					/* translators: %s: provider name */
+					esc_html__( 'Use %s for identity verification during registration', 'trustgate-registration' ),
+					esc_html( $provider->get_label() )
+				);
+				?>
+			</label>
+			<p class="description"><?php esc_html_e( 'Enabling this provider automatically disables any other active provider. Unchecking it allows normal WordPress registration.', 'trustgate-registration' ); ?></p>
 			<?php
 			return;
 		}
@@ -391,8 +495,7 @@ final class SettingsPage {
 	 * @param string $key Setting key.
 	 */
 	private function get_display_value( string $key ): string {
-		$settings = get_option( $this->option_name, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = $this->get_settings();
 
 		if ( isset( $settings[ $key ] ) ) {
 			return (string) $settings[ $key ];
@@ -410,6 +513,17 @@ final class SettingsPage {
 	}
 
 	/**
+	 * Get saved plugin settings.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function get_settings(): array {
+		$settings = get_option( $this->option_name, array() );
+
+		return is_array( $settings ) ? $settings : array();
+	}
+
+	/**
 	 * Render the TrustGate admin page.
 	 */
 	public function render(): void {
@@ -417,12 +531,11 @@ final class SettingsPage {
 			return;
 		}
 
-		$tab  = $this->get_current_tab();
-		$tabs = array(
-			'provider'     => __( 'Provider', 'trustgate-registration' ),
-			'registration' => __( 'Registration', 'trustgate-registration' ),
-			'advanced'     => __( 'Advanced', 'trustgate-registration' ),
-		);
+		$settings        = $this->get_settings();
+		$active_provider = $this->registry->resolve( $settings );
+		$tabs            = $this->get_tabs();
+		$tab             = $this->get_current_tab( $tabs );
+		$status_label    = null !== $active_provider ? $active_provider->get_label() : __( 'Disabled', 'trustgate-registration' );
 		?>
 		<div class="wrap trustgate-admin">
 			<div class="trustgate-admin__header">
@@ -433,9 +546,9 @@ final class SettingsPage {
 				<span class="trustgate-admin__provider">
 					<?php
 					printf(
-						/* translators: %s: provider name */
-						esc_html__( 'Provider: %s', 'trustgate-registration' ),
-						esc_html( $this->provider->get_label() )
+						/* translators: %s: active provider name or disabled status */
+						esc_html__( 'Verification: %s', 'trustgate-registration' ),
+						esc_html( $status_label )
 					);
 					?>
 				</span>
@@ -452,11 +565,14 @@ final class SettingsPage {
 				<?php endforeach; ?>
 			</nav>
 
-			<?php $this->render_environment_notice( $tab ); ?>
+			<?php $this->render_status_notice( $tab, $active_provider ); ?>
 
 			<form method="post" action="options.php" class="trustgate-admin__form">
 				<?php
 				settings_fields( 'trustgate_registration' );
+				?>
+				<input type="hidden" name="<?php echo esc_attr( $this->option_name ); ?>[settings_tab]" value="<?php echo esc_attr( $tab ); ?>" />
+				<?php
 				do_settings_sections( self::PAGE_SLUG . '-' . $tab );
 				submit_button();
 				?>
@@ -466,12 +582,46 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Render the active environment notice on the provider tab.
+	 * Render provider status and environment notices.
 	 *
-	 * @param string $tab Current tab.
+	 * @param string                    $tab Current tab.
+	 * @param VerificationProvider|null $active_provider Active provider.
 	 */
-	private function render_environment_notice( string $tab ): void {
-		if ( 'provider' !== $tab ) {
+	private function render_status_notice( string $tab, ?VerificationProvider $active_provider ): void {
+		if ( null === $active_provider ) {
+			?>
+			<div class="notice notice-warning inline trustgate-admin__notice">
+				<p>
+					<strong><?php esc_html_e( 'Identity verification is disabled.', 'trustgate-registration' ); ?></strong>
+					<?php esc_html_e( ' Visitors can register through the normal WordPress registration flow without verification.', 'trustgate-registration' ); ?>
+				</p>
+			</div>
+			<?php
+			return;
+		}
+
+		if ( null === $this->registry->get( $tab ) ) {
+			return;
+		}
+
+		if ( $tab !== $active_provider->get_slug() ) {
+			?>
+			<div class="notice notice-info inline trustgate-admin__notice">
+				<p>
+					<?php
+					printf(
+						/* translators: %s: active provider name */
+						esc_html__( 'This provider is inactive. %s currently handles registration verification.', 'trustgate-registration' ),
+						esc_html( $active_provider->get_label() )
+					);
+					?>
+				</p>
+			</div>
+			<?php
+			return;
+		}
+
+		if ( 'prembly' !== $tab ) {
 			return;
 		}
 
@@ -515,11 +665,31 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Get the selected settings tab.
+	 * Get all settings tabs.
+	 *
+	 * @return array<string, string>
 	 */
-	private function get_current_tab(): string {
-		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'provider'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	private function get_tabs(): array {
+		$tabs = array();
 
-		return in_array( $tab, array( 'provider', 'registration', 'advanced' ), true ) ? $tab : 'provider';
+		foreach ( $this->registry->all() as $slug => $provider ) {
+			$tabs[ $slug ] = $provider->get_label();
+		}
+
+		$tabs['registration'] = __( 'Registration', 'trustgate-registration' );
+
+		return $tabs;
+	}
+
+	/**
+	 * Get the selected settings tab.
+	 *
+	 * @param array<string, string> $tabs Available tabs.
+	 */
+	private function get_current_tab( array $tabs ): string {
+		$default = (string) array_key_first( $tabs );
+		$tab     = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : $default; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		return isset( $tabs[ $tab ] ) ? $tab : $default;
 	}
 }

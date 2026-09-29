@@ -27,9 +27,13 @@ The Prembly provider uses the widget key and configuration ID in the browser to 
 - `App ID`: optional compatibility header for older Identitypass accounts.
 - `Status Endpoint`: optional override. Defaults to `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{id}/`.
 
-TrustGate has its own top-level WordPress admin menu with separate Provider, Registration, and Advanced tabs. Sandbox and Live credentials are stored independently, so changing environments does not overwrite a working configuration.
+TrustGate has its own top-level WordPress admin menu with a global Registration tab and one tab per verification provider. Enable Prembly from its tab to require KYC during registration. Only one provider can be active at a time; disabling every provider restores normal WordPress registration without deleting saved credentials. Sandbox and Live credentials are stored independently, and Prembly-specific advanced settings remain on the Prembly tab.
 
 See [Prembly setup](docs/prembly-setup.md) for the recommended sandbox widget configuration and a field-by-field dashboard mapping.
+
+## Provider Adapters
+
+Adapters implement `VerificationProvider` and register through the `trustgate_registration_providers` filter. TrustGate creates a settings tab and exclusive activation checkbox for every registered adapter. Providers can add fields with `trustgate_registration_register_provider_settings` and sanitize them with `trustgate_registration_sanitize_provider_settings`; the registration controller continues to receive only the resolved active adapter.
 
 ## Development
 

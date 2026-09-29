@@ -4,7 +4,7 @@ Tags: kyc, identity verification, registration, prembly
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.1.3
+Stable tag: 0.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,8 @@ The first production goal is to block default WordPress registration until a vis
 1. Upload the plugin to `/wp-content/plugins/trustgate-registration`.
 2. Activate TrustGate Registration.
 3. Go to TrustGate > Settings.
-4. Configure the matching Prembly widget key, secret key, Organisation ID, and configuration ID for Sandbox or Live.
+4. Open the Prembly tab and enable the provider.
+5. Configure the matching Prembly widget key, secret key, Organisation ID, and configuration ID for Sandbox or Live.
 
 == Frequently Asked Questions ==
 
@@ -38,6 +39,10 @@ No. The public widget key is sent to the browser, but the secret API key is used
 Not yet. The first scaffold is for development and integration work.
 
 == Changelog ==
+
+= 0.1.4 =
+
+Add exclusive provider tabs, an enable checkbox, provider resolution, and provider-specific advanced settings.
 
 = 0.1.3 =
 
