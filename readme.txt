@@ -40,6 +40,10 @@ Not yet. The first scaffold is for development and integration work.
 
 == Changelog ==
 
+= 0.1.6 =
+
+Use Prembly's session-ID-only status lookup and remove unused API key, Organisation ID, and App ID requirements from the settings interface.
+
 = 0.1.5 =
 
 Apply the configured same-site redirect with email activation instructions and clarify Prembly server authentication requirements.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6
+
+- Use Prembly's session-ID-only SDK status lookup without API key, Organisation ID, or App ID headers.
+- Remove unused server credentials from the active Prembly settings interface while preserving existing saved values.
+- Treat Widget Key and Configuration ID as the only required settings for each environment.
+
 ## 0.1.5
 
 - Apply the configured same-site redirect after WordPress creates a verified account and show email activation instructions.

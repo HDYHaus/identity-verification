@@ -22,14 +22,11 @@ The Prembly provider uses the widget key and configuration ID in the browser to 
 
 - `Sandbox Widget Key` / `Live Widget Key`: copied from the matching saved widget's **SDK Setup > Integration** panel. Do not use the API Integrations public key here.
 - `Sandbox Configuration ID` / `Live Configuration ID`: copied from the matching SDK Setup widget.
-- `Sandbox Secret API Key` / `Live Secret API Key`: sent only from WordPress to Prembly for authenticated session lookups.
-- `Sandbox Organisation ID` / `Live Organisation ID`: paired with the matching secret key as `x-organisation-id`.
-- `App ID`: optional compatibility header for older Identitypass accounts.
 - `Status Endpoint`: optional override. Defaults to `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{id}/`.
 
-TrustGate has its own top-level WordPress admin menu with a global Registration tab and one tab per verification provider. Enable Prembly from its tab to require KYC during registration. Only one provider can be active at a time; disabling every provider restores normal WordPress registration without deleting saved credentials. Sandbox and Live credentials are stored independently, and Prembly-specific advanced settings remain on the Prembly tab.
+TrustGate has its own top-level WordPress admin menu with a global Registration tab and one tab per verification provider. Enable Prembly from its tab to require KYC during registration. Only one provider can be active at a time; disabling every provider restores normal WordPress registration without deleting saved widget settings. Sandbox and Live widget settings are stored independently, and Prembly-specific advanced settings remain on the Prembly tab.
 
-The Organisation ID is not needed to launch the browser widget. Prembly's documented secure backend session lookup uses both the Secret API Key and Organisation ID; without the complete pair, TrustGate's status request is unauthenticated. Configure both before production use.
+Prembly support confirmed that the SDK session endpoint uses the session ID in the URL and does not require a Secret API Key, Organisation ID, or App ID. TrustGate therefore sends no authentication headers to that endpoint.
 
 The optional Success Redirect URL must be on the WordPress site's allowed hosts. It runs after WordPress successfully creates the verified account, not immediately after the Prembly widget completes. TrustGate adds a completion marker and prepends an account-created notice reminding the user to check their email for the password setup link.
 

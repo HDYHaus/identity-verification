@@ -157,12 +157,8 @@ final class SettingsPage {
 			'mode'                  => __( 'Active environment', 'trustgate-registration' ),
 			'test_public_key'       => __( 'Sandbox Widget Key', 'trustgate-registration' ),
 			'test_configuration_id' => __( 'Sandbox Configuration ID', 'trustgate-registration' ),
-			'test_secret_key'       => __( 'Sandbox Secret API Key', 'trustgate-registration' ),
-			'test_organisation_id'  => __( 'Sandbox Organisation ID', 'trustgate-registration' ),
 			'live_public_key'       => __( 'Live Widget Key', 'trustgate-registration' ),
 			'live_configuration_id' => __( 'Live Configuration ID', 'trustgate-registration' ),
-			'live_secret_key'       => __( 'Live Secret API Key', 'trustgate-registration' ),
-			'live_organisation_id'  => __( 'Live Organisation ID', 'trustgate-registration' ),
 		);
 
 		$this->add_fields( $page, 'trustgate_registration_prembly', $fields, 'prembly' );
@@ -178,7 +174,6 @@ final class SettingsPage {
 			$page,
 			'trustgate_registration_prembly_advanced',
 			array(
-				'app_id'          => __( 'Legacy App ID', 'trustgate-registration' ),
 				'status_endpoint' => __( 'Status Endpoint Override', 'trustgate-registration' ),
 			)
 		);
@@ -339,13 +334,8 @@ final class SettingsPage {
 		$text_fields = array(
 			'test_public_key',
 			'test_configuration_id',
-			'test_secret_key',
-			'test_organisation_id',
 			'live_public_key',
 			'live_configuration_id',
-			'live_secret_key',
-			'live_organisation_id',
-			'app_id',
 		);
 
 		foreach ( $text_fields as $field ) {
@@ -362,10 +352,6 @@ final class SettingsPage {
 			$clean['status_endpoint'] = esc_url_raw( (string) $settings['status_endpoint'] );
 		}
 
-		if ( array_key_exists( 'test_secret_key', $settings ) ) {
-			unset( $clean['secret_key'], $clean['organisation_id'], $clean['configuration_id'] );
-		}
-
 		return $clean;
 	}
 
@@ -375,7 +361,7 @@ final class SettingsPage {
 	public function render_prembly_section(): void {
 		printf(
 			'<p>%s</p>',
-			esc_html__( 'Keep Sandbox and Live credentials separate. Changing the active environment never overwrites the other environment.', 'trustgate-registration' )
+			esc_html__( 'Keep Sandbox and Live widget settings separate. Changing the active environment never overwrites the other environment.', 'trustgate-registration' )
 		);
 	}
 
@@ -395,7 +381,7 @@ final class SettingsPage {
 	public function render_prembly_advanced_section(): void {
 		printf(
 			'<p>%s</p>',
-			esc_html__( 'Leave these values blank unless Prembly support or a legacy integration specifically requires them.', 'trustgate-registration' )
+			esc_html__( 'Leave this value blank unless Prembly support supplies a different session endpoint.', 'trustgate-registration' )
 		);
 	}
 
@@ -450,7 +436,7 @@ final class SettingsPage {
 					<?php esc_html_e( 'Live / Production', 'trustgate-registration' ); ?>
 				</option>
 			</select>
-			<p class="description"><?php esc_html_e( 'Live mode uses only the Live credentials below.', 'trustgate-registration' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Live mode uses only the Live widget settings below.', 'trustgate-registration' ); ?></p>
 			<?php
 			return;
 		}
@@ -464,14 +450,9 @@ final class SettingsPage {
 		$descriptions = array(
 			'test_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Sandbox is selected.', 'trustgate-registration' ),
 			'test_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Sandbox widget.', 'trustgate-registration' ),
-			'test_secret_key'       => __( 'Prembly API Integrations > Secret Key while Sandbox is selected. Used only for server-side confirmation.', 'trustgate-registration' ),
-			'test_organisation_id'  => __( 'Used with the Sandbox secret key for authenticated SDK session lookups. The widget can run without it, but server confirmation is unauthenticated.', 'trustgate-registration' ),
 			'live_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Production is selected.', 'trustgate-registration' ),
 			'live_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Live widget.', 'trustgate-registration' ),
-			'live_secret_key'       => __( 'Prembly API Integrations > Secret Key while Production is selected. Used only for server-side confirmation.', 'trustgate-registration' ),
-			'live_organisation_id'  => __( 'Required with the Live secret key for the documented authenticated SDK session lookup.', 'trustgate-registration' ),
-			'app_id'                => __( 'Optional. Used only by older Identitypass endpoints that explicitly require an App ID.', 'trustgate-registration' ),
-			'status_endpoint'       => __( 'Optional. Leave blank to use Prembly\'s current SDK session endpoint. Use {id} for the session ID.', 'trustgate-registration' ),
+			'status_endpoint'       => __( 'Optional. Leave blank to use Prembly\'s current session-ID-only SDK endpoint. Use {id} for the session ID.', 'trustgate-registration' ),
 			'success_redirect'      => __( 'Optional same-site URL visited after WordPress successfully creates the verified account.', 'trustgate-registration' ),
 		);
 		$description  = $descriptions[ $key ] ?? '';
@@ -634,13 +615,7 @@ final class SettingsPage {
 			'configuration_id' => __( 'Configuration ID', 'trustgate-registration' ),
 		);
 
-		$authentication = array(
-			'secret_key'      => __( 'Secret API Key', 'trustgate-registration' ),
-			'organisation_id' => __( 'Organisation ID', 'trustgate-registration' ),
-		);
-
-		$missing_required       = array();
-		$missing_authentication = array();
+		$missing_required = array();
 
 		foreach ( $required as $key => $field_label ) {
 			if ( '' === $this->get_display_value( $mode . '_' . $key ) ) {
@@ -648,13 +623,7 @@ final class SettingsPage {
 			}
 		}
 
-		foreach ( $authentication as $key => $field_label ) {
-			if ( '' === $this->get_display_value( $mode . '_' . $key ) ) {
-				$missing_authentication[] = $field_label;
-			}
-		}
-
-		$notice_class = empty( $missing_required ) && empty( $missing_authentication ) ? 'notice-success' : 'notice-warning';
+		$notice_class = empty( $missing_required ) ? 'notice-success' : 'notice-warning';
 		?>
 		<div class="notice <?php echo esc_attr( $notice_class ); ?> inline trustgate-admin__notice">
 			<p>
@@ -666,14 +635,6 @@ final class SettingsPage {
 						/* translators: %s: comma-separated list of missing fields */
 						esc_html__( ' - missing required widget settings: %s.', 'trustgate-registration' ),
 						esc_html( implode( ', ', $missing_required ) )
-					);
-					?>
-				<?php elseif ( ! empty( $missing_authentication ) ) : ?>
-					<?php
-					printf(
-						/* translators: %s: comma-separated list of missing fields */
-						esc_html__( ' - widget configured; server authentication incomplete: %s.', 'trustgate-registration' ),
-						esc_html( implode( ', ', $missing_authentication ) )
 					);
 					?>
 				<?php else : ?>

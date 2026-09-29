@@ -110,27 +110,13 @@ final class PremblyProvider implements VerificationProvider {
 	 * @return array{verified: bool, status: string, reference: string, raw?: array<string, mixed>}
 	 */
 	private function request_status( string $reference, array $settings, array $context ): array {
-		$mode            = isset( $settings['mode'] ) && 'live' === $settings['mode'] ? 'live' : 'test';
-		$endpoint        = isset( $settings['status_endpoint'] ) && '' !== $settings['status_endpoint']
+		$endpoint = isset( $settings['status_endpoint'] ) && '' !== $settings['status_endpoint']
 			? (string) $settings['status_endpoint']
 			: self::DEFAULT_STATUS_ENDPOINT;
-		$url             = str_replace( '{id}', rawurlencode( $reference ), $endpoint );
-		$headers         = array(
+		$url      = str_replace( '{id}', rawurlencode( $reference ), $endpoint );
+		$headers  = array(
 			'Accept' => 'application/json',
 		);
-		$secret_key      = $this->get_environment_value( $settings, $mode, 'secret_key', 'secret_key' );
-		$organisation_id = $this->get_environment_value( $settings, $mode, 'organisation_id', 'organisation_id' );
-		$app_id          = isset( $settings['app_id'] ) ? (string) $settings['app_id'] : '';
-
-		if ( '' !== $secret_key && '' !== $organisation_id ) {
-			$headers['x-api-key']         = $secret_key;
-			$headers['x-organisation-id'] = $organisation_id;
-		}
-
-		if ( '' !== $app_id ) {
-			$headers['app-id'] = $app_id;
-			$headers['app_id'] = $app_id;
-		}
 
 		$args = array(
 			'headers' => $headers,

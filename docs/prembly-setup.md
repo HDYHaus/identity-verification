@@ -39,26 +39,21 @@ The saved widget appears under **Integrations > SDK Setup**. Use **Copy Config I
 
 Open **TrustGate > Settings** in WordPress and map the fields as follows:
 
-Open the **Prembly** tab and select **Enable Prembly**. TrustGate permits one active verification provider at a time. Clearing the checkbox disables identity verification and allows the normal WordPress registration flow, but it does not remove saved Prembly credentials.
+Open the **Prembly** tab and select **Enable Prembly**. TrustGate permits one active verification provider at a time. Clearing the checkbox disables identity verification and allows the normal WordPress registration flow, but it does not remove saved Prembly widget settings.
 
 | TrustGate field | Prembly source |
 | --- | --- |
 | Mode | `Test` while the Prembly dashboard is in Sandbox mode |
 | Sandbox Widget Key | **SDK Setup > Integration > Widget Key** for a widget created while Sandbox is selected |
 | Sandbox Configuration ID | **SDK Setup > Copy Config ID** for the Sandbox widget |
-| Sandbox Secret API Key | **API Integrations > Secret Key** while Sandbox is selected |
-| Sandbox Organisation ID | Your Prembly organisation identifier for authenticated Sandbox session lookups |
 | Live Widget Key | **SDK Setup > Integration > Widget Key** for a widget created while Live/Production is selected |
 | Live Configuration ID | **SDK Setup > Copy Config ID** for the Live widget |
-| Live Secret API Key | **API Integrations > Secret Key** while Live/Production is selected |
-| Live Organisation ID | Your Prembly organisation identifier for authenticated Live session lookups |
 | Success Redirect URL | Optional page to visit after verified WordPress registration |
-| Legacy App ID | Leave blank unless Prembly support or a legacy Identitypass endpoint explicitly requires one |
 | Status Endpoint Override | Leave blank to use TrustGate's current Prembly SDK session endpoint |
 
-TrustGate stores Sandbox and Live credentials independently. The Organisation ID is not required to launch the widget. Prembly documents both `x-api-key` and `x-organisation-id` for the secure backend SDK session lookup; if either value is absent, TrustGate makes an unauthenticated status request. The Sandbox endpoint may currently accept that request, but configure both values before relying on Live mode. The Legacy App ID is not part of that SDK session request and should normally remain blank. The Status Endpoint Override should also remain blank unless Prembly changes the endpoint or support supplies a different URL.
+TrustGate stores Sandbox and Live widget settings independently. Prembly support confirmed that `GET /api/v1/checker-widget/sdk/sessions/{session_id}/` uses the session ID in the URL only. It does not require a Secret API Key, Organisation ID, or App ID. The Organisation ID remains an account-level UUID used by other Prembly APIs when a user belongs to more than one organisation; it is the same for Sandbox and Production.
 
-Legacy App ID and Status Endpoint Override are in the **Advanced Prembly Settings** section on the Prembly tab. The Success Redirect URL remains on the global **Registration** tab.
+Status Endpoint Override is in the **Advanced Prembly Settings** section on the Prembly tab. The Success Redirect URL remains on the global **Registration** tab.
 
 The Success Redirect URL must be on an allowed WordPress host. WordPress uses it after the verified account has been created successfully; completing the Prembly widget alone does not redirect the visitor. TrustGate appends `trustgate_registration=complete` and displays a notice telling the new user to check their email for the password setup link.
 
@@ -76,8 +71,8 @@ Document verification works across the broadest set of countries and identity do
 
 ## Production Checklist
 
-- Repeat the successful sandbox smoke test with production credentials in a controlled pre-launch environment.
-- Complete Prembly's business onboarding requirements and obtain live credentials.
+- Repeat the successful sandbox smoke test with production widget settings in a controlled pre-launch environment.
+- Complete Prembly's business onboarding requirements and obtain live widget access.
 - Replace the Local redirect URL with the production HTTPS registration URL.
 - Confirm the production domain is permitted by Prembly.
 - Publish privacy and consent language covering document and biometric processing.
