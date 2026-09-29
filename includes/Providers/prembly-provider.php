@@ -173,13 +173,18 @@ final class PremblyProvider implements VerificationProvider {
 				)
 			)
 		);
+		$response_reference    = $this->first_string(
+			array(
+				$data['session_id'] ?? null,
+				$data['id'] ?? null,
+				$widget_info['session_id'] ?? null,
+				$body['session_id'] ?? null,
+			)
+		);
 		$reference             = sanitize_text_field(
 			$this->first_string(
 				array(
-					$data['session_id'] ?? null,
-					$data['id'] ?? null,
-					$widget_info['session_id'] ?? null,
-					$body['session_id'] ?? null,
+					$response_reference,
 					$fallback_reference,
 				)
 			)
@@ -195,15 +200,39 @@ final class PremblyProvider implements VerificationProvider {
 			)
 		);
 
-		if ( '' !== $configured_widget && '' !== $response_widget && ! hash_equals( $configured_widget, $response_widget ) ) {
+		if ( '' === $configured_widget ) {
+			return $this->build_result( false, 'configuration_missing', $reference, $body );
+		}
+
+		if ( '' === $response_widget ) {
+			return $this->build_result( false, 'widget_missing', $reference, $body );
+		}
+
+		if ( ! hash_equals( $configured_widget, $response_widget ) ) {
 			return $this->build_result( false, 'widget_mismatch', $reference, $body );
 		}
 
 		$expected_email = isset( $context['email'] ) ? sanitize_email( (string) $context['email'] ) : '';
-		$response_email = sanitize_email( $this->first_string( array( $data['email'] ?? null, $metadata['email'] ?? null ) ) );
+		$response_email = sanitize_email(
+			$this->first_string(
+				array(
+					$data['end_user_email'] ?? null,
+					$data['email'] ?? null,
+					$metadata['email'] ?? null,
+				)
+			)
+		);
 
-		if ( '' !== $expected_email && '' !== $response_email && ! hash_equals( strtolower( $expected_email ), strtolower( $response_email ) ) ) {
+		if ( '' === $expected_email || '' === $response_email ) {
+			return $this->build_result( false, 'email_missing', $reference, $body );
+		}
+
+		if ( ! hash_equals( strtolower( $expected_email ), strtolower( $response_email ) ) ) {
 			return $this->build_result( false, 'email_mismatch', $reference, $body );
+		}
+
+		if ( '' === $response_reference || ! hash_equals( $fallback_reference, $response_reference ) ) {
+			return $this->build_result( false, 'reference_mismatch', $reference, $body );
 		}
 
 		if ( in_array( $status, array( 'COMPLETED', 'VERIFIED', 'SUCCESS', 'SUCCESSFUL', 'APPROVED' ), true ) ) {

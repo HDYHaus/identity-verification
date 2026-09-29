@@ -12,13 +12,13 @@ TrustGate Registration is a WordPress plugin for verified account registration. 
 
 ## Current Status
 
-This repository is in early development. The plugin includes the bootstrap, settings page, registration form hooks, provider interface, Prembly widget integration, server-side verification status confirmation, and one-time registration attempt protection.
+Version 0.9.0 is the WordPress.org release candidate. The plugin includes the settings interface, native registration hooks, provider registry, Prembly widget integration, fail-closed server-side session confirmation, explicit registrant consent, replay protection, and WordPress privacy tool integration.
 
-On September 26, 2026, the sandbox flow completed an end-to-end smoke test on the HTTPS development site: Prembly completed document verification, WordPress created the verified Subscriber account, and a separate registration submission without verification was blocked. Production rollout still requires the broader test matrix and compliance work listed in the setup guide.
+Sandbox and Production flows have both completed end-to-end smoke tests on the HTTPS development site. Prembly completed document verification, WordPress created the verified Subscriber account, a submission without verification was blocked, and the configured post-registration redirect displayed the email activation instructions. See [the release checklist](docs/release-checklist.md) for the remaining clean-install and compatibility checks before a public 1.0 release.
 
 ## Prembly Settings
 
-The Prembly provider uses the widget key and configuration ID in the browser to launch the widget. After completion, WordPress retrieves the returned SDK session and confirms its status, widget, and available email data before allowing registration.
+The Prembly provider uses the widget key and configuration ID in the browser to launch the widget. After completion, WordPress retrieves the returned SDK session and requires its status, session ID, widget configuration, and end-user email to match before allowing registration.
 
 - `Sandbox Widget Key` / `Live Widget Key`: copied from the matching saved widget's **SDK Setup > Integration** panel. Do not use the API Integrations public key here.
 - `Sandbox Configuration ID` / `Live Configuration ID`: copied from the matching SDK Setup widget.
@@ -42,6 +42,8 @@ Adapters implement `VerificationProvider` and register through the `trustgate_re
 composer install
 composer lint
 composer phpcs
+composer test
+./bin/build-release.sh
 ```
 
 ## Local Development

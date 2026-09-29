@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0
+
+- Require a matching Prembly session ID, widget configuration, and end-user email before registration.
+- Add explicit registrant consent before identity verification begins.
+- Add WordPress privacy policy guidance and personal data export and erasure support.
+- Publish a complete Prembly external-service disclosure and current installation instructions.
+- Add provider response fixture tests and repeatable release packaging.
+
 ## 0.1.6
 
 - Use Prembly's session-ID-only SDK status lookup without API key, Organisation ID, or App ID headers.

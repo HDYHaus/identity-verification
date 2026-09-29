@@ -12,6 +12,7 @@ namespace HDYHaus\TrustGateRegistration;
 use HDYHaus\TrustGateRegistration\Admin\SettingsPage;
 use HDYHaus\TrustGateRegistration\Providers\PremblyProvider;
 use HDYHaus\TrustGateRegistration\Providers\ProviderRegistry;
+use HDYHaus\TrustGateRegistration\Privacy\Privacy;
 use HDYHaus\TrustGateRegistration\Registration\RegistrationController;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -31,6 +32,9 @@ final class Plugin {
 	 * Register hooks.
 	 */
 	public function register(): void {
+		$privacy = new Privacy();
+		$privacy->register();
+
 		$providers = apply_filters(
 			'trustgate_registration_providers',
 			array( new PremblyProvider( self::OPTION_NAME ) )

@@ -3,6 +3,25 @@
 	gap: 8px;
 }
 
+.trustgate-consent {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+.trustgate-consent input {
+	flex: 0 0 auto;
+	margin-top: 2px;
+}
+
+.trustgate-privacy-links {
+	display: block;
+	font-size: 12px;
+	line-height: 1.5;
+}
+
 #trustgate_verification_status {
 	display: block;
 	font-size: 13px;

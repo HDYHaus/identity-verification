@@ -21,7 +21,10 @@
 			nonce: config.nonce,
 			reference: reference,
 			token: getFieldValue( '#trustgate_attempt_token' ),
-			email: getFieldValue( '#user_email' )
+			email: getFieldValue( '#user_email' ),
+			firstName: getFieldValue( '#trustgate_first_name' ),
+			lastName: getFieldValue( '#trustgate_last_name' ),
+			consent: $( '#trustgate_consent' ).is( ':checked' ) ? '1' : '0'
 		} )
 			.done( function ( response ) {
 				const data = response && response.data ? response.data : {};
@@ -49,9 +52,15 @@
 			const firstName = getFieldValue( '#trustgate_first_name' );
 			const lastName = getFieldValue( '#trustgate_last_name' );
 			const provider = config.provider || {};
+			const consent = $( '#trustgate_consent' ).is( ':checked' );
 
 			if ( ! email || ! firstName || ! lastName ) {
 				setStatus( config.i18n.invalid, 'failed' );
+				return;
+			}
+
+			if ( ! consent ) {
+				setStatus( config.i18n.consent, 'failed' );
 				return;
 			}
 
@@ -72,7 +81,7 @@
 					const verification = response && response.verification ? response.verification : {};
 					const data = response && response.data ? response.data : {};
 					const callbackData = rawData || {};
-					const reference = callbackData.widgetId || callbackData.session_id || data.widgetId || data.session_id || verification.reference || data.reference || response.reference || response.user_ref || response.id;
+					const reference = callbackData.session_id || data.session_id || callbackData.widgetId || data.widgetId || verification.reference || data.reference || response.reference || response.user_ref || response.id;
 
 					if ( response && 'success' === response.status && '00' === response.code && reference ) {
 						confirmReference( reference );

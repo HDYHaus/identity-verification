@@ -3,7 +3,7 @@
  * Plugin Name: TrustGate Registration
  * Plugin URI: https://github.com/HDYHaus/trustgate-registration
  * Description: Verify people during WordPress registration with pluggable identity verification providers. Prembly support is the first provider.
- * Version: 0.1.6
+ * Version: 0.9.0
  * Requires at least: 6.4
  * Requires PHP: 8.1
  * Author: HDYHaus
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TRUSTGATE_REGISTRATION_VERSION', '0.1.6' );
+define( 'TRUSTGATE_REGISTRATION_VERSION', '0.9.0' );
 define( 'TRUSTGATE_REGISTRATION_FILE', __FILE__ );
 define( 'TRUSTGATE_REGISTRATION_PATH', plugin_dir_path( __FILE__ ) );
 define( 'TRUSTGATE_REGISTRATION_URL', plugin_dir_url( __FILE__ ) );
@@ -32,17 +32,12 @@ require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Providers/prembly-provider.
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Providers/provider-registry.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Admin/settings-page.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Registration/registration-controller.php';
+require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Privacy/privacy.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/plugin.php';
 
 add_action(
 	'plugins_loaded',
 	static function (): void {
-		load_plugin_textdomain(
-			'trustgate-registration',
-			false,
-			dirname( plugin_basename( __FILE__ ) ) . '/languages'
-		);
-
 		$plugin = new HDYHaus\TrustGateRegistration\Plugin();
 		$plugin->register();
 	}

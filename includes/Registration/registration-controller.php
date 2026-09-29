@@ -101,6 +101,7 @@ final class RegistrationController {
 					'failed'   => __( 'We could not confirm your identity verification. Please try again.', 'trustgate-registration' ),
 					'working'  => __( 'Checking verification...', 'trustgate-registration' ),
 					'invalid'  => __( 'Please enter your email, first name, and last name before verifying.', 'trustgate-registration' ),
+					'consent'  => __( 'Please confirm that you consent to identity verification.', 'trustgate-registration' ),
 					'unready'  => __( 'Identity verification is not configured yet.', 'trustgate-registration' ),
 				),
 			)
@@ -120,6 +121,8 @@ final class RegistrationController {
 		$first_name = isset( $_POST['trustgate_first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_first_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$last_name  = isset( $_POST['trustgate_last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_last_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$token      = $this->get_or_create_attempt_token();
+		$consent    = isset( $_POST['trustgate_consent'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['trustgate_consent'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$privacy    = get_privacy_policy_url();
 		?>
 		<p>
 			<label for="trustgate_first_name"><?php esc_html_e( 'First Name', 'trustgate-registration' ); ?></label>
@@ -130,6 +133,19 @@ final class RegistrationController {
 			<input type="text" name="trustgate_last_name" id="trustgate_last_name" class="input" value="<?php echo esc_attr( $last_name ); ?>" autocomplete="family-name" />
 		</p>
 		<p class="trustgate-verification-control">
+			<label class="trustgate-consent" for="trustgate_consent">
+				<input type="checkbox" name="trustgate_consent" id="trustgate_consent" value="1" <?php checked( $consent ); ?> required />
+				<?php esc_html_e( 'I consent to Prembly processing my name, email, identity document, and biometric information to verify my identity.', 'trustgate-registration' ); ?>
+			</label>
+			<span class="trustgate-privacy-links">
+				<a href="<?php echo esc_url( 'https://prembly.com/Policy' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Prembly Privacy Policy', 'trustgate-registration' ); ?></a>
+				<span aria-hidden="true"> | </span>
+				<a href="<?php echo esc_url( 'https://prembly.com/terms' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Prembly Terms', 'trustgate-registration' ); ?></a>
+				<?php if ( '' !== $privacy ) : ?>
+					<span aria-hidden="true"> | </span>
+					<a href="<?php echo esc_url( $privacy ); ?>"><?php esc_html_e( 'Site Privacy Policy', 'trustgate-registration' ); ?></a>
+				<?php endif; ?>
+			</span>
 			<input type="hidden" name="trustgate_attempt_token" id="trustgate_attempt_token" value="<?php echo esc_attr( $token ); ?>" />
 			<input type="hidden" name="trustgate_reference" id="trustgate_reference" value="" />
 			<button type="button" class="button button-secondary" id="trustgate_verify_button">
@@ -155,6 +171,7 @@ final class RegistrationController {
 		$last_name  = isset( $_POST['trustgate_last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_last_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$reference  = isset( $_POST['trustgate_reference'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_reference'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$token      = isset( $_POST['trustgate_attempt_token'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_attempt_token'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$consent    = isset( $_POST['trustgate_consent'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['trustgate_consent'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
 		if ( '' === $first_name ) {
 			$errors->add( 'trustgate_first_name_required', __( 'Please enter your first name.', 'trustgate-registration' ) );
@@ -164,7 +181,11 @@ final class RegistrationController {
 			$errors->add( 'trustgate_last_name_required', __( 'Please enter your last name.', 'trustgate-registration' ) );
 		}
 
-		if ( ! $this->is_valid_attempt( $token, $reference, $user_email ) ) {
+		if ( ! $consent ) {
+			$errors->add( 'trustgate_consent_required', __( 'Please consent to identity verification before registering.', 'trustgate-registration' ) );
+		}
+
+		if ( ! $this->is_valid_attempt( $token, $reference, $user_email, $first_name, $last_name ) ) {
 			$errors->add( 'trustgate_verification_required', __( 'Please complete identity verification before registering.', 'trustgate-registration' ) );
 		}
 
@@ -254,7 +275,7 @@ final class RegistrationController {
 		$token      = isset( $_POST['trustgate_attempt_token'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_attempt_token'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$user       = get_userdata( $user_id );
 
-		if ( ! $user || ! $this->is_valid_attempt( $token, $reference, $user->user_email ) ) {
+		if ( ! $user || ! $this->is_valid_attempt( $token, $reference, $user->user_email, $first_name, $last_name ) ) {
 			return;
 		}
 
@@ -270,6 +291,8 @@ final class RegistrationController {
 		update_user_meta( $user_id, 'trustgate_verified_at', gmdate( 'c' ) );
 		update_user_meta( $user_id, 'trustgate_provider', $this->provider->get_slug() );
 		update_user_meta( $user_id, 'trustgate_reference', $reference );
+		update_user_meta( $user_id, 'trustgate_reference_hash', hash( 'sha256', $reference ) );
+		update_user_meta( $user_id, 'trustgate_consent_at', (string) ( $this->get_attempt( $token )['consent_at'] ?? gmdate( 'c' ) ) );
 
 		delete_transient( $this->get_attempt_key( $token ) );
 	}
@@ -280,12 +303,15 @@ final class RegistrationController {
 	public function confirm_verification(): void {
 		check_ajax_referer( 'trustgate_registration', 'nonce' );
 
-		$reference = isset( $_POST['reference'] ) ? sanitize_text_field( wp_unslash( $_POST['reference'] ) ) : '';
-		$token     = isset( $_POST['token'] ) ? sanitize_text_field( wp_unslash( $_POST['token'] ) ) : '';
-		$email     = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-		$attempt   = $this->get_attempt( $token );
+		$reference  = isset( $_POST['reference'] ) ? sanitize_text_field( wp_unslash( $_POST['reference'] ) ) : '';
+		$token      = isset( $_POST['token'] ) ? sanitize_text_field( wp_unslash( $_POST['token'] ) ) : '';
+		$email      = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+		$first_name = isset( $_POST['firstName'] ) ? sanitize_text_field( wp_unslash( $_POST['firstName'] ) ) : '';
+		$last_name  = isset( $_POST['lastName'] ) ? sanitize_text_field( wp_unslash( $_POST['lastName'] ) ) : '';
+		$consent    = isset( $_POST['consent'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['consent'] ) );
+		$attempt    = $this->get_attempt( $token );
 
-		if ( '' === $reference || ! is_email( $email ) || 'issued' !== ( $attempt['status'] ?? '' ) ) {
+		if ( '' === $reference || ! is_email( $email ) || '' === $first_name || '' === $last_name || ! $consent || 'issued' !== ( $attempt['status'] ?? '' ) ) {
 			wp_send_json_error(
 				array(
 					'status' => 'invalid_attempt',
@@ -297,7 +323,9 @@ final class RegistrationController {
 		$result = $this->provider->confirm_verification(
 			$reference,
 			array(
-				'email' => $email,
+				'email'      => $email,
+				'first_name' => $first_name,
+				'last_name'  => $last_name,
 			)
 		);
 
@@ -330,9 +358,12 @@ final class RegistrationController {
 		set_transient(
 			$this->get_attempt_key( $token ),
 			array(
-				'status'     => 'verified',
-				'reference'  => $verified_reference,
-				'email_hash' => $this->hash_email( $email ),
+				'status'          => 'verified',
+				'reference'       => $verified_reference,
+				'email_hash'      => $this->hash_email( $email ),
+				'first_name_hash' => $this->hash_name( $first_name ),
+				'last_name_hash'  => $this->hash_name( $last_name ),
+				'consent_at'      => gmdate( 'c' ),
 			),
 			self::ATTEMPT_TTL
 		);
@@ -390,16 +421,20 @@ final class RegistrationController {
 	 * @param string $token Attempt token.
 	 * @param string $reference Verification reference.
 	 * @param string $email Registration email.
+	 * @param string $first_name Registration first name.
+	 * @param string $last_name Registration last name.
 	 */
-	private function is_valid_attempt( string $token, string $reference, string $email ): bool {
+	private function is_valid_attempt( string $token, string $reference, string $email, string $first_name, string $last_name ): bool {
 		$attempt = $this->get_attempt( $token );
 
 		if (
 			'verified' !== ( $attempt['status'] ?? '' ) ||
 			'' === $reference ||
-			! isset( $attempt['reference'], $attempt['email_hash'] ) ||
+			! isset( $attempt['reference'], $attempt['email_hash'], $attempt['first_name_hash'], $attempt['last_name_hash'] ) ||
 			! hash_equals( $attempt['reference'], $reference ) ||
-			! hash_equals( $attempt['email_hash'], $this->hash_email( $email ) )
+			! hash_equals( $attempt['email_hash'], $this->hash_email( $email ) ) ||
+			! hash_equals( $attempt['first_name_hash'], $this->hash_name( $first_name ) ) ||
+			! hash_equals( $attempt['last_name_hash'], $this->hash_name( $last_name ) )
 		) {
 			return false;
 		}
@@ -413,6 +448,20 @@ final class RegistrationController {
 	 * @param string $reference Verification reference.
 	 */
 	private function is_registered_reference( string $reference ): bool {
+		$reference_hash = hash( 'sha256', $reference );
+		$user_ids       = get_users(
+			array(
+				'fields'     => 'ids',
+				'number'     => 1,
+				'meta_key'   => 'trustgate_reference_hash', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value' => $reference_hash, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			)
+		);
+
+		if ( array() !== $user_ids ) {
+			return true;
+		}
+
 		$user_ids = get_users(
 			array(
 				'fields'     => 'ids',
@@ -450,5 +499,14 @@ final class RegistrationController {
 	 */
 	private function hash_email( string $email ): string {
 		return hash( 'sha256', strtolower( trim( $email ) ) );
+	}
+
+	/**
+	 * Hash a name for registration-attempt binding.
+	 *
+	 * @param string $name Name value.
+	 */
+	private function hash_name( string $name ): string {
+		return hash( 'sha256', strtolower( trim( $name ) ) );
 	}
 }

@@ -71,11 +71,11 @@ Document verification works across the broadest set of countries and identity do
 
 ## Production Checklist
 
-- Repeat the successful sandbox smoke test with production widget settings in a controlled pre-launch environment.
+- Repeat the successful Sandbox and Production smoke tests after every change to the Prembly adapter or browser SDK integration.
 - Complete Prembly's business onboarding requirements and obtain live widget access.
 - Replace the Local redirect URL with the production HTTPS registration URL.
 - Confirm the production domain is permitted by Prembly.
-- Publish privacy and consent language covering document and biometric processing.
+- Review the TrustGate consent text and add the suggested disclosure under **Settings > Privacy** to the site's published privacy policy.
 - Confirm retention, deletion, and data-subject request procedures with legal counsel and Prembly.
 - Test successful, failed, cancelled, expired, and repeated verification attempts.
-- Complete TrustGate replay protection and end-to-end tests before enforcing verification on a production registration form.
+- Confirm the WordPress personal data exporter and eraser include TrustGate verification metadata.

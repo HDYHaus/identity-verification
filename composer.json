@@ -16,7 +16,8 @@
   "scripts": {
     "lint": "find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",
     "phpcs": "phpcs",
-    "phpcbf": "phpcbf"
+    "phpcbf": "phpcbf",
+    "test": "php tests/test-prembly-provider.php"
   },
   "config": {
     "allow-plugins": {
