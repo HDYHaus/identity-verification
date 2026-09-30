@@ -17,6 +17,13 @@ $trustgate_test_transients = array();
 /** @var array<string, string> */
 $trustgate_test_user_meta = array();
 
+/** @var array<string, string> */
+$trustgate_test_settings = array(
+	'consent_text'         => 'I agree to identity verification for this registration.',
+	'provider_privacy_url' => 'https://provider.example/privacy',
+	'provider_terms_url'   => 'https://provider.example/consent',
+);
+
 final class TrustGateJsonResponse extends RuntimeException {
 	/**
 	 * Response payload.
@@ -44,6 +51,25 @@ function wp_unslash( string $value ): string { // phpcs:ignore WordPress.NamingC
 
 function sanitize_text_field( string $value ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	return trim( $value );
+}
+
+function sanitize_textarea_field( string $value ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return trim( strip_tags( $value ) );
+}
+
+function esc_url_raw( string $value ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return false !== filter_var( $value, FILTER_VALIDATE_URL ) ? $value : '';
+}
+
+function get_privacy_policy_url(): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return 'https://site.example/privacy';
+}
+
+function get_option( string $option_name, mixed $default = false ): mixed { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	unset( $option_name );
+	global $trustgate_test_settings;
+
+	return array() !== $trustgate_test_settings ? $trustgate_test_settings : $default;
 }
 
 function sanitize_email( string $value ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
@@ -186,11 +212,27 @@ try {
 
 $attempt = $trustgate_test_transients[ $attempt_key ];
 trustgate_registration_assert_same( 'verified', $attempt['verification_status'] ?? '', 'The normalized status is preserved in the attempt.' );
-trustgate_registration_assert_same( '2026-09-30', $attempt['consent_version'] ?? '', 'The accepted consent version is preserved in the attempt.' );
 trustgate_registration_assert_same(
-	'I consent to Prembly processing my name, email, identity document, and biometric information to verify my identity.',
+	hash(
+		'sha256',
+		implode(
+			"\n",
+			array(
+				'prembly',
+				'I agree to identity verification for this registration.',
+				'https://provider.example/privacy',
+				'https://provider.example/consent',
+				'https://site.example/privacy',
+			)
+		)
+	),
+	$attempt['consent_version'] ?? '',
+	'The accepted consent version fingerprints the complete disclosure.'
+);
+trustgate_registration_assert_same(
+	'I agree to identity verification for this registration.',
 	$attempt['consent_text'] ?? '',
-	'The accepted consent wording is preserved in the attempt.'
+	'The configured consent wording is preserved in the attempt.'
 );
 trustgate_registration_assert_same( false, isset( $attempt['raw'] ), 'The raw provider response is not stored in the attempt.' );
 

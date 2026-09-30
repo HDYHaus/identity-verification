@@ -48,11 +48,16 @@ Open the **Prembly** tab and select **Enable Prembly**. TrustGate permits one ac
 | Sandbox Configuration ID | **SDK Setup > Copy Config ID** for the Sandbox widget |
 | Live Widget Key | **SDK Setup > Integration > Widget Key** for a widget created while Live/Production is selected |
 | Live Configuration ID | **SDK Setup > Copy Config ID** for the Live widget |
+| Consent message | Plain-text consent wording appropriate for the site's verification purpose and legal basis |
+| Provider Privacy Policy URL | Prembly privacy policy or the applicable provider-specific policy URL; optional |
+| Provider Terms / Consent URL | Prembly terms or another applicable provider consent document; optional |
 | Success Redirect URL | Optional page to visit after verified WordPress registration |
 
 TrustGate stores Sandbox and Live widget settings independently. Prembly support confirmed that the fixed `GET https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/` endpoint uses the session ID in the URL only. It does not require a Secret API Key, Organisation ID, or App ID. The Organisation ID remains an account-level UUID used by other Prembly APIs when a user belongs to more than one organisation; it is the same for Sandbox and Production.
 
 The Success Redirect URL must be on an allowed WordPress host. WordPress uses it after the verified account has been created successfully; completing the Prembly widget alone does not redirect the visitor. TrustGate appends `trustgate_registration=complete` and displays a notice telling the new user to check their email for the password setup link.
+
+Consent wording and provider legal links are managed on the **Registration** tab. TrustGate sanitizes the statement as plain text and the links as URLs. Empty provider links are omitted, while the site's WordPress Privacy Policy is appended automatically when configured. Changing the wording or any displayed policy URL produces a new stored consent-version fingerprint for subsequent successful registrations.
 
 The Widget Key begins with `wdgt_`. Prembly's API Integrations public key begins with a different prefix and cannot initialize an SDK widget; using it produces an `Invalid widget ID or key` error.
 

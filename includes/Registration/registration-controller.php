@@ -31,9 +31,21 @@ final class RegistrationController {
 	private const REFERENCE_TTL = DAY_IN_SECONDS;
 
 	/**
-	 * Consent wording version. Bump when the consent text materially changes.
+	 * Default provider privacy-policy URL.
 	 */
-	private const CONSENT_VERSION = '2026-09-30';
+	public const DEFAULT_PROVIDER_PRIVACY_URL = 'https://prembly.com/Policy';
+
+	/**
+	 * Default provider terms URL.
+	 */
+	public const DEFAULT_PROVIDER_TERMS_URL = 'https://prembly.com/terms';
+
+	/**
+	 * Get the migration-safe default consent wording.
+	 */
+	public static function get_default_consent_text(): string {
+		return __( 'I consent to Prembly processing my name, email, identity document, and biometric information to verify my identity.', 'trustgate-registration' );
+	}
 
 	/**
 	 * Option name.
@@ -128,6 +140,31 @@ final class RegistrationController {
 		$token      = $this->get_or_create_attempt_token();
 		$consent    = isset( $_POST['trustgate_consent'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['trustgate_consent'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$privacy    = get_privacy_policy_url();
+		$links      = array_filter(
+			array(
+				array(
+					'url'   => $this->get_provider_privacy_url(),
+					'label' => sprintf(
+						/* translators: %s: verification provider name */
+						__( '%s Privacy Policy', 'trustgate-registration' ),
+						$this->provider->get_label()
+					),
+				),
+				array(
+					'url'   => $this->get_provider_terms_url(),
+					'label' => sprintf(
+						/* translators: %s: verification provider name */
+						__( '%s Terms / Consent', 'trustgate-registration' ),
+						$this->provider->get_label()
+					),
+				),
+				array(
+					'url'   => $privacy,
+					'label' => __( 'Site Privacy Policy', 'trustgate-registration' ),
+				),
+			),
+			static fn ( array $link ): bool => '' !== $link['url']
+		);
 		?>
 		<p>
 			<label for="trustgate_first_name"><?php esc_html_e( 'First Name', 'trustgate-registration' ); ?></label>
@@ -142,15 +179,16 @@ final class RegistrationController {
 				<input type="checkbox" name="trustgate_consent" id="trustgate_consent" value="1" <?php checked( $consent ); ?> required />
 				<?php echo esc_html( $this->get_consent_text() ); ?>
 			</label>
-			<span class="trustgate-privacy-links">
-				<a href="<?php echo esc_url( 'https://prembly.com/Policy' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Prembly Privacy Policy', 'trustgate-registration' ); ?></a>
-				<span aria-hidden="true"> | </span>
-				<a href="<?php echo esc_url( 'https://prembly.com/terms' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Prembly Terms', 'trustgate-registration' ); ?></a>
-				<?php if ( '' !== $privacy ) : ?>
-					<span aria-hidden="true"> | </span>
-					<a href="<?php echo esc_url( $privacy ); ?>"><?php esc_html_e( 'Site Privacy Policy', 'trustgate-registration' ); ?></a>
-				<?php endif; ?>
-			</span>
+			<?php if ( ! empty( $links ) ) : ?>
+				<span class="trustgate-privacy-links">
+					<?php foreach ( array_values( $links ) as $index => $link ) : ?>
+						<?php if ( 0 < $index ) : ?>
+							<span aria-hidden="true"> | </span>
+						<?php endif; ?>
+						<a href="<?php echo esc_url( $link['url'] ); ?>"<?php echo $link['url'] !== $privacy ? ' target="_blank" rel="noopener noreferrer"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php echo esc_html( $link['label'] ); ?></a>
+					<?php endforeach; ?>
+				</span>
+			<?php endif; ?>
 			<input type="hidden" name="trustgate_attempt_token" id="trustgate_attempt_token" value="<?php echo esc_attr( $token ); ?>" />
 			<input type="hidden" name="trustgate_reference" id="trustgate_reference" value="" />
 			<button type="button" class="button button-secondary" id="trustgate_verify_button">
@@ -302,7 +340,7 @@ final class RegistrationController {
 		update_user_meta( $user_id, 'trustgate_reference_hash', hash( 'sha256', $reference ) );
 		update_user_meta( $user_id, 'trustgate_consent_at', (string) ( $attempt['consent_at'] ?? gmdate( 'c' ) ) );
 		update_user_meta( $user_id, 'trustgate_consent_text', (string) ( $attempt['consent_text'] ?? $this->get_consent_text() ) );
-		update_user_meta( $user_id, 'trustgate_consent_version', (string) ( $attempt['consent_version'] ?? self::CONSENT_VERSION ) );
+		update_user_meta( $user_id, 'trustgate_consent_version', (string) ( $attempt['consent_version'] ?? $this->get_consent_version() ) );
 
 		delete_transient( $this->get_attempt_key( $token ) );
 	}
@@ -376,7 +414,7 @@ final class RegistrationController {
 				'last_name_hash'      => $this->hash_name( $last_name ),
 				'consent_at'          => gmdate( 'c' ),
 				'consent_text'        => $this->get_consent_text(),
-				'consent_version'     => self::CONSENT_VERSION,
+				'consent_version'     => $this->get_consent_version(),
 			),
 			self::ATTEMPT_TTL
 		);
@@ -416,7 +454,67 @@ final class RegistrationController {
 	 * Get the consent wording displayed to and accepted by the registrant.
 	 */
 	private function get_consent_text(): string {
-		return __( 'I consent to Prembly processing my name, email, identity document, and biometric information to verify my identity.', 'trustgate-registration' );
+		$settings = $this->get_settings();
+		$text     = isset( $settings['consent_text'] ) ? sanitize_textarea_field( (string) $settings['consent_text'] ) : '';
+
+		return '' !== $text ? $text : self::get_default_consent_text();
+	}
+
+	/**
+	 * Get the configured provider privacy-policy URL.
+	 */
+	private function get_provider_privacy_url(): string {
+		return $this->get_configured_url( 'provider_privacy_url', self::DEFAULT_PROVIDER_PRIVACY_URL );
+	}
+
+	/**
+	 * Get the configured provider terms or consent URL.
+	 */
+	private function get_provider_terms_url(): string {
+		return $this->get_configured_url( 'provider_terms_url', self::DEFAULT_PROVIDER_TERMS_URL );
+	}
+
+	/**
+	 * Derive a stable version from the complete disclosure accepted by the user.
+	 */
+	private function get_consent_version(): string {
+		return hash(
+			'sha256',
+			implode(
+				"\n",
+				array(
+					$this->provider->get_slug(),
+					$this->get_consent_text(),
+					$this->get_provider_privacy_url(),
+					$this->get_provider_terms_url(),
+					get_privacy_policy_url(),
+				)
+			)
+		);
+	}
+
+	/**
+	 * Get one configured URL, distinguishing an intentionally empty value from
+	 * an option that predates the setting.
+	 *
+	 * @param string $key Setting key.
+	 * @param string $fallback_url Default URL for older options.
+	 */
+	private function get_configured_url( string $key, string $fallback_url ): string {
+		$settings = $this->get_settings();
+
+		return array_key_exists( $key, $settings ) ? esc_url_raw( (string) $settings[ $key ] ) : $fallback_url;
+	}
+
+	/**
+	 * Get saved plugin settings.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function get_settings(): array {
+		$settings = get_option( $this->option_name, array() );
+
+		return is_array( $settings ) ? $settings : array();
 	}
 
 	/**

@@ -24,6 +24,7 @@ TrustGate is a verification gate, not a membership suite. It does not replace th
 * Prevents a completed verification session from being reused for another account.
 * Keeps Sandbox and Live Prembly credentials separate.
 * Supports an optional same-site success redirect with email activation instructions.
+* Lets site owners customize the plain-text consent message and provider policy links.
 * Stores normalized verification metadata in the WordPress user account.
 * Integrates with WordPress personal data export and erasure tools.
 * Uses a provider adapter architecture, with Prembly as the first provider.
@@ -43,6 +44,8 @@ This service is provided by Prembly Inc:
 * Prembly: https://prembly.com/
 * Prembly Terms of Use: https://prembly.com/terms
 * Prembly Privacy Policy: https://prembly.com/Policy
+
+These are the default provider links. Site administrators can replace or hide them under **TrustGate > Settings > Registration**. When WordPress has a site Privacy Policy configured, TrustGate displays that link separately.
 
 == Installation ==
 
@@ -83,6 +86,10 @@ No. For a successfully created account, TrustGate stores whether verification su
 
 Yes. TrustGate integrates with **Tools > Export Personal Data** and **Tools > Erase Personal Data**. Erasure retains only a one-way session-reference hash to prevent reuse of a completed verification. Site owners should establish an appropriate retention policy and confirm any separate deletion obligations in Prembly.
 
+= Can I change the consent wording and provider links? =
+
+Yes. Open **TrustGate > Settings > Registration** to edit the plain-text consent message and the provider privacy-policy and terms/consent URLs. Provider links are optional, and the site's WordPress Privacy Policy is displayed separately when configured. TrustGate stores the exact accepted wording and a version fingerprint tied to the displayed disclosure for successful registrations.
+
 = Does this make my site KYC compliant? =
 
 No plugin can guarantee legal or regulatory compliance. TrustGate provides an identity-verification gate that can support a site's KYC workflow. Obtain appropriate legal advice for the site's countries, audience, and use case.
@@ -97,6 +104,7 @@ No plugin can guarantee legal or regulatory compliance. TrustGate provides an id
 
 * Require the Prembly session ID, widget configuration, and end-user email to match before registration.
 * Add explicit registrant consent before opening identity verification.
+* Allow site owners to customize consent wording and provider legal links safely.
 * Add WordPress privacy policy guidance and personal data export and erasure support.
 * Correct the Prembly external-service disclosure and current credential requirements.
 * Add provider response and privacy integration tests with repeatable release packaging.
