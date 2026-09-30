@@ -11,6 +11,7 @@ namespace HDYHaus\TrustGateRegistration\Admin;
 
 use HDYHaus\TrustGateRegistration\Contracts\VerificationProvider;
 use HDYHaus\TrustGateRegistration\Providers\ProviderRegistry;
+use HDYHaus\TrustGateRegistration\Registration\RegistrationController;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -224,7 +225,10 @@ final class SettingsPage {
 			$page,
 			'trustgate_registration_flow',
 			array(
-				'success_redirect' => __( 'Success Redirect URL', 'trustgate-registration' ),
+				'consent_text'         => __( 'Consent message', 'trustgate-registration' ),
+				'provider_privacy_url' => __( 'Provider Privacy Policy URL', 'trustgate-registration' ),
+				'provider_terms_url'   => __( 'Provider Terms / Consent URL', 'trustgate-registration' ),
+				'success_redirect'     => __( 'Success Redirect URL', 'trustgate-registration' ),
 			)
 		);
 	}
@@ -239,6 +243,10 @@ final class SettingsPage {
 	 */
 	private function add_fields( string $page, string $section, array $fields, string $provider_slug = '' ): void {
 		foreach ( $fields as $field => $label ) {
+			$field_id = 'provider' === $field && '' !== $provider_slug
+				? 'trustgate-provider-' . $provider_slug
+				: 'trustgate-' . str_replace( '_', '-', $field );
+
 			add_settings_field(
 				$field,
 				$label,
@@ -248,6 +256,7 @@ final class SettingsPage {
 				array(
 					'key'           => $field,
 					'label'         => $label,
+					'label_for'     => $field_id,
 					'provider_slug' => $provider_slug,
 				)
 			);
@@ -271,6 +280,18 @@ final class SettingsPage {
 			: '';
 
 		if ( 'registration' === $tab ) {
+			if ( array_key_exists( 'consent_text', $settings ) ) {
+					$consent_text = sanitize_textarea_field( (string) $settings['consent_text'] );
+
+					$clean['consent_text'] = '' !== $consent_text ? $consent_text : RegistrationController::get_default_consent_text();
+			}
+
+			foreach ( array( 'provider_privacy_url', 'provider_terms_url' ) as $url_field ) {
+				if ( array_key_exists( $url_field, $settings ) ) {
+					$clean[ $url_field ] = esc_url_raw( (string) $settings[ $url_field ] );
+				}
+			}
+
 			if ( array_key_exists( 'success_redirect', $settings ) ) {
 				$clean['success_redirect'] = esc_url_raw( (string) $settings['success_redirect'] );
 			}
@@ -353,7 +374,7 @@ final class SettingsPage {
 	public function render_registration_section(): void {
 		printf(
 			'<p>%s</p>',
-			esc_html__( 'Control what happens after WordPress creates a verified account.', 'trustgate-registration' )
+			esc_html__( 'Customize the disclosure shown before verification and control what happens after WordPress creates a verified account. The consent message is plain text; custom HTML is not allowed.', 'trustgate-registration' )
 		);
 	}
 
@@ -366,6 +387,7 @@ final class SettingsPage {
 		$key   = $args['key'];
 		$value = $this->get_display_value( $key );
 		$name  = sprintf( '%s[%s]', $this->option_name, $key );
+		$id    = $args['label_for'];
 
 		if ( 'provider' === $key ) {
 			$settings      = $this->get_settings();
@@ -400,7 +422,7 @@ final class SettingsPage {
 
 		if ( 'mode' === $key ) {
 			?>
-			<select name="<?php echo esc_attr( $name ); ?>">
+			<select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>">
 				<option value="test" <?php selected( 'test', '' !== $value ? $value : 'test' ); ?>>
 					<?php esc_html_e( 'Sandbox / Test', 'trustgate-registration' ); ?>
 				</option>
@@ -413,7 +435,21 @@ final class SettingsPage {
 			return;
 		}
 
-		$type = 'success_redirect' === $key ? 'url' : 'text';
+		if ( 'consent_text' === $key ) {
+			?>
+			<textarea
+				id="<?php echo esc_attr( $id ); ?>"
+				name="<?php echo esc_attr( $name ); ?>"
+				rows="4"
+				class="large-text"
+			><?php echo esc_textarea( $value ); ?></textarea>
+			<p class="description"><?php esc_html_e( 'Plain-text statement shown beside the required consent checkbox. The exact accepted wording is stored with successful registrations.', 'trustgate-registration' ); ?></p>
+			<?php
+			return;
+		}
+
+		$url_fields = array( 'provider_privacy_url', 'provider_terms_url', 'success_redirect' );
+		$type       = in_array( $key, $url_fields, true ) ? 'url' : 'text';
 
 		if ( str_contains( $key, 'secret_key' ) ) {
 			$type = 'password';
@@ -424,12 +460,15 @@ final class SettingsPage {
 			'test_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Sandbox widget.', 'trustgate-registration' ),
 			'live_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Production is selected.', 'trustgate-registration' ),
 			'live_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Live widget.', 'trustgate-registration' ),
+			'provider_privacy_url'  => __( 'Optional provider privacy-policy link shown below the consent message. Leave empty to hide it.', 'trustgate-registration' ),
+			'provider_terms_url'    => __( 'Optional provider terms or consent link shown below the consent message. Leave empty to hide it.', 'trustgate-registration' ),
 			'success_redirect'      => __( 'Optional same-site URL visited after WordPress successfully creates the verified account.', 'trustgate-registration' ),
 		);
 		$description  = $descriptions[ $key ] ?? '';
 		?>
 		<input
 			type="<?php echo esc_attr( $type ); ?>"
+			id="<?php echo esc_attr( $id ); ?>"
 			name="<?php echo esc_attr( $name ); ?>"
 			value="<?php echo esc_attr( $value ); ?>"
 			class="regular-text"
@@ -451,6 +490,16 @@ final class SettingsPage {
 
 		if ( isset( $settings[ $key ] ) ) {
 			return (string) $settings[ $key ];
+		}
+
+		$defaults = array(
+			'consent_text'         => RegistrationController::get_default_consent_text(),
+			'provider_privacy_url' => RegistrationController::DEFAULT_PROVIDER_PRIVACY_URL,
+			'provider_terms_url'   => RegistrationController::DEFAULT_PROVIDER_TERMS_URL,
+		);
+
+		if ( isset( $defaults[ $key ] ) ) {
+			return $defaults[ $key ];
 		}
 
 		$legacy_keys = array(

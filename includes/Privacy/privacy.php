@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace HDYHaus\TrustGateRegistration\Privacy;
 
+use HDYHaus\TrustGateRegistration\Registration\RegistrationController;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -17,6 +19,22 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Registers privacy policy guidance and personal data handlers.
  */
 final class Privacy {
+	/**
+	 * Settings option name.
+	 *
+	 * @var string
+	 */
+	private string $option_name;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param string $option_name Settings option name.
+	 */
+	public function __construct( string $option_name ) {
+		$this->option_name = $option_name;
+	}
+
 	/**
 	 * Register hooks.
 	 */
@@ -34,9 +52,30 @@ final class Privacy {
 			return;
 		}
 
+		$settings    = get_option( $this->option_name, array() );
+		$settings    = is_array( $settings ) ? $settings : array();
+		$consent     = isset( $settings['consent_text'] ) ? sanitize_textarea_field( (string) $settings['consent_text'] ) : '';
+		$consent     = '' !== $consent ? $consent : RegistrationController::get_default_consent_text();
+		$privacy_url = array_key_exists( 'provider_privacy_url', $settings ) ? esc_url_raw( (string) $settings['provider_privacy_url'] ) : RegistrationController::DEFAULT_PROVIDER_PRIVACY_URL;
+		$terms_url   = array_key_exists( 'provider_terms_url', $settings ) ? esc_url_raw( (string) $settings['provider_terms_url'] ) : RegistrationController::DEFAULT_PROVIDER_TERMS_URL;
+
 		$content  = '<p>' . esc_html__( 'When identity verification is enabled, the registrant\'s name and email address are sent to Prembly when the registrant starts verification. Prembly may then collect and process identity document images, selfies, biometric information, device information, and IP-derived location information to perform the checks configured by the site owner.', 'trustgate-registration' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'The registration form requires agreement to this statement:', 'trustgate-registration' ) . ' &ldquo;' . esc_html( $consent ) . '&rdquo;</p>';
 		$content .= '<p>' . esc_html__( 'This site stores whether verification succeeded, the normalized verification status, the verification provider, the provider session reference, a one-way reference hash, the verification time, and the consent time, wording, and version in the registered user\'s account metadata. The one-way hash may be retained after a privacy erasure request to prevent reuse of a completed verification. The site owner determines how long other information is retained.', 'trustgate-registration' ) . '</p>';
-		$content .= '<p><a href="https://prembly.com/Policy">' . esc_html__( 'Prembly Privacy Policy', 'trustgate-registration' ) . '</a> | <a href="https://prembly.com/terms">' . esc_html__( 'Prembly Terms of Use', 'trustgate-registration' ) . '</a></p>';
+
+		$links = array();
+
+		if ( '' !== $privacy_url ) {
+			$links[] = '<a href="' . esc_url( $privacy_url ) . '">' . esc_html__( 'Verification Provider Privacy Policy', 'trustgate-registration' ) . '</a>';
+		}
+
+		if ( '' !== $terms_url ) {
+			$links[] = '<a href="' . esc_url( $terms_url ) . '">' . esc_html__( 'Verification Provider Terms / Consent', 'trustgate-registration' ) . '</a>';
+		}
+
+		if ( ! empty( $links ) ) {
+			$content .= '<p>' . implode( ' | ', $links ) . '</p>';
+		}
 
 		wp_add_privacy_policy_content( __( 'TrustGate Registration', 'trustgate-registration' ), wp_kses_post( wpautop( $content, false ) ) );
 	}

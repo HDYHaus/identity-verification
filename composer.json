@@ -19,10 +19,12 @@
     "phpcbf": "phpcbf",
     "test": [
       "@test:provider",
+      "@test:settings",
       "@test:registration",
       "@test:privacy"
     ],
     "test:provider": "php tests/test-prembly-provider.php",
+    "test:settings": "php tests/test-settings-page.php",
     "test:registration": "php tests/test-registration-controller.php",
     "test:privacy": "php tests/test-privacy.php"
   },

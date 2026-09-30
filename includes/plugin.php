@@ -32,7 +32,7 @@ final class Plugin {
 	 * Register hooks.
 	 */
 	public function register(): void {
-		$privacy = new Privacy();
+		$privacy = new Privacy( self::OPTION_NAME );
 		$privacy->register();
 
 		$providers = apply_filters(

@@ -4,6 +4,7 @@
 
 - Require a matching Prembly session ID, widget configuration, and end-user email before registration.
 - Add explicit registrant consent before identity verification begins.
+- Allow site owners to customize plain-text consent wording and provider legal links.
 - Add WordPress privacy policy guidance and personal data export and erasure support.
 - Publish a complete Prembly external-service disclosure and current installation instructions.
 - Add provider response and privacy integration tests with repeatable release packaging.

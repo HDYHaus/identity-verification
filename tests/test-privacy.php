@@ -25,12 +25,44 @@ $trustgate_test_user_meta = array(
 	'trustgate_consent_version'     => '2026-09-30',
 );
 
+/** @var array<string, string> */
+$trustgate_test_settings = array(
+	'consent_text'         => 'I agree to the configured identity check.',
+	'provider_privacy_url' => 'https://provider.example/privacy',
+	'provider_terms_url'   => '',
+);
+
+$trustgate_test_policy_content = '';
+
 function __( string $text ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	return $text;
 }
 
 function esc_html__( string $text ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	return $text;
+}
+
+function esc_html( string $text ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
+}
+
+function esc_url( string $url ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return $url;
+}
+
+function esc_url_raw( string $url ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return false !== filter_var( $url, FILTER_VALIDATE_URL ) ? $url : '';
+}
+
+function sanitize_textarea_field( string $text ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return trim( strip_tags( $text ) );
+}
+
+function get_option( string $option_name, mixed $default = false ): mixed { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	unset( $option_name );
+	global $trustgate_test_settings;
+
+	return array() !== $trustgate_test_settings ? $trustgate_test_settings : $default;
 }
 
 function wp_kses_post( string $text ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
@@ -40,6 +72,12 @@ function wp_kses_post( string $text ): string { // phpcs:ignore WordPress.Naming
 function wpautop( string $text, bool $br = true ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	unset( $br );
 	return $text;
+}
+
+function wp_add_privacy_policy_content( string $plugin_name, string $policy_text ): void { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	unset( $plugin_name );
+	global $trustgate_test_policy_content;
+	$trustgate_test_policy_content = $policy_text;
 }
 
 function add_action( string $hook, callable $callback ): void { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
@@ -79,6 +117,7 @@ function delete_user_meta( int $user_id, string $key ): bool { // phpcs:ignore W
 	return true;
 }
 
+require_once dirname( __DIR__ ) . '/includes/Registration/registration-controller.php';
 require_once dirname( __DIR__ ) . '/includes/Privacy/privacy.php';
 
 use HDYHaus\TrustGateRegistration\Privacy\Privacy;
@@ -99,12 +138,16 @@ function trustgate_privacy_assert_same( mixed $expected, mixed $actual, string $
 	exit( 1 );
 }
 
-$privacy = new Privacy();
+$privacy = new Privacy( 'trustgate_settings' );
 $privacy->register();
+$privacy->add_policy_content();
 
 trustgate_privacy_assert_same( true, isset( $trustgate_test_hooks['admin_init'] ), 'Privacy policy guidance is registered.' );
 trustgate_privacy_assert_same( true, isset( $trustgate_test_hooks['wp_privacy_personal_data_exporters'] ), 'The exporter is registered.' );
 trustgate_privacy_assert_same( true, isset( $trustgate_test_hooks['wp_privacy_personal_data_erasers'] ), 'The eraser is registered.' );
+trustgate_privacy_assert_same( true, str_contains( $trustgate_test_policy_content, 'I agree to the configured identity check.' ), 'Privacy guidance includes the configured consent wording.' );
+trustgate_privacy_assert_same( true, str_contains( $trustgate_test_policy_content, 'https://provider.example/privacy' ), 'Privacy guidance includes the configured provider policy.' );
+trustgate_privacy_assert_same( false, str_contains( $trustgate_test_policy_content, 'Terms / Consent' ), 'Privacy guidance omits an empty provider link.' );
 
 $export = $privacy->export_user_data( 'person@example.com' );
 trustgate_privacy_assert_same( true, $export['done'], 'The exporter completes in one page.' );
