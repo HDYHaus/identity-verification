@@ -162,21 +162,6 @@ final class SettingsPage {
 		);
 
 		$this->add_fields( $page, 'trustgate_registration_prembly', $fields, 'prembly' );
-
-		add_settings_section(
-			'trustgate_registration_prembly_advanced',
-			__( 'Advanced Prembly Settings', 'trustgate-registration' ),
-			array( $this, 'render_prembly_advanced_section' ),
-			$page
-		);
-
-		$this->add_fields(
-			$page,
-			'trustgate_registration_prembly_advanced',
-			array(
-				'status_endpoint' => __( 'Status Endpoint Override', 'trustgate-registration' ),
-			)
-		);
 	}
 
 	/**
@@ -280,7 +265,8 @@ final class SettingsPage {
 		$current  = get_option( $this->option_name, array() );
 		$current  = is_array( $current ) ? $current : array();
 		$clean    = array_map( 'strval', $current );
-		$tab      = isset( $settings['settings_tab'] ) && is_string( $settings['settings_tab'] )
+		unset( $clean['status_endpoint'] );
+		$tab = isset( $settings['settings_tab'] ) && is_string( $settings['settings_tab'] )
 			? sanitize_key( $settings['settings_tab'] )
 			: '';
 
@@ -348,10 +334,6 @@ final class SettingsPage {
 			$clean['mode'] = 'live' === $settings['mode'] ? 'live' : 'test';
 		}
 
-		if ( array_key_exists( 'status_endpoint', $settings ) ) {
-			$clean['status_endpoint'] = esc_url_raw( (string) $settings['status_endpoint'] );
-		}
-
 		return $clean;
 	}
 
@@ -372,16 +354,6 @@ final class SettingsPage {
 		printf(
 			'<p>%s</p>',
 			esc_html__( 'Control what happens after WordPress creates a verified account.', 'trustgate-registration' )
-		);
-	}
-
-	/**
-	 * Render the advanced Prembly section description.
-	 */
-	public function render_prembly_advanced_section(): void {
-		printf(
-			'<p>%s</p>',
-			esc_html__( 'Leave this value blank unless Prembly support supplies a different session endpoint.', 'trustgate-registration' )
 		);
 	}
 
@@ -441,7 +413,7 @@ final class SettingsPage {
 			return;
 		}
 
-		$type = in_array( $key, array( 'status_endpoint', 'success_redirect' ), true ) ? 'url' : 'text';
+		$type = 'success_redirect' === $key ? 'url' : 'text';
 
 		if ( str_contains( $key, 'secret_key' ) ) {
 			$type = 'password';
@@ -452,7 +424,6 @@ final class SettingsPage {
 			'test_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Sandbox widget.', 'trustgate-registration' ),
 			'live_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Production is selected.', 'trustgate-registration' ),
 			'live_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Live widget.', 'trustgate-registration' ),
-			'status_endpoint'       => __( 'Optional. Leave blank to use Prembly\'s current session-ID-only SDK endpoint. Use {id} for the session ID.', 'trustgate-registration' ),
 			'success_redirect'      => __( 'Optional same-site URL visited after WordPress successfully creates the verified account.', 'trustgate-registration' ),
 		);
 		$description  = $descriptions[ $key ] ?? '';

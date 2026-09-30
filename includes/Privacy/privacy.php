@@ -35,7 +35,7 @@ final class Privacy {
 		}
 
 		$content  = '<p>' . esc_html__( 'When identity verification is enabled, the registrant\'s name and email address are sent to Prembly when the registrant starts verification. Prembly may then collect and process identity document images, selfies, biometric information, device information, and IP-derived location information to perform the checks configured by the site owner.', 'trustgate-registration' ) . '</p>';
-		$content .= '<p>' . esc_html__( 'This site stores whether verification succeeded, the verification provider, the provider session reference, a one-way reference hash, the verification time, and the consent time in the registered user\'s account metadata. The one-way hash may be retained after a privacy erasure request to prevent reuse of a completed verification. The site owner determines how long other information is retained.', 'trustgate-registration' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'This site stores whether verification succeeded, the normalized verification status, the verification provider, the provider session reference, a one-way reference hash, the verification time, and the consent time, wording, and version in the registered user\'s account metadata. The one-way hash may be retained after a privacy erasure request to prevent reuse of a completed verification. The site owner determines how long other information is retained.', 'trustgate-registration' ) . '</p>';
 		$content .= '<p><a href="https://prembly.com/Policy">' . esc_html__( 'Prembly Privacy Policy', 'trustgate-registration' ) . '</a> | <a href="https://prembly.com/terms">' . esc_html__( 'Prembly Terms of Use', 'trustgate-registration' ) . '</a></p>';
 
 		wp_add_privacy_policy_content( __( 'TrustGate Registration', 'trustgate-registration' ), wp_kses_post( wpautop( $content, false ) ) );
@@ -155,12 +155,15 @@ final class Privacy {
 	 */
 	private function get_meta_labels(): array {
 		return array(
-			'trustgate_verified'       => __( 'Verification status', 'trustgate-registration' ),
-			'trustgate_verified_at'    => __( 'Verification time', 'trustgate-registration' ),
-			'trustgate_provider'       => __( 'Verification provider', 'trustgate-registration' ),
-			'trustgate_reference'      => __( 'Verification reference', 'trustgate-registration' ),
-			'trustgate_reference_hash' => __( 'Verification reference hash', 'trustgate-registration' ),
-			'trustgate_consent_at'     => __( 'Verification consent time', 'trustgate-registration' ),
+			'trustgate_verified'            => __( 'Verification successful', 'trustgate-registration' ),
+			'trustgate_verification_status' => __( 'Verification status', 'trustgate-registration' ),
+			'trustgate_verified_at'         => __( 'Verification time', 'trustgate-registration' ),
+			'trustgate_provider'            => __( 'Verification provider', 'trustgate-registration' ),
+			'trustgate_reference'           => __( 'Verification reference', 'trustgate-registration' ),
+			'trustgate_reference_hash'      => __( 'Verification reference hash', 'trustgate-registration' ),
+			'trustgate_consent_at'          => __( 'Verification consent time', 'trustgate-registration' ),
+			'trustgate_consent_text'        => __( 'Verification consent wording', 'trustgate-registration' ),
+			'trustgate_consent_version'     => __( 'Verification consent version', 'trustgate-registration' ),
 		);
 	}
 }
