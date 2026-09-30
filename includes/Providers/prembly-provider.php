@@ -110,21 +110,17 @@ final class PremblyProvider implements VerificationProvider {
 	 * @return array{verified: bool, status: string, reference: string, raw?: array<string, mixed>}
 	 */
 	private function request_status( string $reference, array $settings, array $context ): array {
-		$endpoint = isset( $settings['status_endpoint'] ) && '' !== $settings['status_endpoint']
-			? (string) $settings['status_endpoint']
-			: self::DEFAULT_STATUS_ENDPOINT;
-		$url      = str_replace( '{id}', rawurlencode( $reference ), $endpoint );
-		$headers  = array(
+		$url     = str_replace( '{id}', rawurlencode( $reference ), self::DEFAULT_STATUS_ENDPOINT );
+		$headers = array(
 			'Accept' => 'application/json',
 		);
 
 		$args = array(
 			'headers' => $headers,
-			'method'  => 'GET',
 			'timeout' => 20,
 		);
 
-		$response = wp_remote_request( $url, $args );
+		$response = wp_safe_remote_get( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
 			return $this->build_result( false, 'request_error', $reference );

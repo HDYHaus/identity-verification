@@ -1,5 +1,5 @@
 === TrustGate Registration ===
-Contributors: hdyhaus
+Contributors: mariaojob
 Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
@@ -77,7 +77,7 @@ No. This integration uses Prembly's Widget Key and Configuration ID in the brows
 
 = Does TrustGate store identity documents or selfies in WordPress? =
 
-No. TrustGate stores the verification result, time, provider slug, Prembly session reference, a one-way replay-prevention hash, and consent time as user metadata. Documents, selfies, biometric information, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
+No. For a successfully created account, TrustGate stores whether verification succeeded, the normalized verification status, verification time, provider slug, Prembly session reference, a one-way replay-prevention hash, and the accepted consent time, wording, and version as user metadata. Documents, selfies, biometric information, raw Prembly responses, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
 
 = Can verification metadata be exported or erased? =
 
@@ -87,6 +87,10 @@ Yes. TrustGate integrates with **Tools > Export Personal Data** and **Tools > Er
 
 No plugin can guarantee legal or regulatory compliance. TrustGate provides an identity-verification gate that can support a site's KYC workflow. Obtain appropriate legal advice for the site's countries, audience, and use case.
 
+== Screenshots ==
+
+1. TrustGate adds identity verification fields, explicit consent, and a verification action to the native WordPress registration screen.
+
 == Changelog ==
 
 = 0.9.0 =
@@ -95,7 +99,7 @@ No plugin can guarantee legal or regulatory compliance. TrustGate provides an id
 * Add explicit registrant consent before opening identity verification.
 * Add WordPress privacy policy guidance and personal data export and erasure support.
 * Correct the Prembly external-service disclosure and current credential requirements.
-* Add provider response fixture tests and repeatable release packaging.
+* Add provider response and privacy integration tests with repeatable release packaging.
 
 = 0.1.6 =
 

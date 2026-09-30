@@ -49,11 +49,8 @@ Open the **Prembly** tab and select **Enable Prembly**. TrustGate permits one ac
 | Live Widget Key | **SDK Setup > Integration > Widget Key** for a widget created while Live/Production is selected |
 | Live Configuration ID | **SDK Setup > Copy Config ID** for the Live widget |
 | Success Redirect URL | Optional page to visit after verified WordPress registration |
-| Status Endpoint Override | Leave blank to use TrustGate's current Prembly SDK session endpoint |
 
-TrustGate stores Sandbox and Live widget settings independently. Prembly support confirmed that `GET /api/v1/checker-widget/sdk/sessions/{session_id}/` uses the session ID in the URL only. It does not require a Secret API Key, Organisation ID, or App ID. The Organisation ID remains an account-level UUID used by other Prembly APIs when a user belongs to more than one organisation; it is the same for Sandbox and Production.
-
-Status Endpoint Override is in the **Advanced Prembly Settings** section on the Prembly tab. The Success Redirect URL remains on the global **Registration** tab.
+TrustGate stores Sandbox and Live widget settings independently. Prembly support confirmed that the fixed `GET https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/` endpoint uses the session ID in the URL only. It does not require a Secret API Key, Organisation ID, or App ID. The Organisation ID remains an account-level UUID used by other Prembly APIs when a user belongs to more than one organisation; it is the same for Sandbox and Production.
 
 The Success Redirect URL must be on an allowed WordPress host. WordPress uses it after the verified account has been created successfully; completing the Prembly widget alone does not redirect the visitor. TrustGate appends `trustgate_registration=complete` and displays a notice telling the new user to check their email for the password setup link.
 

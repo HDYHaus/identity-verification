@@ -17,7 +17,14 @@
     "lint": "find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",
     "phpcs": "phpcs",
     "phpcbf": "phpcbf",
-    "test": "php tests/test-prembly-provider.php"
+    "test": [
+      "@test:provider",
+      "@test:registration",
+      "@test:privacy"
+    ],
+    "test:provider": "php tests/test-prembly-provider.php",
+    "test:registration": "php tests/test-registration-controller.php",
+    "test:privacy": "php tests/test-privacy.php"
   },
   "config": {
     "allow-plugins": {

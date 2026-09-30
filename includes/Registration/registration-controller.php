@@ -31,6 +31,11 @@ final class RegistrationController {
 	private const REFERENCE_TTL = DAY_IN_SECONDS;
 
 	/**
+	 * Consent wording version. Bump when the consent text materially changes.
+	 */
+	private const CONSENT_VERSION = '2026-09-30';
+
+	/**
 	 * Option name.
 	 *
 	 * @var string
@@ -135,7 +140,7 @@ final class RegistrationController {
 		<p class="trustgate-verification-control">
 			<label class="trustgate-consent" for="trustgate_consent">
 				<input type="checkbox" name="trustgate_consent" id="trustgate_consent" value="1" <?php checked( $consent ); ?> required />
-				<?php esc_html_e( 'I consent to Prembly processing my name, email, identity document, and biometric information to verify my identity.', 'trustgate-registration' ); ?>
+				<?php echo esc_html( $this->get_consent_text() ); ?>
 			</label>
 			<span class="trustgate-privacy-links">
 				<a href="<?php echo esc_url( 'https://prembly.com/Policy' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Prembly Privacy Policy', 'trustgate-registration' ); ?></a>
@@ -279,6 +284,8 @@ final class RegistrationController {
 			return;
 		}
 
+		$attempt = $this->get_attempt( $token );
+
 		if ( '' !== $first_name ) {
 			update_user_meta( $user_id, 'first_name', $first_name );
 		}
@@ -288,11 +295,14 @@ final class RegistrationController {
 		}
 
 		update_user_meta( $user_id, 'trustgate_verified', '1' );
+		update_user_meta( $user_id, 'trustgate_verification_status', (string) ( $attempt['verification_status'] ?? 'verified' ) );
 		update_user_meta( $user_id, 'trustgate_verified_at', gmdate( 'c' ) );
 		update_user_meta( $user_id, 'trustgate_provider', $this->provider->get_slug() );
 		update_user_meta( $user_id, 'trustgate_reference', $reference );
 		update_user_meta( $user_id, 'trustgate_reference_hash', hash( 'sha256', $reference ) );
-		update_user_meta( $user_id, 'trustgate_consent_at', (string) ( $this->get_attempt( $token )['consent_at'] ?? gmdate( 'c' ) ) );
+		update_user_meta( $user_id, 'trustgate_consent_at', (string) ( $attempt['consent_at'] ?? gmdate( 'c' ) ) );
+		update_user_meta( $user_id, 'trustgate_consent_text', (string) ( $attempt['consent_text'] ?? $this->get_consent_text() ) );
+		update_user_meta( $user_id, 'trustgate_consent_version', (string) ( $attempt['consent_version'] ?? self::CONSENT_VERSION ) );
 
 		delete_transient( $this->get_attempt_key( $token ) );
 	}
@@ -358,12 +368,15 @@ final class RegistrationController {
 		set_transient(
 			$this->get_attempt_key( $token ),
 			array(
-				'status'          => 'verified',
-				'reference'       => $verified_reference,
-				'email_hash'      => $this->hash_email( $email ),
-				'first_name_hash' => $this->hash_name( $first_name ),
-				'last_name_hash'  => $this->hash_name( $last_name ),
-				'consent_at'      => gmdate( 'c' ),
+				'status'              => 'verified',
+				'verification_status' => sanitize_key( (string) $result['status'] ),
+				'reference'           => $verified_reference,
+				'email_hash'          => $this->hash_email( $email ),
+				'first_name_hash'     => $this->hash_name( $first_name ),
+				'last_name_hash'      => $this->hash_name( $last_name ),
+				'consent_at'          => gmdate( 'c' ),
+				'consent_text'        => $this->get_consent_text(),
+				'consent_version'     => self::CONSENT_VERSION,
 			),
 			self::ATTEMPT_TTL
 		);
@@ -397,6 +410,13 @@ final class RegistrationController {
 		);
 
 		return $token;
+	}
+
+	/**
+	 * Get the consent wording displayed to and accepted by the registrant.
+	 */
+	private function get_consent_text(): string {
+		return __( 'I consent to Prembly processing my name, email, identity document, and biometric information to verify my identity.', 'trustgate-registration' );
 	}
 
 	/**

@@ -21,6 +21,57 @@ function sanitize_email( string $value ): string { // phpcs:ignore WordPress.Nam
 	return filter_var( $value, FILTER_SANITIZE_EMAIL );
 }
 
+/** @var array<string, mixed> */
+$trustgate_test_settings = array();
+
+/** @var array<string, mixed> */
+$trustgate_test_response = array();
+
+/** @var array{url: string, args: array<string, mixed>} */
+$trustgate_test_request = array(
+	'url'  => '',
+	'args' => array(),
+);
+
+function get_option( string $option_name, mixed $default = false ): mixed { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	unset( $option_name );
+
+	global $trustgate_test_settings;
+
+	return array() !== $trustgate_test_settings ? $trustgate_test_settings : $default;
+}
+
+/**
+ * Capture the outbound request for assertions.
+ *
+ * @param array<string, mixed> $args Request arguments.
+ * @return array<string, mixed>
+ */
+function wp_safe_remote_get( string $url, array $args = array() ): array { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	global $trustgate_test_request, $trustgate_test_response;
+
+	$trustgate_test_request = array(
+		'url'  => $url,
+		'args' => $args,
+	);
+
+	return $trustgate_test_response;
+}
+
+function is_wp_error( mixed $value ): bool { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return false;
+}
+
+/** @param array<string, mixed> $response */
+function wp_remote_retrieve_response_code( array $response ): int { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return (int) ( $response['response']['code'] ?? 0 );
+}
+
+/** @param array<string, mixed> $response */
+function wp_remote_retrieve_body( array $response ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return (string) ( $response['body'] ?? '' );
+}
+
 require_once dirname( __DIR__ ) . '/includes/Contracts/verification-provider.php';
 require_once dirname( __DIR__ ) . '/includes/Providers/prembly-provider.php';
 
@@ -75,6 +126,24 @@ function trustgate_normalize_fixture( array $fixture, array $fixture_settings, a
 $result = trustgate_normalize_fixture( $body, $settings, $context );
 trustgate_assert_same( true, $result['verified'], 'A bound completed session is verified.' );
 trustgate_assert_same( 'verified', $result['status'], 'A successful response has normalized status.' );
+
+$trustgate_test_settings = $settings + array(
+	'status_endpoint' => 'https://example.com/unsafe/{id}',
+);
+$trustgate_test_response = array(
+	'response' => array( 'code' => 200 ),
+	'body'     => json_encode( $body ),
+);
+$result                  = $provider->confirm_verification( 'sdk_session_123', $context );
+
+trustgate_assert_same( true, $result['verified'], 'The safe HTTP request returns a verified result.' );
+trustgate_assert_same(
+	'https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/sdk_session_123/',
+	$trustgate_test_request['url'],
+	'A saved legacy endpoint override cannot change the request destination.'
+);
+trustgate_assert_same( 'application/json', $trustgate_test_request['args']['headers']['Accept'], 'The request accepts JSON.' );
+trustgate_assert_same( 20, $trustgate_test_request['args']['timeout'], 'The request uses the expected timeout.' );
 
 $fixture = $body;
 unset( $fixture['data']['widget_config'] );

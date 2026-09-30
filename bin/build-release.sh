@@ -14,6 +14,7 @@ mkdir -p "$PACKAGE_DIR"
 rsync -a \
 	--exclude '.git/' \
 	--exclude '.github/' \
+	--exclude '.wordpress-org/' \
 	--exclude '.editorconfig' \
 	--exclude '.gitignore' \
 	--exclude 'bin/' \

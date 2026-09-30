@@ -6,7 +6,7 @@
 - Add explicit registrant consent before identity verification begins.
 - Add WordPress privacy policy guidance and personal data export and erasure support.
 - Publish a complete Prembly external-service disclosure and current installation instructions.
-- Add provider response fixture tests and repeatable release packaging.
+- Add provider response and privacy integration tests with repeatable release packaging.
 
 ## 0.1.6
 
