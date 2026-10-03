@@ -78,7 +78,7 @@ final class PremblyProvider implements VerificationProvider {
 	 *
 	 * @param string               $reference Provider reference.
 	 * @param array<string, mixed> $context Verification context.
-	 * @return array{verified: bool, status: string, reference: string, raw?: array<string, mixed>}
+	 * @return array{verified: bool, status: string, reference: string, identity_hash?: string, raw?: array<string, mixed>}
 	 */
 	public function confirm_verification( string $reference, array $context = array() ): array {
 		$reference = sanitize_text_field( $reference );
@@ -107,7 +107,7 @@ final class PremblyProvider implements VerificationProvider {
 	 * @param string               $reference Verification reference.
 	 * @param array<string, mixed> $settings Plugin settings.
 	 * @param array<string, mixed> $context Verification context.
-	 * @return array{verified: bool, status: string, reference: string, raw?: array<string, mixed>}
+	 * @return array{verified: bool, status: string, reference: string, identity_hash?: string, raw?: array<string, mixed>}
 	 */
 	private function request_status( string $reference, array $settings, array $context ): array {
 		$url     = str_replace( '{id}', rawurlencode( $reference ), self::DEFAULT_STATUS_ENDPOINT );
@@ -148,7 +148,7 @@ final class PremblyProvider implements VerificationProvider {
 	 * @param string               $fallback_reference Fallback reference.
 	 * @param array<string, mixed> $settings Plugin settings.
 	 * @param array<string, mixed> $context Verification context.
-	 * @return array{verified: bool, status: string, reference: string, raw?: array<string, mixed>}
+	 * @return array{verified: bool, status: string, reference: string, identity_hash?: string, raw?: array<string, mixed>}
 	 */
 	private function normalize_status( array $body, string $fallback_reference, array $settings, array $context ): array {
 		$data                  = isset( $body['data'] ) && is_array( $body['data'] ) ? $body['data'] : array();
@@ -232,7 +232,13 @@ final class PremblyProvider implements VerificationProvider {
 		}
 
 		if ( in_array( $status, array( 'COMPLETED', 'VERIFIED', 'SUCCESS', 'SUCCESSFUL', 'APPROVED' ), true ) ) {
-			return $this->build_result( true, 'verified', $reference, $body );
+			$identity_hash = $this->build_identity_hash( $data );
+
+			if ( '' === $identity_hash ) {
+				return $this->build_result( false, 'identity_missing', $reference, $body );
+			}
+
+			return $this->build_result( true, 'verified', $reference, $body, $identity_hash );
 		}
 
 		if ( in_array( $status, array( 'CREATED', 'INITIATED', 'IN_PROGRESS', 'PENDING', 'PROCESSING' ), true ) ) {
@@ -280,15 +286,80 @@ final class PremblyProvider implements VerificationProvider {
 	}
 
 	/**
+	 * Build a site-specific fingerprint without retaining identity document data.
+	 *
+	 * @param array<string, mixed> $data Prembly session data.
+	 */
+	private function build_identity_hash( array $data ): string {
+		$addon_results     = isset( $data['addon_results'] ) && is_array( $data['addon_results'] ) ? $data['addon_results'] : array();
+		$document_response = isset( $addon_results['document_verification_response'] ) && is_array( $addon_results['document_verification_response'] ) ? $addon_results['document_verification_response'] : array();
+		$document_data     = isset( $document_response['data'] ) && is_array( $document_response['data'] ) ? $document_response['data'] : array();
+		$metadata          = isset( $data['metadata'] ) && is_array( $data['metadata'] ) ? $data['metadata'] : array();
+		$sdk_details       = isset( $metadata['sdk_verification_details'] ) && is_array( $metadata['sdk_verification_details'] ) ? $metadata['sdk_verification_details'] : array();
+		$document_details  = isset( $sdk_details['document'] ) && is_array( $sdk_details['document'] ) ? $sdk_details['document'] : array();
+		$document_payload  = isset( $document_details['payload'] ) && is_array( $document_details['payload'] ) ? $document_details['payload'] : array();
+		$document_number   = $this->normalize_identity_part(
+			$this->first_string(
+				array(
+					$document_data['document_number'] ?? null,
+					$document_data['documentNumber'] ?? null,
+					$document_data['id_number'] ?? null,
+				)
+			)
+		);
+		$document_type     = $this->normalize_identity_part(
+			$this->first_string(
+				array(
+					$document_data['document_type'] ?? null,
+					$document_data['documentType'] ?? null,
+					$document_payload['doc_type'] ?? null,
+				)
+			)
+		);
+		$document_country  = $this->normalize_identity_part(
+			$this->first_string(
+				array(
+					$document_data['document_country'] ?? null,
+					$document_data['documentCountry'] ?? null,
+					$document_data['issuing_country'] ?? null,
+					$document_payload['doc_country'] ?? null,
+				)
+			)
+		);
+
+		if ( '' === $document_number || '' === $document_type || '' === $document_country ) {
+			return '';
+		}
+
+		return hash_hmac(
+			'sha256',
+			implode( '|', array( $this->get_slug(), $document_country, $document_type, $document_number ) ),
+			wp_salt( 'auth' )
+		);
+	}
+
+	/**
+	 * Normalize an identity component before hashing it.
+	 *
+	 * @param string $value Identity component.
+	 */
+	private function normalize_identity_part( string $value ): string {
+		$normalized = preg_replace( '/[^A-Z0-9]/', '', strtoupper( trim( $value ) ) );
+
+		return is_string( $normalized ) ? $normalized : '';
+	}
+
+	/**
 	 * Build normalized result.
 	 *
 	 * @param bool                 $verified Whether verification is approved.
 	 * @param string               $status Normalized status.
 	 * @param string               $reference Verification reference.
 	 * @param array<string, mixed> $raw Raw response body.
-	 * @return array{verified: bool, status: string, reference: string, raw?: array<string, mixed>}
+	 * @param string               $identity_hash Site-specific identity fingerprint.
+	 * @return array{verified: bool, status: string, reference: string, identity_hash?: string, raw?: array<string, mixed>}
 	 */
-	private function build_result( bool $verified, string $status, string $reference, array $raw = array() ): array {
+	private function build_result( bool $verified, string $status, string $reference, array $raw = array(), string $identity_hash = '' ): array {
 		$result = array(
 			'verified'  => $verified,
 			'status'    => $status,
@@ -297,6 +368,10 @@ final class PremblyProvider implements VerificationProvider {
 
 		if ( array() !== $raw ) {
 			$result['raw'] = $raw;
+		}
+
+		if ( '' !== $identity_hash ) {
+			$result['identity_hash'] = $identity_hash;
 		}
 
 		return $result;

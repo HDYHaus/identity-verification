@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.9.6
+
+- Create the settings option directly on its first save so values remain stored after cache flushes and plugin deactivation.
+
+## 0.9.5
+
+- Preserve the internal settings-tab marker so fresh installations remain correct when WordPress sanitizes a new option twice.
+
+## 0.9.4
+
+- Fix the settings handler so WordPress sanitizes each submission exactly once and persists every field after reload.
+
+## 0.9.3
+
+- Fix saving provider activation and Prembly widget settings after a fresh installation.
+- Route settings updates through a nonce-protected TrustGate admin handler.
+
+## 0.9.2
+
+- Prevent one verified identity document from creating multiple WordPress accounts.
+- Retain only a site-specific one-way identity fingerprint after privacy erasure or account deletion.
+- Fail closed when a completed provider response lacks a stable document identity.
+
+## 0.9.1
+
+- Add a read-only TrustGate verification and consent record to WordPress user profile screens for administrators.
+- Show when privacy erasure has removed verification details while retaining replay protection.
+
 ## 0.9.0
 
 - Require a matching Prembly session ID, widget configuration, and end-user email before registration.

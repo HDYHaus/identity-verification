@@ -24,6 +24,9 @@ $trustgate_test_settings = array(
 	'provider_terms_url'   => 'https://provider.example/consent',
 );
 
+/** @var array<string, mixed> */
+$trustgate_test_options = array();
+
 final class TrustGateJsonResponse extends RuntimeException {
 	/**
 	 * Response payload.
@@ -66,10 +69,43 @@ function get_privacy_policy_url(): string { // phpcs:ignore WordPress.NamingConv
 }
 
 function get_option( string $option_name, mixed $default = false ): mixed { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
-	unset( $option_name );
-	global $trustgate_test_settings;
+	global $trustgate_test_options, $trustgate_test_settings;
 
-	return array() !== $trustgate_test_settings ? $trustgate_test_settings : $default;
+	if ( 'trustgate_settings' === $option_name ) {
+		return $trustgate_test_settings;
+	}
+
+	return $trustgate_test_options[ $option_name ] ?? $default;
+}
+
+function add_option( string $option_name, mixed $value, string $deprecated = '', bool $autoload = true ): bool { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	unset( $deprecated, $autoload );
+	global $trustgate_test_options;
+
+	if ( array_key_exists( $option_name, $trustgate_test_options ) ) {
+		return false;
+	}
+
+	$trustgate_test_options[ $option_name ] = $value;
+	return true;
+}
+
+function update_option( string $option_name, mixed $value, bool $autoload = true ): bool { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	unset( $autoload );
+	global $trustgate_test_options;
+	$trustgate_test_options[ $option_name ] = $value;
+	return true;
+}
+
+function delete_option( string $option_name ): bool { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	global $trustgate_test_options;
+
+	if ( ! array_key_exists( $option_name, $trustgate_test_options ) ) {
+		return false;
+	}
+
+	unset( $trustgate_test_options[ $option_name ] );
+	return true;
 }
 
 function sanitize_email( string $value ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
@@ -163,10 +199,11 @@ final class TrustGateTestProvider implements VerificationProvider {
 	public function confirm_verification( string $reference, array $context = array() ): array {
 		unset( $context );
 		return array(
-			'verified'  => true,
-			'status'    => 'verified',
-			'reference' => $reference,
-			'raw'       => array( 'sensitive' => 'must not be stored' ),
+			'verified'      => true,
+			'status'        => 'verified',
+			'reference'     => $reference,
+			'identity_hash' => hash( 'sha256', 'identity-1' ),
+			'raw'           => array( 'sensitive' => 'must not be stored' ),
 		);
 	}
 }
@@ -212,6 +249,7 @@ try {
 
 $attempt = $trustgate_test_transients[ $attempt_key ];
 trustgate_registration_assert_same( 'verified', $attempt['verification_status'] ?? '', 'The normalized status is preserved in the attempt.' );
+trustgate_registration_assert_same( hash( 'sha256', 'identity-1' ), $attempt['identity_hash'] ?? '', 'The identity fingerprint is preserved in the attempt.' );
 trustgate_registration_assert_same(
 	hash(
 		'sha256',
@@ -249,7 +287,31 @@ trustgate_registration_assert_same( 'verified', $trustgate_test_user_meta['trust
 trustgate_registration_assert_same( $attempt['consent_at'], $trustgate_test_user_meta['trustgate_consent_at'] ?? '', 'The accepted consent time is stored for the user.' );
 trustgate_registration_assert_same( $attempt['consent_text'], $trustgate_test_user_meta['trustgate_consent_text'] ?? '', 'The accepted consent wording is stored for the user.' );
 trustgate_registration_assert_same( $attempt['consent_version'], $trustgate_test_user_meta['trustgate_consent_version'] ?? '', 'The accepted consent version is stored for the user.' );
+trustgate_registration_assert_same( $attempt['identity_hash'], $trustgate_test_user_meta['trustgate_identity_hash'] ?? '', 'The identity fingerprint is stored for the user.' );
 trustgate_registration_assert_same( false, isset( $trustgate_test_user_meta['raw'] ), 'The raw provider response is not stored for the user.' );
 trustgate_registration_assert_same( false, isset( $trustgate_test_transients[ $attempt_key ] ), 'The completed attempt is deleted after registration.' );
+trustgate_registration_assert_same(
+	'user:42',
+	$trustgate_test_options[ RegistrationController::IDENTITY_OPTION_PREFIX . hash( 'sha256', 'identity-1' ) ] ?? '',
+	'The identity fingerprint becomes a permanent uniqueness record.'
+);
+
+$second_token       = 'second-attempt-token';
+$second_attempt_key = 'trustgate_attempt_' . hash( 'sha256', $second_token );
+$trustgate_test_transients[ $second_attempt_key ] = array( 'status' => 'issued' );
+$_POST = array(
+	'reference' => 'sdk_session_456',
+	'token'     => $second_token,
+	'email'     => 'other@example.com',
+	'firstName' => 'Maria',
+	'lastName'  => 'Job',
+	'consent'   => '1',
+);
+
+try {
+	$controller->confirm_verification();
+} catch ( TrustGateJsonResponse $response ) {
+	trustgate_registration_assert_same( 'identity_unavailable', $response->payload['status'] ?? '', 'The same identity cannot verify a second account.' );
+}
 
 fwrite( STDOUT, "Registration metadata tests passed.\n" );

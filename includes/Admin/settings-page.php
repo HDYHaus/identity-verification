@@ -57,8 +57,49 @@ final class SettingsPage {
 	public function register(): void {
 		add_action( 'admin_menu', array( $this, 'add_page' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_post_trustgate_registration_save', array( $this, 'save_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( TRUSTGATE_REGISTRATION_FILE ), array( $this, 'add_plugin_action_links' ) );
+	}
+
+	/**
+	 * Save TrustGate settings from the plugin admin page.
+	 */
+	public function save_settings(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You are not allowed to manage TrustGate settings.', 'trustgate-registration' ) );
+		}
+
+		check_admin_referer( 'trustgate_registration_save', 'trustgate_registration_nonce' );
+
+		$submitted = isset( $_POST[ $this->option_name ] ) && is_array( $_POST[ $this->option_name ] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- update_option applies the registered sanitizer.
+			? wp_unslash( $_POST[ $this->option_name ] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- update_option applies the registered sanitizer.
+			: array();
+
+		// Avoid update_option() falling through to add_option() and sanitizing a new value twice.
+		if ( null === get_option( $this->option_name, null ) ) {
+			add_option( $this->option_name, $submitted, '', false );
+		} else {
+			update_option( $this->option_name, $submitted, false );
+		}
+
+		$tabs = $this->get_tabs();
+		$tab  = isset( $submitted['settings_tab'] ) && is_string( $submitted['settings_tab'] )
+			? sanitize_key( $submitted['settings_tab'] )
+			: (string) array_key_first( $tabs );
+		$tab  = isset( $tabs[ $tab ] ) ? $tab : (string) array_key_first( $tabs );
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'                     => self::PAGE_SLUG,
+					'tab'                      => $tab,
+					'trustgate-settings-saved' => '1',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
 	}
 
 	/**
@@ -280,6 +321,8 @@ final class SettingsPage {
 			: '';
 
 		if ( 'registration' === $tab ) {
+			$clean['settings_tab'] = 'registration';
+
 			if ( array_key_exists( 'consent_text', $settings ) ) {
 					$consent_text = sanitize_textarea_field( (string) $settings['consent_text'] );
 
@@ -304,6 +347,8 @@ final class SettingsPage {
 		if ( null === $tab_provider ) {
 			return $clean;
 		}
+
+		$clean['settings_tab'] = $tab;
 
 		if ( array_key_exists( 'provider', $settings ) ) {
 			$submitted_provider = is_string( $settings['provider'] ) ? sanitize_key( $settings['provider'] ) : '';
@@ -568,10 +613,15 @@ final class SettingsPage {
 
 			<?php $this->render_status_notice( $tab, $active_provider ); ?>
 
-			<form method="post" action="options.php" class="trustgate-admin__form">
+			<?php if ( isset( $_GET['trustgate-settings-saved'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['trustgate-settings-saved'] ) ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Settings saved.', 'trustgate-registration' ); ?></p></div>
+			<?php endif; ?>
+
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="trustgate-admin__form">
 				<?php
-				settings_fields( 'trustgate_registration' );
+				wp_nonce_field( 'trustgate_registration_save', 'trustgate_registration_nonce' );
 				?>
+				<input type="hidden" name="action" value="trustgate_registration_save" />
 				<input type="hidden" name="<?php echo esc_attr( $this->option_name ); ?>[settings_tab]" value="<?php echo esc_attr( $tab ); ?>" />
 				<?php
 				do_settings_sections( self::PAGE_SLUG . '-' . $tab );

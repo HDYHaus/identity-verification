@@ -132,4 +132,27 @@ $fallback = $page->sanitize_settings(
 
 trustgate_settings_assert_same( RegistrationController::get_default_consent_text(), $fallback['consent_text'], 'A blank consent message falls back to the safe default.' );
 
+$prembly = $page->sanitize_settings(
+	array(
+		'settings_tab'         => 'prembly',
+		'provider'             => 'prembly',
+		'mode'                 => 'live',
+		'test_public_key'      => 'wdgt_test',
+		'test_configuration_id' => 'config_test',
+		'live_public_key'      => 'wdgt_live',
+		'live_configuration_id' => 'config_live',
+	)
+);
+
+trustgate_settings_assert_same( 'prembly', $prembly['provider'], 'Checking Enable Prembly activates the provider.' );
+trustgate_settings_assert_same( 'live', $prembly['mode'], 'The selected environment is saved.' );
+trustgate_settings_assert_same( 'wdgt_test', $prembly['test_public_key'], 'The Sandbox Widget Key is saved.' );
+trustgate_settings_assert_same( 'config_test', $prembly['test_configuration_id'], 'The Sandbox Configuration ID is saved.' );
+trustgate_settings_assert_same( 'wdgt_live', $prembly['live_public_key'], 'The Live Widget Key is saved.' );
+trustgate_settings_assert_same( 'config_live', $prembly['live_configuration_id'], 'The Live Configuration ID is saved.' );
+
+$prembly_second_pass = $page->sanitize_settings( $prembly );
+
+trustgate_settings_assert_same( $prembly, $prembly_second_pass, 'Prembly settings survive WordPress sanitizing a new option twice.' );
+
 fwrite( STDOUT, "Settings sanitization tests passed.\n" );

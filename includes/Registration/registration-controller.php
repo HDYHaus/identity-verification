@@ -31,6 +31,11 @@ final class RegistrationController {
 	private const REFERENCE_TTL = DAY_IN_SECONDS;
 
 	/**
+	 * Prefix for permanent identity uniqueness records.
+	 */
+	public const IDENTITY_OPTION_PREFIX = 'trustgate_identity_';
+
+	/**
 	 * Default provider privacy-policy URL.
 	 */
 	public const DEFAULT_PROVIDER_PRIVACY_URL = 'https://prembly.com/Policy';
@@ -113,13 +118,14 @@ final class RegistrationController {
 				'nonce'    => wp_create_nonce( 'trustgate_registration' ),
 				'provider' => $this->provider->get_public_config(),
 				'i18n'     => array(
-					'verify'   => __( 'Verify Identity', 'trustgate-registration' ),
-					'verified' => __( 'Identity verified. You can finish registration.', 'trustgate-registration' ),
-					'failed'   => __( 'We could not confirm your identity verification. Please try again.', 'trustgate-registration' ),
-					'working'  => __( 'Checking verification...', 'trustgate-registration' ),
-					'invalid'  => __( 'Please enter your email, first name, and last name before verifying.', 'trustgate-registration' ),
-					'consent'  => __( 'Please confirm that you consent to identity verification.', 'trustgate-registration' ),
-					'unready'  => __( 'Identity verification is not configured yet.', 'trustgate-registration' ),
+					'verify'            => __( 'Verify Identity', 'trustgate-registration' ),
+					'verified'          => __( 'Identity verified. You can finish registration.', 'trustgate-registration' ),
+					'failed'            => __( 'We could not confirm your identity verification. Please try again.', 'trustgate-registration' ),
+					'working'           => __( 'Checking verification...', 'trustgate-registration' ),
+					'invalid'           => __( 'Please enter your email, first name, and last name before verifying.', 'trustgate-registration' ),
+					'consent'           => __( 'Please confirm that you consent to identity verification.', 'trustgate-registration' ),
+					'unready'           => __( 'Identity verification is not configured yet.', 'trustgate-registration' ),
+					'duplicateIdentity' => __( 'This identity is already associated with an account. Please sign in or contact the site administrator.', 'trustgate-registration' ),
 				),
 			)
 		);
@@ -338,9 +344,11 @@ final class RegistrationController {
 		update_user_meta( $user_id, 'trustgate_provider', $this->provider->get_slug() );
 		update_user_meta( $user_id, 'trustgate_reference', $reference );
 		update_user_meta( $user_id, 'trustgate_reference_hash', hash( 'sha256', $reference ) );
+		update_user_meta( $user_id, 'trustgate_identity_hash', (string) $attempt['identity_hash'] );
 		update_user_meta( $user_id, 'trustgate_consent_at', (string) ( $attempt['consent_at'] ?? gmdate( 'c' ) ) );
 		update_user_meta( $user_id, 'trustgate_consent_text', (string) ( $attempt['consent_text'] ?? $this->get_consent_text() ) );
 		update_user_meta( $user_id, 'trustgate_consent_version', (string) ( $attempt['consent_version'] ?? $this->get_consent_version() ) );
+		$this->finalize_identity( (string) $attempt['identity_hash'], $token, $user_id );
 
 		delete_transient( $this->get_attempt_key( $token ) );
 	}
@@ -387,8 +395,27 @@ final class RegistrationController {
 		}
 
 		$verified_reference = sanitize_text_field( (string) $result['reference'] );
+		$identity_hash      = isset( $result['identity_hash'] ) ? sanitize_text_field( (string) $result['identity_hash'] ) : '';
 		$reservation_key    = $this->get_reference_key( $verified_reference );
 		$reservation        = get_transient( $reservation_key );
+
+		if ( 1 !== preg_match( '/^[a-f0-9]{64}$/', $identity_hash ) ) {
+			wp_send_json_error(
+				array(
+					'status' => 'identity_missing',
+				),
+				400
+			);
+		}
+
+		if ( ! $this->reserve_identity( $identity_hash, $token ) ) {
+			wp_send_json_error(
+				array(
+					'status' => 'identity_unavailable',
+				),
+				409
+			);
+		}
 
 		if (
 			$this->is_registered_reference( $verified_reference ) ||
@@ -412,6 +439,7 @@ final class RegistrationController {
 				'email_hash'          => $this->hash_email( $email ),
 				'first_name_hash'     => $this->hash_name( $first_name ),
 				'last_name_hash'      => $this->hash_name( $last_name ),
+				'identity_hash'       => $identity_hash,
 				'consent_at'          => gmdate( 'c' ),
 				'consent_text'        => $this->get_consent_text(),
 				'consent_version'     => $this->get_consent_version(),
@@ -548,11 +576,12 @@ final class RegistrationController {
 		if (
 			'verified' !== ( $attempt['status'] ?? '' ) ||
 			'' === $reference ||
-			! isset( $attempt['reference'], $attempt['email_hash'], $attempt['first_name_hash'], $attempt['last_name_hash'] ) ||
+			! isset( $attempt['reference'], $attempt['email_hash'], $attempt['first_name_hash'], $attempt['last_name_hash'], $attempt['identity_hash'] ) ||
 			! hash_equals( $attempt['reference'], $reference ) ||
 			! hash_equals( $attempt['email_hash'], $this->hash_email( $email ) ) ||
 			! hash_equals( $attempt['first_name_hash'], $this->hash_name( $first_name ) ) ||
-			! hash_equals( $attempt['last_name_hash'], $this->hash_name( $last_name ) )
+			! hash_equals( $attempt['last_name_hash'], $this->hash_name( $last_name ) ) ||
+			! $this->identity_reservation_matches( $attempt['identity_hash'], $token )
 		) {
 			return false;
 		}
@@ -608,6 +637,75 @@ final class RegistrationController {
 	 */
 	private function get_reference_key( string $reference ): string {
 		return 'trustgate_reference_' . hash( 'sha256', $reference );
+	}
+
+	/**
+	 * Reserve an identity fingerprint for one registration attempt.
+	 *
+	 * @param string $identity_hash Site-specific identity fingerprint.
+	 * @param string $token Registration attempt token.
+	 */
+	private function reserve_identity( string $identity_hash, string $token ): bool {
+		$option_name = self::IDENTITY_OPTION_PREFIX . $identity_hash;
+		$value       = get_option( $option_name, '' );
+
+		if ( '' === $value || false === $value ) {
+			return add_option( $option_name, $this->build_identity_reservation( $token ), '', false );
+		}
+
+		if ( $this->identity_reservation_matches( $identity_hash, $token ) ) {
+			return true;
+		}
+
+		$parts = is_string( $value ) ? explode( ':', $value, 3 ) : array();
+
+		if ( 3 === count( $parts ) && 'reserved' === $parts[0] && (int) $parts[2] < time() ) {
+			delete_option( $option_name );
+
+			return add_option( $option_name, $this->build_identity_reservation( $token ), '', false );
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check whether an identity reservation belongs to an attempt.
+	 *
+	 * @param string $identity_hash Site-specific identity fingerprint.
+	 * @param string $token Registration attempt token.
+	 */
+	private function identity_reservation_matches( string $identity_hash, string $token ): bool {
+		$value = get_option( self::IDENTITY_OPTION_PREFIX . $identity_hash, '' );
+		$parts = is_string( $value ) ? explode( ':', $value, 3 ) : array();
+
+		return 3 === count( $parts )
+			&& 'reserved' === $parts[0]
+			&& hash_equals( $parts[1], hash( 'sha256', $token ) )
+			&& (int) $parts[2] >= time();
+	}
+
+	/**
+	 * Convert an attempt reservation into a permanent uniqueness record.
+	 *
+	 * @param string $identity_hash Site-specific identity fingerprint.
+	 * @param string $token Registration attempt token.
+	 * @param int    $user_id Registered user ID.
+	 */
+	private function finalize_identity( string $identity_hash, string $token, int $user_id ): void {
+		if ( ! $this->identity_reservation_matches( $identity_hash, $token ) ) {
+			return;
+		}
+
+		update_option( self::IDENTITY_OPTION_PREFIX . $identity_hash, 'user:' . $user_id, false );
+	}
+
+	/**
+	 * Build an expiring identity reservation value.
+	 *
+	 * @param string $token Registration attempt token.
+	 */
+	private function build_identity_reservation( string $token ): string {
+		return sprintf( 'reserved:%s:%d', hash( 'sha256', $token ), time() + self::ATTEMPT_TTL );
 	}
 
 	/**

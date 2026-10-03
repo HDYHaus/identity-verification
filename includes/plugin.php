@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace HDYHaus\TrustGateRegistration;
 
 use HDYHaus\TrustGateRegistration\Admin\SettingsPage;
+use HDYHaus\TrustGateRegistration\Admin\UserVerificationProfile;
 use HDYHaus\TrustGateRegistration\Providers\PremblyProvider;
 use HDYHaus\TrustGateRegistration\Providers\ProviderRegistry;
 use HDYHaus\TrustGateRegistration\Privacy\Privacy;
@@ -34,6 +35,9 @@ final class Plugin {
 	public function register(): void {
 		$privacy = new Privacy( self::OPTION_NAME );
 		$privacy->register();
+
+		$user_profile = new UserVerificationProfile();
+		$user_profile->register();
 
 		$providers = apply_filters(
 			'trustgate_registration_providers',

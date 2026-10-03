@@ -20,6 +20,7 @@ $trustgate_test_user_meta = array(
 	'trustgate_provider'            => 'prembly',
 	'trustgate_reference'           => 'sdk_session_123',
 	'trustgate_reference_hash'      => 'one-way-hash',
+	'trustgate_identity_hash'       => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
 	'trustgate_consent_at'          => '2026-09-30 11:59:00',
 	'trustgate_consent_text'        => 'I consent to identity verification.',
 	'trustgate_consent_version'     => '2026-09-30',
@@ -33,6 +34,9 @@ $trustgate_test_settings = array(
 );
 
 $trustgate_test_policy_content = '';
+
+/** @var array<string, mixed> */
+$trustgate_test_options = array();
 
 function __( string $text ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	return $text;
@@ -117,10 +121,18 @@ function delete_user_meta( int $user_id, string $key ): bool { // phpcs:ignore W
 	return true;
 }
 
+function update_option( string $option_name, mixed $value, bool $autoload = true ): bool { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	unset( $autoload );
+	global $trustgate_test_options;
+	$trustgate_test_options[ $option_name ] = $value;
+	return true;
+}
+
 require_once dirname( __DIR__ ) . '/includes/Registration/registration-controller.php';
 require_once dirname( __DIR__ ) . '/includes/Privacy/privacy.php';
 
 use HDYHaus\TrustGateRegistration\Privacy\Privacy;
+use HDYHaus\TrustGateRegistration\Registration\RegistrationController;
 
 /**
  * Fail the test run when an assertion does not match.
@@ -143,6 +155,7 @@ $privacy->register();
 $privacy->add_policy_content();
 
 trustgate_privacy_assert_same( true, isset( $trustgate_test_hooks['admin_init'] ), 'Privacy policy guidance is registered.' );
+trustgate_privacy_assert_same( true, isset( $trustgate_test_hooks['delete_user'] ), 'Identity retention is registered for account deletion.' );
 trustgate_privacy_assert_same( true, isset( $trustgate_test_hooks['wp_privacy_personal_data_exporters'] ), 'The exporter is registered.' );
 trustgate_privacy_assert_same( true, isset( $trustgate_test_hooks['wp_privacy_personal_data_erasers'] ), 'The eraser is registered.' );
 trustgate_privacy_assert_same( true, str_contains( $trustgate_test_policy_content, 'I agree to the configured identity check.' ), 'Privacy guidance includes the configured consent wording.' );
@@ -152,16 +165,36 @@ trustgate_privacy_assert_same( false, str_contains( $trustgate_test_policy_conte
 $export = $privacy->export_user_data( 'person@example.com' );
 trustgate_privacy_assert_same( true, $export['done'], 'The exporter completes in one page.' );
 trustgate_privacy_assert_same( 'trustgate-registration', $export['data'][0]['group_id'], 'The export uses the TrustGate group.' );
-trustgate_privacy_assert_same( 9, count( $export['data'][0]['data'] ), 'Every stored verification field is exported.' );
+trustgate_privacy_assert_same( 10, count( $export['data'][0]['data'] ), 'Every stored verification field is exported.' );
 
 $erasure = $privacy->erase_user_data( 'person@example.com' );
 trustgate_privacy_assert_same( true, $erasure['items_removed'], 'Erasable verification fields are removed.' );
 trustgate_privacy_assert_same( true, $erasure['items_retained'], 'The replay-prevention hash is retained.' );
-trustgate_privacy_assert_same( 1, count( $erasure['messages'] ), 'The retained hash is disclosed to the requester.' );
-trustgate_privacy_assert_same( array( 'trustgate_reference_hash' => 'one-way-hash' ), $trustgate_test_user_meta, 'Only the one-way hash remains.' );
+trustgate_privacy_assert_same( 2, count( $erasure['messages'] ), 'Both retained hashes are disclosed to the requester.' );
+trustgate_privacy_assert_same(
+	array(
+		'trustgate_reference_hash' => 'one-way-hash',
+		'trustgate_identity_hash'  => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+	),
+	$trustgate_test_user_meta,
+	'Only one-way hashes remain.'
+);
+trustgate_privacy_assert_same(
+	'retained',
+	$trustgate_test_options[ RegistrationController::IDENTITY_OPTION_PREFIX . $trustgate_test_user_meta['trustgate_identity_hash'] ] ?? '',
+	'Privacy erasure removes the user link from the permanent identity record.'
+);
 
 $export_after_erasure = $privacy->export_user_data( 'person@example.com' );
-trustgate_privacy_assert_same( 1, count( $export_after_erasure['data'][0]['data'] ), 'The retained hash remains exportable.' );
+trustgate_privacy_assert_same( 2, count( $export_after_erasure['data'][0]['data'] ), 'The retained hashes remain exportable.' );
+
+$trustgate_test_user_meta['trustgate_identity_hash'] = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+$privacy->retain_identity_after_user_deletion( 42 );
+trustgate_privacy_assert_same(
+	'retained',
+	$trustgate_test_options[ RegistrationController::IDENTITY_OPTION_PREFIX . $trustgate_test_user_meta['trustgate_identity_hash'] ] ?? '',
+	'Account deletion retains an anonymous identity uniqueness record.'
+);
 
 $missing_user = $privacy->export_user_data( 'missing@example.com' );
 trustgate_privacy_assert_same( array(), $missing_user['data'], 'An unknown email exports no data.' );

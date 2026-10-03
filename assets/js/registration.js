@@ -37,6 +37,12 @@
 				const detail = config.provider && config.provider.isTest && data.status ? ' (' + data.status + ')' : '';
 
 				$( '#trustgate_reference' ).val( '' );
+
+				if ( 'identity_unavailable' === data.status ) {
+					setStatus( config.i18n.duplicateIdentity, 'failed' );
+					return;
+				}
+
 				setStatus( config.i18n.failed + detail, 'failed' );
 			} );
 	}

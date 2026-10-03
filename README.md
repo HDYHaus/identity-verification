@@ -12,7 +12,7 @@ TrustGate Registration is a WordPress plugin for verified account registration. 
 
 ## Current Status
 
-Version 0.9.0 is the WordPress.org release candidate. The plugin includes the settings interface, native registration hooks, provider registry, Prembly widget integration, fail-closed server-side session confirmation, explicit registrant consent, replay protection, and WordPress privacy tool integration.
+Version 0.9.6 is the WordPress.org release candidate. The plugin includes the settings interface, native registration hooks, provider registry, Prembly widget integration, fail-closed server-side session confirmation, explicit registrant consent, session and identity replay protection, WordPress privacy tool integration, and read-only verification details on administrator user-profile screens.
 
 Sandbox and Production flows have both completed end-to-end smoke tests on the HTTPS development site. Prembly completed document verification, WordPress created the verified Subscriber account, a submission without verification was blocked, and the configured post-registration redirect displayed the email activation instructions. See [the release checklist](docs/release-checklist.md) for the remaining clean-install and compatibility checks before a public 1.0 release.
 
@@ -35,7 +35,7 @@ See [Prembly setup](docs/prembly-setup.md) for the recommended sandbox widget co
 
 ## Verification Data
 
-For a successfully created account, TrustGate stores the normalized verification status, verification time, provider slug, Prembly session reference, a one-way replay-prevention hash, and the accepted consent time, wording, and disclosure-version fingerprint as WordPress user metadata. It does not copy identity documents, selfies, biometric information, raw Prembly responses, or detailed provider reports into WordPress. The metadata is available through WordPress personal data export and erasure tools; erasure retains only the one-way reference hash to prevent reuse of a completed verification.
+For a successfully created account, TrustGate stores the normalized verification status, verification time, provider slug, Prembly session reference, site-specific one-way session and identity hashes, and the accepted consent time, wording, and disclosure-version fingerprint as WordPress metadata. The identity hash is derived with a site secret from the verified document country, type, and number; the underlying document data is never stored. TrustGate does not copy identity documents, document numbers, selfies, biometric information, raw Prembly responses, or detailed provider reports into WordPress. The metadata is available through WordPress personal data export and erasure tools; one-way hashes are retained after privacy erasure or account deletion to prevent reuse of a completed verification or identity.
 
 ## Provider Adapters
 

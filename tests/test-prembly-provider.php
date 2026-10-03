@@ -21,6 +21,11 @@ function sanitize_email( string $value ): string { // phpcs:ignore WordPress.Nam
 	return filter_var( $value, FILTER_SANITIZE_EMAIL );
 }
 
+function wp_salt( string $scheme = 'auth' ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	unset( $scheme );
+	return 'site-specific-test-salt';
+}
+
 /** @var array<string, mixed> */
 $trustgate_test_settings = array();
 
@@ -106,6 +111,24 @@ $body     = array(
 		'status'         => 'COMPLETED',
 		'end_user_email' => 'person@example.com',
 		'widget_config'  => array( 'id' => 'config_123' ),
+		'addon_results'  => array(
+			'document_verification_response' => array(
+				'data' => array(
+					'document_number' => 'A-123 456',
+					'document_type'   => 'Passport',
+				),
+			),
+		),
+		'metadata'       => array(
+			'sdk_verification_details' => array(
+				'document' => array(
+					'payload' => array(
+						'doc_type'    => 'Passport',
+						'doc_country' => 'ALB',
+					),
+				),
+			),
+		),
 	),
 );
 
@@ -126,6 +149,11 @@ function trustgate_normalize_fixture( array $fixture, array $fixture_settings, a
 $result = trustgate_normalize_fixture( $body, $settings, $context );
 trustgate_assert_same( true, $result['verified'], 'A bound completed session is verified.' );
 trustgate_assert_same( 'verified', $result['status'], 'A successful response has normalized status.' );
+trustgate_assert_same(
+	hash_hmac( 'sha256', 'prembly|ALB|PASSPORT|A123456', 'site-specific-test-salt' ),
+	$result['identity_hash'] ?? '',
+	'A successful document check returns only a site-specific identity fingerprint.'
+);
 
 $trustgate_test_settings = $settings + array(
 	'status_endpoint' => 'https://example.com/unsafe/{id}',
@@ -168,5 +196,9 @@ trustgate_assert_same( 'reference_mismatch', trustgate_normalize_fixture( $fixtu
 $fixture                   = $body;
 $fixture['data']['status'] = 'FAILED';
 trustgate_assert_same( 'not_verified', trustgate_normalize_fixture( $fixture, $settings, $context )['status'], 'A failed session is rejected.' );
+
+$fixture = $body;
+unset( $fixture['data']['addon_results']['document_verification_response']['data']['document_number'] );
+trustgate_assert_same( 'identity_missing', trustgate_normalize_fixture( $fixture, $settings, $context )['status'], 'A completed session without a stable document identity fails closed.' );
 
 fwrite( STDOUT, "Prembly provider tests passed.\n" );

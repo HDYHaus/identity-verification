@@ -4,7 +4,7 @@ Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.0
+Stable tag: 0.9.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,7 @@ TrustGate is a verification gate, not a membership suite. It does not replace th
 * Confirms the result server-side before allowing account creation.
 * Binds each verification to the submitted email, configured widget, and one-time registration attempt.
 * Prevents a completed verification session from being reused for another account.
+* Prevents the same verified identity document from creating another account, even after account deletion.
 * Keeps Sandbox and Live Prembly credentials separate.
 * Supports an optional same-site success redirect with email activation instructions.
 * Lets site owners customize the plain-text consent message and provider policy links.
@@ -37,7 +38,7 @@ This plugin connects to Prembly, an external identity verification service, when
 
 The Prembly browser SDK is loaded from `https://js.prembly.com/v1/inline/widget-v3.js` on the default WordPress registration page. When a registrant selects Verify Identity, TrustGate sends their first name, last name, email address, a temporary user reference, the configured Widget Key, and Configuration ID to Prembly. Prembly's verification interface may collect identity document images, selfies, biometric information, device information, and IP-derived location information according to the checks selected by the site administrator.
 
-After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. TrustGate uses that response to confirm the session status, email address, widget configuration, and session ID. The complete Prembly report remains available in the site owner's Prembly dashboard; TrustGate stores only normalized verification metadata in WordPress.
+After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. TrustGate uses that response to confirm the session status, email address, widget configuration, session ID, and verified document identity. The complete Prembly report remains available in the site owner's Prembly dashboard; TrustGate stores only normalized verification metadata and site-specific one-way fingerprints in WordPress.
 
 This service is provided by Prembly Inc:
 
@@ -64,7 +65,7 @@ No Prembly Secret API Key, Organisation ID, or App ID is required for the SDK se
 
 = Does TrustGate replace the WordPress registration form? =
 
-No. Version 0.9.0 integrates with the default WordPress registration screen. It does not currently add verification to WooCommerce, BuddyPress, MemberPress, Ultimate Member, or other custom registration forms.
+No. Version 0.9.6 integrates with the default WordPress registration screen. It does not currently add verification to WooCommerce, BuddyPress, MemberPress, Ultimate Member, or other custom registration forms.
 
 = What happens when Prembly is disabled? =
 
@@ -80,11 +81,15 @@ No. This integration uses Prembly's Widget Key and Configuration ID in the brows
 
 = Does TrustGate store identity documents or selfies in WordPress? =
 
-No. For a successfully created account, TrustGate stores whether verification succeeded, the normalized verification status, verification time, provider slug, Prembly session reference, a one-way replay-prevention hash, and the accepted consent time, wording, and version as user metadata. Documents, selfies, biometric information, raw Prembly responses, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
+No. For a successfully created account, TrustGate stores whether verification succeeded, the normalized verification status, verification time, provider slug, Prembly session reference, site-specific one-way session and identity hashes, and the accepted consent time, wording, and version. Documents, document numbers, selfies, biometric information, raw Prembly responses, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
+
+= Can the same verified person create more than one account? =
+
+No. TrustGate derives a site-specific one-way fingerprint from the verified document country, type, and number returned by Prembly. It never stores the document number. The fingerprint is retained after privacy erasure or account deletion so the same identity cannot register again.
 
 = Can verification metadata be exported or erased? =
 
-Yes. TrustGate integrates with **Tools > Export Personal Data** and **Tools > Erase Personal Data**. Erasure retains only a one-way session-reference hash to prevent reuse of a completed verification. Site owners should establish an appropriate retention policy and confirm any separate deletion obligations in Prembly.
+Yes. TrustGate integrates with **Tools > Export Personal Data** and **Tools > Erase Personal Data**. Erasure retains one-way session-reference and identity hashes to prevent reuse of a completed verification or identity. Site owners should establish an appropriate retention policy and confirm any separate deletion obligations in Prembly.
 
 = Can I change the consent wording and provider links? =
 
@@ -99,6 +104,34 @@ No plugin can guarantee legal or regulatory compliance. TrustGate provides an id
 1. TrustGate adds identity verification fields, explicit consent, and a verification action to the native WordPress registration screen.
 
 == Changelog ==
+
+= 0.9.6 =
+
+* Create the settings option directly on its first save so values remain stored after cache flushes and plugin deactivation.
+
+= 0.9.5 =
+
+* Preserve the internal settings-tab marker so fresh installations remain correct when WordPress sanitizes a new option twice.
+
+= 0.9.4 =
+
+* Fix the settings handler so WordPress sanitizes each submission exactly once and persists every field after reload.
+
+= 0.9.3 =
+
+* Fix saving provider activation and Prembly widget settings after a fresh installation.
+* Route settings updates through a nonce-protected TrustGate admin handler.
+
+= 0.9.2 =
+
+* Prevent one verified identity document from creating multiple WordPress accounts.
+* Retain only a site-specific one-way identity fingerprint after privacy erasure or account deletion.
+* Fail closed when a completed provider response lacks a stable document identity.
+
+= 0.9.1 =
+
+* Add a read-only TrustGate verification and consent record to WordPress user profile screens for administrators.
+* Show when privacy erasure has removed verification details while retaining replay protection.
 
 = 0.9.0 =
 

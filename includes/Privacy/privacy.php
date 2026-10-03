@@ -40,6 +40,7 @@ final class Privacy {
 	 */
 	public function register(): void {
 		add_action( 'admin_init', array( $this, 'add_policy_content' ) );
+		add_action( 'delete_user', array( $this, 'retain_identity_after_user_deletion' ) );
 		add_filter( 'wp_privacy_personal_data_exporters', array( $this, 'register_exporter' ) );
 		add_filter( 'wp_privacy_personal_data_erasers', array( $this, 'register_eraser' ) );
 	}
@@ -61,7 +62,7 @@ final class Privacy {
 
 		$content  = '<p>' . esc_html__( 'When identity verification is enabled, the registrant\'s name and email address are sent to Prembly when the registrant starts verification. Prembly may then collect and process identity document images, selfies, biometric information, device information, and IP-derived location information to perform the checks configured by the site owner.', 'trustgate-registration' ) . '</p>';
 		$content .= '<p>' . esc_html__( 'The registration form requires agreement to this statement:', 'trustgate-registration' ) . ' &ldquo;' . esc_html( $consent ) . '&rdquo;</p>';
-		$content .= '<p>' . esc_html__( 'This site stores whether verification succeeded, the normalized verification status, the verification provider, the provider session reference, a one-way reference hash, the verification time, and the consent time, wording, and version in the registered user\'s account metadata. The one-way hash may be retained after a privacy erasure request to prevent reuse of a completed verification. The site owner determines how long other information is retained.', 'trustgate-registration' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'This site stores whether verification succeeded, the normalized verification status, the verification provider, the provider session reference, one-way reference and identity hashes, the verification time, and the consent time, wording, and version. The one-way hashes may be retained after privacy erasure or account deletion to prevent reuse of a completed verification or identity. The site owner determines how long other information is retained.', 'trustgate-registration' ) . '</p>';
 
 		$links = array();
 
@@ -166,7 +167,7 @@ final class Privacy {
 		$messages       = array();
 
 		if ( $user ) {
-			$keys = array_diff( array_keys( $this->get_meta_labels() ), array( 'trustgate_reference_hash' ) );
+			$keys = array_diff( array_keys( $this->get_meta_labels() ), array( 'trustgate_reference_hash', 'trustgate_identity_hash' ) );
 
 			foreach ( $keys as $key ) {
 				$items_removed = delete_user_meta( $user->ID, $key ) || $items_removed;
@@ -177,6 +178,14 @@ final class Privacy {
 			if ( $items_retained ) {
 				$messages[] = __( 'A one-way verification reference hash was retained to prevent a completed verification from being reused.', 'trustgate-registration' );
 			}
+
+			$identity_hash = (string) get_user_meta( $user->ID, 'trustgate_identity_hash', true );
+
+			if ( '' !== $identity_hash ) {
+				$items_retained = true;
+				$messages[]     = __( 'A one-way identity hash was retained to prevent the same verified identity from creating another account.', 'trustgate-registration' );
+				update_option( RegistrationController::IDENTITY_OPTION_PREFIX . $identity_hash, 'retained', false );
+			}
 		}
 
 		return array(
@@ -185,6 +194,21 @@ final class Privacy {
 			'messages'       => $messages,
 			'done'           => true,
 		);
+	}
+
+	/**
+	 * Remove the user link while retaining identity uniqueness after deletion.
+	 *
+	 * @param int $user_id User being deleted.
+	 */
+	public function retain_identity_after_user_deletion( int $user_id ): void {
+		$identity_hash = (string) get_user_meta( $user_id, 'trustgate_identity_hash', true );
+
+		if ( 1 !== preg_match( '/^[a-f0-9]{64}$/', $identity_hash ) ) {
+			return;
+		}
+
+		update_option( RegistrationController::IDENTITY_OPTION_PREFIX . $identity_hash, 'retained', false );
 	}
 
 	/**
@@ -200,6 +224,7 @@ final class Privacy {
 			'trustgate_provider'            => __( 'Verification provider', 'trustgate-registration' ),
 			'trustgate_reference'           => __( 'Verification reference', 'trustgate-registration' ),
 			'trustgate_reference_hash'      => __( 'Verification reference hash', 'trustgate-registration' ),
+			'trustgate_identity_hash'       => __( 'Identity uniqueness hash', 'trustgate-registration' ),
 			'trustgate_consent_at'          => __( 'Verification consent time', 'trustgate-registration' ),
 			'trustgate_consent_text'        => __( 'Verification consent wording', 'trustgate-registration' ),
 			'trustgate_consent_version'     => __( 'Verification consent version', 'trustgate-registration' ),

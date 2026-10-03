@@ -21,12 +21,14 @@
       "@test:provider",
       "@test:settings",
       "@test:registration",
-      "@test:privacy"
+      "@test:privacy",
+      "@test:user-profile"
     ],
     "test:provider": "php tests/test-prembly-provider.php",
     "test:settings": "php tests/test-settings-page.php",
     "test:registration": "php tests/test-registration-controller.php",
-    "test:privacy": "php tests/test-privacy.php"
+    "test:privacy": "php tests/test-privacy.php",
+    "test:user-profile": "php tests/test-user-verification-profile.php"
   },
   "config": {
     "allow-plugins": {
