@@ -22,6 +22,7 @@ $trustgate_test_settings = array(
 	'consent_text'         => 'I agree to identity verification for this registration.',
 	'provider_privacy_url' => 'https://provider.example/privacy',
 	'provider_terms_url'   => 'https://provider.example/consent',
+	'site_terms_url'       => 'https://site.example/terms',
 );
 
 /** @var array<string, mixed> */
@@ -66,6 +67,18 @@ function esc_url_raw( string $value ): string { // phpcs:ignore WordPress.Naming
 
 function get_privacy_policy_url(): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	return 'https://site.example/privacy';
+}
+
+function get_post( int $page_id ): ?object {
+	return match ( $page_id ) {
+		12 => (object) array( 'post_type' => 'page', 'post_status' => 'publish' ),
+		13 => (object) array( 'post_type' => 'page', 'post_status' => 'draft' ),
+		default => null,
+	};
+}
+
+function get_permalink( int $page_id ): string {
+	return 'https://site.example/page-' . $page_id;
 }
 
 function get_option( string $option_name, mixed $default = false ): mixed { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
@@ -261,6 +274,7 @@ trustgate_registration_assert_same(
 				'https://provider.example/privacy',
 				'https://provider.example/consent',
 				'https://site.example/privacy',
+				'https://site.example/terms',
 			)
 		)
 	),
@@ -313,5 +327,17 @@ try {
 } catch ( TrustGateJsonResponse $response ) {
 	trustgate_registration_assert_same( 'identity_unavailable', $response->payload['status'] ?? '', 'The same identity cannot verify a second account.' );
 }
+
+$terms_method   = new ReflectionMethod( RegistrationController::class, 'get_site_terms_url' );
+$version_method = new ReflectionMethod( RegistrationController::class, 'get_consent_version' );
+$custom_version = $version_method->invoke( $controller );
+$trustgate_test_settings['site_terms_page_id'] = '12';
+trustgate_registration_assert_same( 'https://site.example/page-12', $terms_method->invoke( $controller ), 'The published page takes precedence over the custom URL.' );
+trustgate_registration_assert_same( false, $custom_version === $version_method->invoke( $controller ), 'Changing the website terms changes the consent fingerprint.' );
+$trustgate_test_settings['site_terms_page_id'] = '13';
+trustgate_registration_assert_same( 'https://site.example/terms', $terms_method->invoke( $controller ), 'An unpublished page is not linked; the custom URL is used.' );
+$trustgate_test_settings['site_terms_page_id'] = '0';
+$trustgate_test_settings['site_terms_url'] = '';
+trustgate_registration_assert_same( '', $terms_method->invoke( $controller ), 'No website terms link is supplied when neither source is configured.' );
 
 fwrite( STDOUT, "Registration metadata tests passed.\n" );

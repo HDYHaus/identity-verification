@@ -166,7 +166,11 @@ final class RegistrationController {
 				),
 				array(
 					'url'   => $privacy,
-					'label' => __( 'Site Privacy Policy', 'trustgate-registration' ),
+					'label' => __( 'Website Privacy Policy', 'trustgate-registration' ),
+				),
+				array(
+					'url'   => $this->get_site_terms_url(),
+					'label' => __( 'Website Terms / Disclaimer', 'trustgate-registration' ),
 				),
 			),
 			static fn ( array $link ): bool => '' !== $link['url']
@@ -503,6 +507,21 @@ final class RegistrationController {
 	}
 
 	/**
+	 * Resolve the website terms from a published page or a custom URL.
+	 */
+	private function get_site_terms_url(): string {
+		$settings = $this->get_settings();
+		$page_id  = (int) ( $settings['site_terms_page_id'] ?? 0 );
+		$page     = $page_id > 0 ? get_post( $page_id ) : null;
+
+		if ( $page && 'page' === $page->post_type && 'publish' === $page->post_status ) {
+			return (string) get_permalink( $page_id );
+		}
+
+		return $this->get_configured_url( 'site_terms_url', '' );
+	}
+
+	/**
 	 * Derive a stable version from the complete disclosure accepted by the user.
 	 */
 	private function get_consent_version(): string {
@@ -516,6 +535,7 @@ final class RegistrationController {
 					$this->get_provider_privacy_url(),
 					$this->get_provider_terms_url(),
 					get_privacy_policy_url(),
+					$this->get_site_terms_url(),
 				)
 			)
 		);

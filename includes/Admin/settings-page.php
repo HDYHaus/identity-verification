@@ -27,6 +27,11 @@ final class SettingsPage {
 	private const PAGE_SLUG = 'trustgate-registration';
 
 	/**
+	 * Global registration settings page slug.
+	 */
+	private const REGISTRATION_SLUG = 'trustgate-registration-flow';
+
+	/**
 	 * Option name.
 	 *
 	 * @var string
@@ -92,7 +97,7 @@ final class SettingsPage {
 		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'page'                     => self::PAGE_SLUG,
+					'page'                     => 'registration' === $tab ? self::REGISTRATION_SLUG : self::PAGE_SLUG,
 					'tab'                      => $tab,
 					'trustgate-settings-saved' => '1',
 				),
@@ -124,6 +129,15 @@ final class SettingsPage {
 			self::PAGE_SLUG,
 			array( $this, 'render' )
 		);
+
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'TrustGate Registration Settings', 'trustgate-registration' ),
+			__( 'Registration', 'trustgate-registration' ),
+			'manage_options',
+			self::REGISTRATION_SLUG,
+			array( $this, 'render' )
+		);
 	}
 
 	/**
@@ -150,7 +164,7 @@ final class SettingsPage {
 	 * @param string $hook_suffix Current admin page hook.
 	 */
 	public function enqueue_assets( string $hook_suffix ): void {
-		if ( 'toplevel_page_' . self::PAGE_SLUG !== $hook_suffix ) {
+		if ( ! in_array( $hook_suffix, array( 'toplevel_page_' . self::PAGE_SLUG, 'trustgate_page_' . self::REGISTRATION_SLUG ), true ) ) {
 			return;
 		}
 
@@ -267,8 +281,11 @@ final class SettingsPage {
 			'trustgate_registration_flow',
 			array(
 				'consent_text'         => __( 'Consent message', 'trustgate-registration' ),
-				'provider_privacy_url' => __( 'Provider Privacy Policy URL', 'trustgate-registration' ),
-				'provider_terms_url'   => __( 'Provider Terms / Consent URL', 'trustgate-registration' ),
+				'provider_privacy_url' => __( 'Verification Provider Privacy Policy URL', 'trustgate-registration' ),
+				'provider_terms_url'   => __( 'Verification Provider Terms / Consent URL', 'trustgate-registration' ),
+				'site_privacy_policy'  => __( 'Website Privacy Policy', 'trustgate-registration' ),
+				'site_terms_page_id'   => __( 'Website Terms / Disclaimer Page', 'trustgate-registration' ),
+				'site_terms_url'       => __( 'Website Terms / Disclaimer URL', 'trustgate-registration' ),
 				'success_redirect'     => __( 'Success Redirect URL', 'trustgate-registration' ),
 			)
 		);
@@ -297,7 +314,7 @@ final class SettingsPage {
 				array(
 					'key'           => $field,
 					'label'         => $label,
-					'label_for'     => $field_id,
+					'label_for'     => 'site_privacy_policy' === $field ? '' : $field_id,
 					'provider_slug' => $provider_slug,
 				)
 			);
@@ -329,10 +346,16 @@ final class SettingsPage {
 					$clean['consent_text'] = '' !== $consent_text ? $consent_text : RegistrationController::get_default_consent_text();
 			}
 
-			foreach ( array( 'provider_privacy_url', 'provider_terms_url' ) as $url_field ) {
+			foreach ( array( 'provider_privacy_url', 'provider_terms_url', 'site_terms_url' ) as $url_field ) {
 				if ( array_key_exists( $url_field, $settings ) ) {
 					$clean[ $url_field ] = esc_url_raw( (string) $settings[ $url_field ] );
 				}
+			}
+
+			if ( array_key_exists( 'site_terms_page_id', $settings ) ) {
+				$page_id                     = absint( $settings['site_terms_page_id'] );
+				$page                        = $page_id > 0 ? get_post( $page_id ) : null;
+				$clean['site_terms_page_id'] = $page && 'page' === $page->post_type && 'publish' === $page->post_status ? (string) $page_id : '0';
 			}
 
 			if ( array_key_exists( 'success_redirect', $settings ) ) {
@@ -419,7 +442,7 @@ final class SettingsPage {
 	public function render_registration_section(): void {
 		printf(
 			'<p>%s</p>',
-			esc_html__( 'Customize the disclosure shown before verification and control what happens after WordPress creates a verified account. The consent message is plain text; custom HTML is not allowed.', 'trustgate-registration' )
+			esc_html__( 'These settings apply to the active verification provider. Set the consent message, the provider\'s policy links, and your website\'s own policy links for registration. The consent message is plain text.', 'trustgate-registration' )
 		);
 	}
 
@@ -433,6 +456,30 @@ final class SettingsPage {
 		$value = $this->get_display_value( $key );
 		$name  = sprintf( '%s[%s]', $this->option_name, $key );
 		$id    = $args['label_for'];
+
+		if ( 'site_privacy_policy' === $key ) {
+			$privacy_url = get_privacy_policy_url();
+			if ( '' !== $privacy_url ) {
+				printf( '<a href="%s">%s</a>', esc_url( $privacy_url ), esc_html__( 'Website Privacy Policy', 'trustgate-registration' ) );
+			} else {
+				esc_html_e( 'No WordPress Privacy Policy page is configured.', 'trustgate-registration' );
+			}
+			printf( '<p class="description">%s <a href="%s">%s</a></p>', esc_html__( 'Recommended: choose your website\'s Privacy Policy page in WordPress. TrustGate automatically includes its link on registration.', 'trustgate-registration' ), esc_url( admin_url( 'options-privacy.php' ) ), esc_html__( 'Privacy Settings', 'trustgate-registration' ) );
+			return;
+		}
+
+		if ( 'site_terms_page_id' === $key ) {
+			?>
+			<select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>">
+				<option value="0"><?php esc_html_e( 'Use the custom URL below', 'trustgate-registration' ); ?></option>
+				<?php foreach ( get_pages( array( 'post_status' => 'publish' ) ) as $page ) : ?>
+					<option value="<?php echo esc_attr( (string) $page->ID ); ?>" <?php selected( (string) $page->ID, $value ); ?>><?php echo esc_html( $page->post_title ); ?></option>
+				<?php endforeach; ?>
+			</select>
+			<p class="description"><?php esc_html_e( 'Recommended: select a published page containing your website\'s registration terms or disclaimer. A selected page takes precedence over the custom URL below.', 'trustgate-registration' ); ?></p>
+			<?php
+			return;
+		}
 
 		if ( 'provider' === $key ) {
 			$settings      = $this->get_settings();
@@ -493,7 +540,7 @@ final class SettingsPage {
 			return;
 		}
 
-		$url_fields = array( 'provider_privacy_url', 'provider_terms_url', 'success_redirect' );
+		$url_fields = array( 'provider_privacy_url', 'provider_terms_url', 'site_terms_url', 'success_redirect' );
 		$type       = in_array( $key, $url_fields, true ) ? 'url' : 'text';
 
 		if ( str_contains( $key, 'secret_key' ) ) {
@@ -505,8 +552,9 @@ final class SettingsPage {
 			'test_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Sandbox widget.', 'trustgate-registration' ),
 			'live_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Production is selected.', 'trustgate-registration' ),
 			'live_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Live widget.', 'trustgate-registration' ),
-			'provider_privacy_url'  => __( 'Optional provider privacy-policy link shown below the consent message. Leave empty to hide it.', 'trustgate-registration' ),
-			'provider_terms_url'    => __( 'Optional provider terms or consent link shown below the consent message. Leave empty to hide it.', 'trustgate-registration' ),
+			'provider_privacy_url'  => __( 'Recommended: enter the Privacy Policy URL of the verification provider you use. This link appears below the registration consent message.', 'trustgate-registration' ),
+			'provider_terms_url'    => __( 'Recommended: enter the terms or consent URL of the verification provider you use. This is the provider\'s policy, not your website\'s terms.', 'trustgate-registration' ),
+			'site_terms_url'        => __( 'Enter your website\'s terms or disclaimer URL when using a custom URL instead of a WordPress page. This link appears separately from the verification provider\'s policies.', 'trustgate-registration' ),
 			'success_redirect'      => __( 'Optional same-site URL visited after WordPress successfully creates the verified account.', 'trustgate-registration' ),
 		);
 		$description  = $descriptions[ $key ] ?? '';
@@ -600,8 +648,14 @@ final class SettingsPage {
 				</span>
 			</div>
 
+			<?php if ( 'registration' !== $tab ) : ?>
 			<nav class="nav-tab-wrapper" aria-label="<?php esc_attr_e( 'TrustGate settings', 'trustgate-registration' ); ?>">
 				<?php foreach ( $tabs as $tab_key => $tab_label ) : ?>
+					<?php
+					if ( 'registration' === $tab_key ) {
+						continue;
+					}
+					?>
 					<a
 						class="nav-tab <?php echo $tab === $tab_key ? 'nav-tab-active' : ''; ?>"
 						href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=' . $tab_key ) ); ?>"
@@ -610,6 +664,7 @@ final class SettingsPage {
 					</a>
 				<?php endforeach; ?>
 			</nav>
+			<?php endif; ?>
 
 			<?php $this->render_status_notice( $tab, $active_provider ); ?>
 
@@ -738,6 +793,9 @@ final class SettingsPage {
 	 * @param array<string, string> $tabs Available tabs.
 	 */
 	private function get_current_tab( array $tabs ): string {
+		if ( isset( $_GET['page'] ) && self::REGISTRATION_SLUG === sanitize_key( wp_unslash( $_GET['page'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return 'registration';
+		}
 		$default = (string) array_key_first( $tabs );
 		$tab     = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : $default; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.7
+
+- Move global registration settings to a dedicated TrustGate > Registration submenu.
+- Clarify recommended verification provider privacy and terms links, and show the website's WordPress Privacy Policy configuration.
+- Add a published WordPress page selector or custom URL for website terms/disclaimers, included in the registration disclosure and consent fingerprint.
+
 ## 0.9.6
 
 - Create the settings option directly on its first save so values remain stored after cache flushes and plugin deactivation.

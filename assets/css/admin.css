@@ -45,6 +45,10 @@
 	max-width: 640px;
 }
 
+.trustgate-admin__form select {
+	max-width: 100%;
+}
+
 @media screen and (max-width: 782px) {
 	.trustgate-admin__header {
 		align-items: stretch;

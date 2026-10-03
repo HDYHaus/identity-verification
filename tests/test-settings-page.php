@@ -30,6 +30,19 @@ function sanitize_key( string $value ): string { // phpcs:ignore WordPress.Namin
 	return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $value ) ) ?? '';
 }
 
+function wp_unslash( string $value ): string {
+	return $value;
+}
+
+function add_menu_page( mixed ...$args ): void {
+	unset( $args );
+}
+
+function add_submenu_page( mixed ...$args ): void {
+	global $trustgate_test_submenus;
+	$trustgate_test_submenus[ $args[4] ] = $args;
+}
+
 function sanitize_text_field( string $value ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	return trim( strip_tags( $value ) );
 }
@@ -40,6 +53,19 @@ function sanitize_textarea_field( string $value ): string { // phpcs:ignore Word
 
 function esc_url_raw( string $value ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	return false !== filter_var( $value, FILTER_VALIDATE_URL ) && in_array( parse_url( $value, PHP_URL_SCHEME ), array( 'http', 'https' ), true ) ? $value : '';
+}
+
+function absint( mixed $value ): int {
+	return abs( (int) $value );
+}
+
+function get_post( int $page_id ): ?object {
+	return match ( $page_id ) {
+		12 => (object) array( 'post_type' => 'page', 'post_status' => 'publish' ),
+		13 => (object) array( 'post_type' => 'page', 'post_status' => 'draft' ),
+		14 => (object) array( 'post_type' => 'post', 'post_status' => 'publish' ),
+		default => null,
+	};
 }
 
 function get_option( string $option_name, mixed $default = false ): mixed { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
@@ -107,12 +133,25 @@ function trustgate_settings_assert_same( mixed $expected, mixed $actual, string 
 
 $registry = new ProviderRegistry( array( new TrustGateSettingsTestProvider() ), 'prembly' );
 $page     = new SettingsPage( 'trustgate_settings', $registry );
+$page->add_page();
+trustgate_settings_assert_same( 'Registration', $trustgate_test_submenus['trustgate-registration-flow'][2], 'Registration has a separate submenu under TrustGate.' );
+$tab_method  = new ReflectionMethod( SettingsPage::class, 'get_current_tab' );
+$tabs_method = new ReflectionMethod( SettingsPage::class, 'get_tabs' );
+$_GET = array( 'page' => 'trustgate-registration-flow', 'tab' => 'prembly' );
+trustgate_settings_assert_same( 'registration', $tab_method->invoke( $page, $tabs_method->invoke( $page ) ), 'The Registration page always opens global registration settings.' );
+$_GET = array( 'page' => 'trustgate-registration', 'tab' => 'registration' );
+trustgate_settings_assert_same( 'registration', $tab_method->invoke( $page, $tabs_method->invoke( $page ) ), 'Existing Registration tab links remain usable.' );
+$_GET = array( 'page' => 'trustgate-registration' );
+trustgate_settings_assert_same( 'prembly', $tab_method->invoke( $page, $tabs_method->invoke( $page ) ), 'Settings continues to open the provider settings.' );
+
 $clean    = $page->sanitize_settings(
 	array(
 		'settings_tab'        => 'registration',
 		'consent_text'        => "  <strong>Custom consent</strong>\nfor this site.  ",
 		'provider_privacy_url' => 'javascript:alert(1)',
 		'provider_terms_url'   => 'https://provider.example/consent',
+		'site_terms_page_id'   => '12',
+		'site_terms_url'       => 'https://site.example/terms',
 		'success_redirect'     => 'https://site.example/complete',
 	)
 );
@@ -120,6 +159,14 @@ $clean    = $page->sanitize_settings(
 trustgate_settings_assert_same( "Custom consent\nfor this site.", $clean['consent_text'], 'Consent wording is sanitized as plain text.' );
 trustgate_settings_assert_same( '', $clean['provider_privacy_url'], 'Unsafe provider URLs are rejected.' );
 trustgate_settings_assert_same( 'https://provider.example/consent', $clean['provider_terms_url'], 'A valid provider URL is retained.' );
+trustgate_settings_assert_same( '12', $clean['site_terms_page_id'], 'A published website page can be selected.' );
+trustgate_settings_assert_same( 'https://site.example/terms', $clean['site_terms_url'], 'The custom website URL is retained separately from provider links.' );
+
+foreach ( array( 13, 14, 999 ) as $invalid_page_id ) {
+	$invalid = $page->sanitize_settings( array( 'settings_tab' => 'registration', 'site_terms_page_id' => $invalid_page_id, 'site_terms_url' => 'javascript:alert(1)' ) );
+	trustgate_settings_assert_same( '0', $invalid['site_terms_page_id'], 'Drafts, posts, and nonexistent pages cannot be selected.' );
+	trustgate_settings_assert_same( '', $invalid['site_terms_url'], 'Unsafe website URLs are rejected.' );
+}
 trustgate_settings_assert_same( 'prembly', $clean['provider'], 'Saving the Registration tab preserves the active provider.' );
 trustgate_settings_assert_same( 'wdgt_existing', $clean['test_public_key'], 'Saving the Registration tab preserves provider credentials.' );
 

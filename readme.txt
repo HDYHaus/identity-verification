@@ -4,7 +4,7 @@ Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.6
+Stable tag: 0.9.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,7 +25,7 @@ TrustGate is a verification gate, not a membership suite. It does not replace th
 * Prevents the same verified identity document from creating another account, even after account deletion.
 * Keeps Sandbox and Live Prembly credentials separate.
 * Supports an optional same-site success redirect with email activation instructions.
-* Lets site owners customize the plain-text consent message and provider policy links.
+* Lets site owners customize the plain-text consent message, provider policy links, and a website terms/disclaimer page or URL.
 * Stores normalized verification metadata in the WordPress user account.
 * Integrates with WordPress personal data export and erasure tools.
 * Uses a provider adapter architecture, with Prembly as the first provider.
@@ -46,7 +46,7 @@ This service is provided by Prembly Inc:
 * Prembly Terms of Use: https://prembly.com/terms
 * Prembly Privacy Policy: https://prembly.com/Policy
 
-These are the default provider links. Site administrators can replace or hide them under **TrustGate > Settings > Registration**. When WordPress has a site Privacy Policy configured, TrustGate displays that link separately.
+These are the default provider links. Site administrators can replace them under **TrustGate > Registration**. Supplying the verification provider's privacy and terms links is recommended. When WordPress has a website Privacy Policy configured, TrustGate displays that link separately. Website terms or a disclaimer can also be linked by selecting a published WordPress page or entering a custom URL.
 
 == Installation ==
 
@@ -65,7 +65,7 @@ No Prembly Secret API Key, Organisation ID, or App ID is required for the SDK se
 
 = Does TrustGate replace the WordPress registration form? =
 
-No. Version 0.9.6 integrates with the default WordPress registration screen. It does not currently add verification to WooCommerce, BuddyPress, MemberPress, Ultimate Member, or other custom registration forms.
+No. Version 0.9.7 integrates with the default WordPress registration screen. It does not currently add verification to WooCommerce, BuddyPress, MemberPress, Ultimate Member, or other custom registration forms.
 
 = What happens when Prembly is disabled? =
 
@@ -104,6 +104,11 @@ No plugin can guarantee legal or regulatory compliance. TrustGate provides an id
 1. TrustGate adds identity verification fields, explicit consent, and a verification action to the native WordPress registration screen.
 
 == Changelog ==
+
+= 0.9.7 =
+* Move global registration settings to TrustGate > Registration.
+* Clarify recommended verification provider privacy and terms links and the website Privacy Policy configuration.
+* Add a published WordPress page selector or custom URL for website terms/disclaimers, included in the consent record fingerprint.
 
 = 0.9.6 =
 

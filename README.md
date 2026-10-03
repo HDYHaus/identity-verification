@@ -12,7 +12,7 @@ TrustGate Registration is a WordPress plugin for verified account registration. 
 
 ## Current Status
 
-Version 0.9.6 is the WordPress.org release candidate. The plugin includes the settings interface, native registration hooks, provider registry, Prembly widget integration, fail-closed server-side session confirmation, explicit registrant consent, session and identity replay protection, WordPress privacy tool integration, and read-only verification details on administrator user-profile screens.
+Version 0.9.7 is the WordPress.org release candidate. The plugin includes the settings interface, native registration hooks, provider registry, Prembly widget integration, fail-closed server-side session confirmation, explicit registrant consent, session and identity replay protection, WordPress privacy tool integration, and read-only verification details on administrator user-profile screens.
 
 Sandbox and Production flows have both completed end-to-end smoke tests on the HTTPS development site. Prembly completed document verification, WordPress created the verified Subscriber account, a submission without verification was blocked, and the configured post-registration redirect displayed the email activation instructions. See [the release checklist](docs/release-checklist.md) for the remaining clean-install and compatibility checks before a public 1.0 release.
 
@@ -23,9 +23,9 @@ The Prembly provider uses the widget key and configuration ID in the browser to 
 - `Sandbox Widget Key` / `Live Widget Key`: copied from the matching saved widget's **SDK Setup > Integration** panel. Do not use the API Integrations public key here.
 - `Sandbox Configuration ID` / `Live Configuration ID`: copied from the matching SDK Setup widget.
 
-TrustGate has its own top-level WordPress admin menu with a global Registration tab and one tab per verification provider. Enable Prembly from its tab to require KYC during registration. Only one provider can be active at a time; disabling every provider restores normal WordPress registration without deleting saved widget settings. Sandbox and Live widget settings are stored independently.
+TrustGate has its own top-level WordPress admin menu. Open **TrustGate > Registration** for global registration settings, or **TrustGate > Settings** for verification provider tabs. Enable Prembly from its tab to require KYC during registration. Only one provider can be active at a time; disabling every provider restores normal WordPress registration without deleting saved widget settings. Sandbox and Live widget settings are stored independently.
 
-The Registration tab lets the site owner replace the plain-text consent message and the provider privacy-policy and terms/consent URLs. Existing sites use the documented Prembly wording and links until they are changed. TrustGate continues to append the site's WordPress Privacy Policy when one is configured, and successful accounts retain the exact accepted wording plus a version fingerprint derived from the complete disclosure.
+The Registration page applies to the active provider and lets the site owner replace the plain-text consent message and separate verification provider privacy-policy and terms/consent URLs. These links are recommended. Existing sites use the documented Prembly wording and links until they are changed. TrustGate automatically includes the website's WordPress Privacy Policy when configured under **Settings > Privacy**. For website terms or a disclaimer, choose a published WordPress page or enter a custom URL; a selected published page takes precedence. Successful accounts retain the exact accepted wording plus a version fingerprint derived from the complete disclosure, including the website terms link.
 
 Prembly support confirmed that the fixed SDK session endpoint at `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{id}/` uses the session ID in the URL and does not require a Secret API Key, Organisation ID, or App ID. TrustGate therefore sends no authentication headers to that endpoint.
 

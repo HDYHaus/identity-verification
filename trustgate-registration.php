@@ -3,7 +3,7 @@
  * Plugin Name: TrustGate Registration
  * Plugin URI: https://github.com/HDYHaus/trustgate-registration
  * Description: Verify people during WordPress registration with pluggable identity verification providers. Prembly support is the first provider.
- * Version: 0.9.6
+ * Version: 0.9.7
  * Requires at least: 6.4
  * Requires PHP: 8.1
  * Author: HDY Haus
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TRUSTGATE_REGISTRATION_VERSION', '0.9.6' );
+define( 'TRUSTGATE_REGISTRATION_VERSION', '0.9.7' );
 define( 'TRUSTGATE_REGISTRATION_FILE', __FILE__ );
 define( 'TRUSTGATE_REGISTRATION_PATH', plugin_dir_path( __FILE__ ) );
 define( 'TRUSTGATE_REGISTRATION_URL', plugin_dir_url( __FILE__ ) );
