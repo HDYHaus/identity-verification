@@ -19,8 +19,12 @@ rsync -a \
 	--exclude '.gitignore' \
 	--exclude 'bin/' \
 	--exclude 'tests/' \
+	--exclude 'docs/' \
 	--exclude 'vendor/' \
+	--exclude 'composer.json' \
 	--exclude 'composer.lock' \
+	--exclude 'CONTRIBUTING.md' \
+	--exclude 'SECURITY.md' \
 	--exclude 'phpcs.xml.dist' \
 	--exclude '*.zip' \
 	"$ROOT_DIR/" "$PACKAGE_DIR/"

@@ -93,7 +93,15 @@ Yes. TrustGate integrates with **Tools > Export Personal Data** and **Tools > Er
 
 = Can I change the consent wording and provider links? =
 
-Yes. Open **TrustGate > Settings > Registration** to edit the plain-text consent message and the provider privacy-policy and terms/consent URLs. Provider links are optional, and the site's WordPress Privacy Policy is displayed separately when configured. TrustGate stores the exact accepted wording and a version fingerprint tied to the displayed disclosure for successful registrations.
+Yes. Open **TrustGate > Registration** to edit the plain-text consent message and the verification provider's privacy-policy and terms/consent URLs. Supplying provider links is recommended. The website's WordPress Privacy Policy is displayed separately when configured under **Settings > Privacy**. For your website's own terms or disclaimer, select a published WordPress page or enter a custom URL. TrustGate stores the exact accepted wording and a version fingerprint tied to the displayed disclosure for successful registrations.
+
+= Does TrustGate support multisite? =
+
+This release is tested for single-site WordPress installations. Multisite and network activation have not been verified and are not currently supported.
+
+= Where can I get support? =
+
+Report plugin bugs at https://github.com/HDYHaus/trustgate-registration/issues/. For verification widget configuration, billing, or provider reports, contact Prembly through https://prembly.com/.
 
 = Does this make my site KYC compliant? =
 
@@ -102,6 +110,8 @@ No plugin can guarantee legal or regulatory compliance. TrustGate provides an id
 == Screenshots ==
 
 1. TrustGate adds identity verification fields, explicit consent, and a verification action to the native WordPress registration screen.
+2. Global Registration settings separate verification provider policies from website privacy and terms/disclaimer links.
+3. Prembly settings keep Sandbox and Live widget credentials separate and control the active verification provider.
 
 == Changelog ==
 

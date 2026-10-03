@@ -16,6 +16,8 @@ Version 0.9.7 is the WordPress.org release candidate. The plugin includes the se
 
 Sandbox and Production flows have both completed end-to-end smoke tests on the HTTPS development site. Prembly completed document verification, WordPress created the verified Subscriber account, a submission without verification was blocked, and the configured post-registration redirect displayed the email activation instructions. See [the release checklist](docs/release-checklist.md) for the remaining clean-install and compatibility checks before a public 1.0 release.
 
+The 0.9.7 submission candidate passed the official Plugin Check and clean-install integration checks on WordPress 6.4.12 / PHP 8.1 and WordPress 7.1.2 / PHP 8.4 and 8.5. See [submission check results](docs/submission-checks.md) for the exact checks and remaining final live-provider test.
+
 ## Prembly Settings
 
 The Prembly provider uses the widget key and configuration ID in the browser to launch the widget. After completion, WordPress retrieves the returned SDK session and requires its status, session ID, widget configuration, and end-user email to match before allowing registration.
