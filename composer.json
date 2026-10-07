@@ -1,5 +1,5 @@
 {
-  "name": "hdyhaus/trustgate-registration",
+  "name": "hdyhaus/identity-verification",
   "description": "Verified WordPress registration with pluggable identity verification providers, starting with Prembly.",
   "type": "wordpress-plugin",
   "license": "GPL-2.0-or-later",

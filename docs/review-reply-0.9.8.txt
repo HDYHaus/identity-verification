@@ -1,0 +1,3 @@
+Thank you for the review. The revised plugin is named HDYHaus Identity Verification. Please reserve the new slug hdyhaus-identity-verification.
+
+The review findings have been addressed, and version 0.9.8 is ready for upload. The public repository is https://github.com/HDYHaus/identity-verification.

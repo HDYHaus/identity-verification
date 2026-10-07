@@ -18,18 +18,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Registers the TrustGate admin area.
+ * Registers the HDYHaus Identity Verification admin area.
  */
 final class SettingsPage {
 	/**
 	 * Page slug.
 	 */
-	private const PAGE_SLUG = 'trustgate-registration';
+	private const PAGE_SLUG = 'hdyhaus-identity-verification';
 
 	/**
 	 * Global registration settings page slug.
 	 */
-	private const REGISTRATION_SLUG = 'trustgate-registration-flow';
+	private const REGISTRATION_SLUG = 'hdyhaus-identity-verification-flow';
 
 	/**
 	 * Option name.
@@ -68,11 +68,11 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Save TrustGate settings from the plugin admin page.
+	 * Save HDYHaus Identity Verification settings from the plugin admin page.
 	 */
 	public function save_settings(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You are not allowed to manage TrustGate settings.', 'trustgate-registration' ) );
+			wp_die( esc_html__( 'You are not allowed to manage HDYHaus Identity Verification settings.', 'hdyhaus-identity-verification' ) );
 		}
 
 		check_admin_referer( 'trustgate_registration_save', 'trustgate_registration_nonce' );
@@ -108,12 +108,12 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Add the top-level TrustGate admin page.
+	 * Add the top-level HDYHaus Identity Verification admin page.
 	 */
 	public function add_page(): void {
 		add_menu_page(
-			__( 'TrustGate Registration', 'trustgate-registration' ),
-			__( 'TrustGate', 'trustgate-registration' ),
+			__( 'HDYHaus Identity Verification', 'hdyhaus-identity-verification' ),
+			__( 'HDYHaus Identity Verification', 'hdyhaus-identity-verification' ),
 			'manage_options',
 			self::PAGE_SLUG,
 			array( $this, 'render' ),
@@ -123,8 +123,8 @@ final class SettingsPage {
 
 		add_submenu_page(
 			self::PAGE_SLUG,
-			__( 'TrustGate Settings', 'trustgate-registration' ),
-			__( 'Settings', 'trustgate-registration' ),
+			__( 'HDYHaus Identity Verification Settings', 'hdyhaus-identity-verification' ),
+			__( 'Settings', 'hdyhaus-identity-verification' ),
 			'manage_options',
 			self::PAGE_SLUG,
 			array( $this, 'render' )
@@ -132,8 +132,8 @@ final class SettingsPage {
 
 		add_submenu_page(
 			self::PAGE_SLUG,
-			__( 'TrustGate Registration Settings', 'trustgate-registration' ),
-			__( 'Registration', 'trustgate-registration' ),
+			__( 'HDYHaus Identity Verification Settings', 'hdyhaus-identity-verification' ),
+			__( 'Registration', 'hdyhaus-identity-verification' ),
 			'manage_options',
 			self::REGISTRATION_SLUG,
 			array( $this, 'render' )
@@ -150,7 +150,7 @@ final class SettingsPage {
 		$settings_link = sprintf(
 			'<a href="%1$s">%2$s</a>',
 			esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG ) ),
-			esc_html__( 'Settings', 'trustgate-registration' )
+			esc_html__( 'Settings', 'hdyhaus-identity-verification' )
 		);
 
 		array_unshift( $links, $settings_link );
@@ -159,7 +159,7 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Enqueue admin styles only on TrustGate screens.
+	 * Enqueue admin styles only on HDYHaus Identity Verification screens.
 	 *
 	 * @param string $hook_suffix Current admin page hook.
 	 */
@@ -169,7 +169,7 @@ final class SettingsPage {
 		}
 
 		wp_enqueue_style(
-			'trustgate-registration-admin',
+			'hdyhaus-identity-verification-admin',
 			TRUSTGATE_REGISTRATION_URL . 'assets/css/admin.css',
 			array(),
 			TRUSTGATE_REGISTRATION_VERSION
@@ -203,18 +203,18 @@ final class SettingsPage {
 
 		add_settings_section(
 			'trustgate_registration_prembly',
-			__( 'Prembly', 'trustgate-registration' ),
+			__( 'Prembly', 'hdyhaus-identity-verification' ),
 			array( $this, 'render_prembly_section' ),
 			$page
 		);
 
 		$fields = array(
-			'provider'              => __( 'Enable Prembly', 'trustgate-registration' ),
-			'mode'                  => __( 'Active environment', 'trustgate-registration' ),
-			'test_public_key'       => __( 'Sandbox Widget Key', 'trustgate-registration' ),
-			'test_configuration_id' => __( 'Sandbox Configuration ID', 'trustgate-registration' ),
-			'live_public_key'       => __( 'Live Widget Key', 'trustgate-registration' ),
-			'live_configuration_id' => __( 'Live Configuration ID', 'trustgate-registration' ),
+			'provider'              => __( 'Enable Prembly', 'hdyhaus-identity-verification' ),
+			'mode'                  => __( 'Active environment', 'hdyhaus-identity-verification' ),
+			'test_public_key'       => __( 'Sandbox Widget Key', 'hdyhaus-identity-verification' ),
+			'test_configuration_id' => __( 'Sandbox Configuration ID', 'hdyhaus-identity-verification' ),
+			'live_public_key'       => __( 'Live Widget Key', 'hdyhaus-identity-verification' ),
+			'live_configuration_id' => __( 'Live Configuration ID', 'hdyhaus-identity-verification' ),
 		);
 
 		$this->add_fields( $page, 'trustgate_registration_prembly', $fields, 'prembly' );
@@ -245,7 +245,7 @@ final class SettingsPage {
 				array(
 					'provider' => sprintf(
 						/* translators: %s: provider name */
-						__( 'Enable %s', 'trustgate-registration' ),
+						__( 'Enable %s', 'hdyhaus-identity-verification' ),
 						$provider->get_label()
 					),
 				),
@@ -257,7 +257,7 @@ final class SettingsPage {
 			 *
 			 * @param string $slug Provider slug.
 			 * @param string $page Settings API page identifier.
-			 * @param string $option_name TrustGate option name.
+			 * @param string $option_name HDYHaus Identity Verification option name.
 			 */
 			do_action( 'trustgate_registration_register_provider_settings', $slug, $page, $this->option_name );
 		}
@@ -271,7 +271,7 @@ final class SettingsPage {
 
 		add_settings_section(
 			'trustgate_registration_flow',
-			__( 'Registration', 'trustgate-registration' ),
+			__( 'Registration', 'hdyhaus-identity-verification' ),
 			array( $this, 'render_registration_section' ),
 			$page
 		);
@@ -280,13 +280,13 @@ final class SettingsPage {
 			$page,
 			'trustgate_registration_flow',
 			array(
-				'consent_text'         => __( 'Consent message', 'trustgate-registration' ),
-				'provider_privacy_url' => __( 'Verification Provider Privacy Policy URL', 'trustgate-registration' ),
-				'provider_terms_url'   => __( 'Verification Provider Terms / Consent URL', 'trustgate-registration' ),
-				'site_privacy_policy'  => __( 'Website Privacy Policy', 'trustgate-registration' ),
-				'site_terms_page_id'   => __( 'Website Terms / Disclaimer Page', 'trustgate-registration' ),
-				'site_terms_url'       => __( 'Website Terms / Disclaimer URL', 'trustgate-registration' ),
-				'success_redirect'     => __( 'Success Redirect URL', 'trustgate-registration' ),
+				'consent_text'         => __( 'Consent message', 'hdyhaus-identity-verification' ),
+				'provider_privacy_url' => __( 'Verification Provider Privacy Policy URL', 'hdyhaus-identity-verification' ),
+				'provider_terms_url'   => __( 'Verification Provider Terms / Consent URL', 'hdyhaus-identity-verification' ),
+				'site_privacy_policy'  => __( 'Website Privacy Policy', 'hdyhaus-identity-verification' ),
+				'site_terms_page_id'   => __( 'Website Terms / Disclaimer Page', 'hdyhaus-identity-verification' ),
+				'site_terms_url'       => __( 'Website Terms / Disclaimer URL', 'hdyhaus-identity-verification' ),
+				'success_redirect'     => __( 'Success Redirect URL', 'hdyhaus-identity-verification' ),
 			)
 		);
 	}
@@ -382,7 +382,7 @@ final class SettingsPage {
 				add_settings_error(
 					$this->option_name,
 					'trustgate_provider_conflict',
-					__( 'TrustGate rejected conflicting provider settings. Only one provider can be enabled.', 'trustgate-registration' ),
+					__( 'HDYHaus Identity Verification rejected conflicting provider settings. Only one provider can be enabled.', 'hdyhaus-identity-verification' ),
 					'error'
 				);
 			}
@@ -432,7 +432,7 @@ final class SettingsPage {
 	public function render_prembly_section(): void {
 		printf(
 			'<p>%s</p>',
-			esc_html__( 'Keep Sandbox and Live widget settings separate. Changing the active environment never overwrites the other environment.', 'trustgate-registration' )
+			esc_html__( 'Keep Sandbox and Live widget settings separate. Changing the active environment never overwrites the other environment.', 'hdyhaus-identity-verification' )
 		);
 	}
 
@@ -442,7 +442,7 @@ final class SettingsPage {
 	public function render_registration_section(): void {
 		printf(
 			'<p>%s</p>',
-			esc_html__( 'These settings apply to the active verification provider. Set the consent message, the provider\'s policy links, and your website\'s own policy links for registration. The consent message is plain text.', 'trustgate-registration' )
+			esc_html__( 'These settings apply to the active verification provider. Set the consent message, the provider\'s policy links, and your website\'s own policy links for registration. The consent message is plain text.', 'hdyhaus-identity-verification' )
 		);
 	}
 
@@ -460,23 +460,23 @@ final class SettingsPage {
 		if ( 'site_privacy_policy' === $key ) {
 			$privacy_url = get_privacy_policy_url();
 			if ( '' !== $privacy_url ) {
-				printf( '<a href="%s">%s</a>', esc_url( $privacy_url ), esc_html__( 'Website Privacy Policy', 'trustgate-registration' ) );
+				printf( '<a href="%s">%s</a>', esc_url( $privacy_url ), esc_html__( 'Website Privacy Policy', 'hdyhaus-identity-verification' ) );
 			} else {
-				esc_html_e( 'No WordPress Privacy Policy page is configured.', 'trustgate-registration' );
+				esc_html_e( 'No WordPress Privacy Policy page is configured.', 'hdyhaus-identity-verification' );
 			}
-			printf( '<p class="description">%s <a href="%s">%s</a></p>', esc_html__( 'Recommended: choose your website\'s Privacy Policy page in WordPress. TrustGate automatically includes its link on registration.', 'trustgate-registration' ), esc_url( admin_url( 'options-privacy.php' ) ), esc_html__( 'Privacy Settings', 'trustgate-registration' ) );
+			printf( '<p class="description">%s <a href="%s">%s</a></p>', esc_html__( 'Recommended: choose your website\'s Privacy Policy page in WordPress. HDYHaus Identity Verification automatically includes its link on registration.', 'hdyhaus-identity-verification' ), esc_url( admin_url( 'options-privacy.php' ) ), esc_html__( 'Privacy Settings', 'hdyhaus-identity-verification' ) );
 			return;
 		}
 
 		if ( 'site_terms_page_id' === $key ) {
 			?>
 			<select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>">
-				<option value="0"><?php esc_html_e( 'Use the custom URL below', 'trustgate-registration' ); ?></option>
+				<option value="0"><?php esc_html_e( 'Use the custom URL below', 'hdyhaus-identity-verification' ); ?></option>
 				<?php foreach ( get_pages( array( 'post_status' => 'publish' ) ) as $page ) : ?>
 					<option value="<?php echo esc_attr( (string) $page->ID ); ?>" <?php selected( (string) $page->ID, $value ); ?>><?php echo esc_html( $page->post_title ); ?></option>
 				<?php endforeach; ?>
 			</select>
-			<p class="description"><?php esc_html_e( 'Recommended: select a published page containing your website\'s registration terms or disclaimer. A selected page takes precedence over the custom URL below.', 'trustgate-registration' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Recommended: select a published page containing your website\'s registration terms or disclaimer. A selected page takes precedence over the custom URL below.', 'hdyhaus-identity-verification' ); ?></p>
 			<?php
 			return;
 		}
@@ -502,12 +502,12 @@ final class SettingsPage {
 				<?php
 				printf(
 					/* translators: %s: provider name */
-					esc_html__( 'Use %s for identity verification during registration', 'trustgate-registration' ),
+					esc_html__( 'Use %s for identity verification during registration', 'hdyhaus-identity-verification' ),
 					esc_html( $provider->get_label() )
 				);
 				?>
 			</label>
-			<p class="description"><?php esc_html_e( 'Enabling this provider automatically disables any other active provider. Unchecking it allows normal WordPress registration.', 'trustgate-registration' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Enabling this provider automatically disables any other active provider. Unchecking it allows normal WordPress registration.', 'hdyhaus-identity-verification' ); ?></p>
 			<?php
 			return;
 		}
@@ -516,13 +516,13 @@ final class SettingsPage {
 			?>
 			<select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>">
 				<option value="test" <?php selected( 'test', '' !== $value ? $value : 'test' ); ?>>
-					<?php esc_html_e( 'Sandbox / Test', 'trustgate-registration' ); ?>
+					<?php esc_html_e( 'Sandbox / Test', 'hdyhaus-identity-verification' ); ?>
 				</option>
 				<option value="live" <?php selected( 'live', $value ); ?>>
-					<?php esc_html_e( 'Live / Production', 'trustgate-registration' ); ?>
+					<?php esc_html_e( 'Live / Production', 'hdyhaus-identity-verification' ); ?>
 				</option>
 			</select>
-			<p class="description"><?php esc_html_e( 'Live mode uses only the Live widget settings below.', 'trustgate-registration' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Live mode uses only the Live widget settings below.', 'hdyhaus-identity-verification' ); ?></p>
 			<?php
 			return;
 		}
@@ -535,7 +535,7 @@ final class SettingsPage {
 				rows="4"
 				class="large-text"
 			><?php echo esc_textarea( $value ); ?></textarea>
-			<p class="description"><?php esc_html_e( 'Plain-text statement shown beside the required consent checkbox. The exact accepted wording is stored with successful registrations.', 'trustgate-registration' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Plain-text statement shown beside the required consent checkbox. The exact accepted wording is stored with successful registrations.', 'hdyhaus-identity-verification' ); ?></p>
 			<?php
 			return;
 		}
@@ -548,14 +548,14 @@ final class SettingsPage {
 		}
 
 		$descriptions = array(
-			'test_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Sandbox is selected.', 'trustgate-registration' ),
-			'test_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Sandbox widget.', 'trustgate-registration' ),
-			'live_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Production is selected.', 'trustgate-registration' ),
-			'live_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Live widget.', 'trustgate-registration' ),
-			'provider_privacy_url'  => __( 'Recommended: enter the Privacy Policy URL of the verification provider you use. This link appears below the registration consent message.', 'trustgate-registration' ),
-			'provider_terms_url'    => __( 'Recommended: enter the terms or consent URL of the verification provider you use. This is the provider\'s policy, not your website\'s terms.', 'trustgate-registration' ),
-			'site_terms_url'        => __( 'Enter your website\'s terms or disclaimer URL when using a custom URL instead of a WordPress page. This link appears separately from the verification provider\'s policies.', 'trustgate-registration' ),
-			'success_redirect'      => __( 'Optional same-site URL visited after WordPress successfully creates the verified account.', 'trustgate-registration' ),
+			'test_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Sandbox is selected.', 'hdyhaus-identity-verification' ),
+			'test_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Sandbox widget.', 'hdyhaus-identity-verification' ),
+			'live_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Production is selected.', 'hdyhaus-identity-verification' ),
+			'live_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Live widget.', 'hdyhaus-identity-verification' ),
+			'provider_privacy_url'  => __( 'Recommended: enter the Privacy Policy URL of the verification provider you use. This link appears below the registration consent message.', 'hdyhaus-identity-verification' ),
+			'provider_terms_url'    => __( 'Recommended: enter the terms or consent URL of the verification provider you use. This is the provider\'s policy, not your website\'s terms.', 'hdyhaus-identity-verification' ),
+			'site_terms_url'        => __( 'Enter your website\'s terms or disclaimer URL when using a custom URL instead of a WordPress page. This link appears separately from the verification provider\'s policies.', 'hdyhaus-identity-verification' ),
+			'success_redirect'      => __( 'Optional same-site URL visited after WordPress successfully creates the verified account.', 'hdyhaus-identity-verification' ),
 		);
 		$description  = $descriptions[ $key ] ?? '';
 		?>
@@ -618,7 +618,7 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Render the TrustGate admin page.
+	 * Render the HDYHaus Identity Verification admin page.
 	 */
 	public function render(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -629,19 +629,19 @@ final class SettingsPage {
 		$active_provider = $this->registry->resolve( $settings );
 		$tabs            = $this->get_tabs();
 		$tab             = $this->get_current_tab( $tabs );
-		$status_label    = null !== $active_provider ? $active_provider->get_label() : __( 'Disabled', 'trustgate-registration' );
+		$status_label    = null !== $active_provider ? $active_provider->get_label() : __( 'Disabled', 'hdyhaus-identity-verification' );
 		?>
 		<div class="wrap trustgate-admin">
 			<div class="trustgate-admin__header">
 				<div>
-					<h1><?php esc_html_e( 'TrustGate Registration', 'trustgate-registration' ); ?></h1>
-					<p><?php esc_html_e( 'Identity verification for WordPress account registration.', 'trustgate-registration' ); ?></p>
+					<h1><?php esc_html_e( 'HDYHaus Identity Verification', 'hdyhaus-identity-verification' ); ?></h1>
+					<p><?php esc_html_e( 'Identity verification for WordPress account registration.', 'hdyhaus-identity-verification' ); ?></p>
 				</div>
 				<span class="trustgate-admin__provider">
 					<?php
 					printf(
 						/* translators: %s: active provider name or disabled status */
-						esc_html__( 'Verification: %s', 'trustgate-registration' ),
+						esc_html__( 'Verification: %s', 'hdyhaus-identity-verification' ),
 						esc_html( $status_label )
 					);
 					?>
@@ -649,7 +649,7 @@ final class SettingsPage {
 			</div>
 
 			<?php if ( 'registration' !== $tab ) : ?>
-			<nav class="nav-tab-wrapper" aria-label="<?php esc_attr_e( 'TrustGate settings', 'trustgate-registration' ); ?>">
+			<nav class="nav-tab-wrapper" aria-label="<?php esc_attr_e( 'HDYHaus Identity Verification settings', 'hdyhaus-identity-verification' ); ?>">
 				<?php foreach ( $tabs as $tab_key => $tab_label ) : ?>
 					<?php
 					if ( 'registration' === $tab_key ) {
@@ -669,7 +669,7 @@ final class SettingsPage {
 			<?php $this->render_status_notice( $tab, $active_provider ); ?>
 
 			<?php if ( isset( $_GET['trustgate-settings-saved'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['trustgate-settings-saved'] ) ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Settings saved.', 'trustgate-registration' ); ?></p></div>
+				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Settings saved.', 'hdyhaus-identity-verification' ); ?></p></div>
 			<?php endif; ?>
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="trustgate-admin__form">
@@ -698,8 +698,8 @@ final class SettingsPage {
 			?>
 			<div class="notice notice-warning inline trustgate-admin__notice">
 				<p>
-					<strong><?php esc_html_e( 'Identity verification is disabled.', 'trustgate-registration' ); ?></strong>
-					<?php esc_html_e( ' Visitors can register through the normal WordPress registration flow without verification.', 'trustgate-registration' ); ?>
+					<strong><?php esc_html_e( 'Identity verification is disabled.', 'hdyhaus-identity-verification' ); ?></strong>
+					<?php esc_html_e( ' Visitors can register through the normal WordPress registration flow without verification.', 'hdyhaus-identity-verification' ); ?>
 				</p>
 			</div>
 			<?php
@@ -717,7 +717,7 @@ final class SettingsPage {
 					<?php
 					printf(
 						/* translators: %s: active provider name */
-						esc_html__( 'This provider is inactive. %s currently handles registration verification.', 'trustgate-registration' ),
+						esc_html__( 'This provider is inactive. %s currently handles registration verification.', 'hdyhaus-identity-verification' ),
 						esc_html( $active_provider->get_label() )
 					);
 					?>
@@ -733,11 +733,11 @@ final class SettingsPage {
 
 		$mode  = $this->get_display_value( 'mode' );
 		$mode  = 'live' === $mode ? 'live' : 'test';
-		$label = 'live' === $mode ? __( 'Live / Production', 'trustgate-registration' ) : __( 'Sandbox / Test', 'trustgate-registration' );
+		$label = 'live' === $mode ? __( 'Live / Production', 'hdyhaus-identity-verification' ) : __( 'Sandbox / Test', 'hdyhaus-identity-verification' );
 
 		$required = array(
-			'public_key'       => __( 'Widget Key', 'trustgate-registration' ),
-			'configuration_id' => __( 'Configuration ID', 'trustgate-registration' ),
+			'public_key'       => __( 'Widget Key', 'hdyhaus-identity-verification' ),
+			'configuration_id' => __( 'Configuration ID', 'hdyhaus-identity-verification' ),
 		);
 
 		$missing_required = array();
@@ -752,18 +752,18 @@ final class SettingsPage {
 		?>
 		<div class="notice <?php echo esc_attr( $notice_class ); ?> inline trustgate-admin__notice">
 			<p>
-				<strong><?php esc_html_e( 'Active environment:', 'trustgate-registration' ); ?></strong>
+				<strong><?php esc_html_e( 'Active environment:', 'hdyhaus-identity-verification' ); ?></strong>
 				<?php echo esc_html( $label ); ?>
 				<?php if ( ! empty( $missing_required ) ) : ?>
 					<?php
 					printf(
 						/* translators: %s: comma-separated list of missing fields */
-						esc_html__( ' - missing required widget settings: %s.', 'trustgate-registration' ),
+						esc_html__( ' - missing required widget settings: %s.', 'hdyhaus-identity-verification' ),
 						esc_html( implode( ', ', $missing_required ) )
 					);
 					?>
 				<?php else : ?>
-					<?php esc_html_e( ' - configuration complete.', 'trustgate-registration' ); ?>
+					<?php esc_html_e( ' - configuration complete.', 'hdyhaus-identity-verification' ); ?>
 				<?php endif; ?>
 			</p>
 		</div>
@@ -782,7 +782,7 @@ final class SettingsPage {
 			$tabs[ $slug ] = $provider->get_label();
 		}
 
-		$tabs['registration'] = __( 'Registration', 'trustgate-registration' );
+		$tabs['registration'] = __( 'Registration', 'hdyhaus-identity-verification' );
 
 		return $tabs;
 	}

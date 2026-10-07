@@ -1,10 +1,10 @@
-=== TrustGate Registration ===
+=== HDYHaus Identity Verification ===
 Contributors: mariaojob
 Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.7
+Stable tag: 0.9.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,9 +12,9 @@ Verify a person's identity before WordPress creates their account, without repla
 
 == Description ==
 
-TrustGate Registration adds identity verification to the default WordPress registration page. When a provider is enabled, WordPress creates the account only after the provider confirms a successful verification.
+HDYHaus Identity Verification adds identity verification to the default WordPress registration page. When a provider is enabled, WordPress creates the account only after the provider confirms a successful verification.
 
-TrustGate is a verification gate, not a membership suite. It does not replace the registration form, add payment processing, restrict content, or create membership levels.
+HDYHaus Identity Verification is a verification gate, not a membership suite. It does not replace the registration form, add payment processing, restrict content, or create membership levels.
 
 = Features =
 
@@ -30,15 +30,15 @@ TrustGate is a verification gate, not a membership suite. It does not replace th
 * Integrates with WordPress personal data export and erasure tools.
 * Uses a provider adapter architecture, with Prembly as the first provider.
 
-TrustGate supports identity verification and KYC workflows. Installing it does not by itself make a website compliant with any law or regulatory framework. Site owners remain responsible for their verification policy, lawful basis, privacy notice, retention period, and provider configuration.
+HDYHaus Identity Verification supports identity verification and KYC workflows. Installing it does not by itself make a website compliant with any law or regulatory framework. Site owners remain responsible for their verification policy, lawful basis, privacy notice, retention period, and provider configuration.
 
 == External Service: Prembly ==
 
 This plugin connects to Prembly, an external identity verification service, when Prembly is enabled by a site administrator.
 
-The Prembly browser SDK is loaded from `https://js.prembly.com/v1/inline/widget-v3.js` on the default WordPress registration page. When a registrant selects Verify Identity, TrustGate sends their first name, last name, email address, a temporary user reference, the configured Widget Key, and Configuration ID to Prembly. Prembly's verification interface may collect identity document images, selfies, biometric information, device information, and IP-derived location information according to the checks selected by the site administrator.
+The Prembly browser SDK is loaded from `https://js.prembly.com/v1/inline/widget-v3.js` on the default WordPress registration page. When a registrant selects Verify Identity, HDYHaus Identity Verification sends their first name, last name, email address, a temporary user reference, the configured Widget Key, and Configuration ID to Prembly. Prembly's verification interface may collect identity document images, selfies, biometric information, device information, and IP-derived location information according to the checks selected by the site administrator.
 
-After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. TrustGate uses that response to confirm the session status, email address, widget configuration, session ID, and verified document identity. The complete Prembly report remains available in the site owner's Prembly dashboard; TrustGate stores only normalized verification metadata and site-specific one-way fingerprints in WordPress.
+After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. HDYHaus Identity Verification uses that response to confirm the session status, email address, widget configuration, session ID, and verified document identity. The complete Prembly report remains available in the site owner's Prembly dashboard; HDYHaus Identity Verification stores only normalized verification metadata and site-specific one-way fingerprints in WordPress.
 
 This service is provided by Prembly Inc:
 
@@ -46,14 +46,14 @@ This service is provided by Prembly Inc:
 * Prembly Terms of Use: https://prembly.com/terms
 * Prembly Privacy Policy: https://prembly.com/Policy
 
-These are the default provider links. Site administrators can replace them under **TrustGate > Registration**. Supplying the verification provider's privacy and terms links is recommended. When WordPress has a website Privacy Policy configured, TrustGate displays that link separately. Website terms or a disclaimer can also be linked by selecting a published WordPress page or entering a custom URL.
+These are the default provider links. Site administrators can replace them under **HDYHaus Identity Verification > Registration**. Supplying the verification provider's privacy and terms links is recommended. When WordPress has a website Privacy Policy configured, HDYHaus Identity Verification displays that link separately. Website terms or a disclaimer can also be linked by selecting a published WordPress page or entering a custom URL.
 
 == Installation ==
 
-1. Install and activate TrustGate Registration.
+1. Install and activate HDYHaus Identity Verification.
 2. In WordPress, enable **Settings > General > Anyone can register**.
 3. In Prembly, create separate SDK Setup widgets for Sandbox and Production as needed.
-4. In WordPress, open **TrustGate > Settings > Prembly**.
+4. In WordPress, open **HDYHaus Identity Verification > Settings > Prembly**.
 5. Add the Widget Key and Configuration ID for the appropriate environment.
 6. Choose Sandbox or Live and select **Enable Prembly**.
 7. Add identity verification information to the site's privacy policy. Suggested text is available under **Settings > Privacy**.
@@ -63,13 +63,13 @@ No Prembly Secret API Key, Organisation ID, or App ID is required for the SDK se
 
 == Frequently Asked Questions ==
 
-= Does TrustGate replace the WordPress registration form? =
+= Does HDYHaus Identity Verification replace the WordPress registration form? =
 
-No. Version 0.9.7 integrates with the default WordPress registration screen. It does not currently add verification to WooCommerce, BuddyPress, MemberPress, Ultimate Member, or other custom registration forms.
+No. Version 0.9.8 integrates with the default WordPress registration screen. It does not currently add verification to WooCommerce, BuddyPress, MemberPress, Ultimate Member, or other custom registration forms.
 
 = What happens when Prembly is disabled? =
 
-TrustGate registers no verification hooks or Prembly scripts. Normal WordPress registration continues, and saved Prembly settings are preserved.
+HDYHaus Identity Verification registers no verification hooks or Prembly scripts. Normal WordPress registration continues, and saved Prembly settings are preserved.
 
 = Does this plugin send data to a third party? =
 
@@ -79,44 +79,50 @@ Yes, when Prembly is enabled and a registrant starts verification. See the **Ext
 
 No. This integration uses Prembly's Widget Key and Configuration ID in the browser. The session confirmation endpoint uses the session ID and does not require the Secret API Key, Organisation ID, or App ID.
 
-= Does TrustGate store identity documents or selfies in WordPress? =
+= Does HDYHaus Identity Verification store identity documents or selfies in WordPress? =
 
-No. For a successfully created account, TrustGate stores whether verification succeeded, the normalized verification status, verification time, provider slug, Prembly session reference, site-specific one-way session and identity hashes, and the accepted consent time, wording, and version. Documents, document numbers, selfies, biometric information, raw Prembly responses, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
+No. For a successfully created account, HDYHaus Identity Verification stores whether verification succeeded, the normalized verification status, verification time, provider slug, Prembly session reference, site-specific one-way session and identity hashes, and the accepted consent time, wording, and version. Documents, document numbers, selfies, biometric information, raw Prembly responses, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
 
 = Can the same verified person create more than one account? =
 
-No. TrustGate derives a site-specific one-way fingerprint from the verified document country, type, and number returned by Prembly. It never stores the document number. The fingerprint is retained after privacy erasure or account deletion so the same identity cannot register again.
+No. HDYHaus Identity Verification derives a site-specific one-way fingerprint from the verified document country, type, and number returned by Prembly. It never stores the document number. The fingerprint is retained after privacy erasure or account deletion so the same identity cannot register again.
 
 = Can verification metadata be exported or erased? =
 
-Yes. TrustGate integrates with **Tools > Export Personal Data** and **Tools > Erase Personal Data**. Erasure retains one-way session-reference and identity hashes to prevent reuse of a completed verification or identity. Site owners should establish an appropriate retention policy and confirm any separate deletion obligations in Prembly.
+Yes. HDYHaus Identity Verification integrates with **Tools > Export Personal Data** and **Tools > Erase Personal Data**. Erasure retains one-way session-reference and identity hashes to prevent reuse of a completed verification or identity. Site owners should establish an appropriate retention policy and confirm any separate deletion obligations in Prembly.
 
 = Can I change the consent wording and provider links? =
 
-Yes. Open **TrustGate > Registration** to edit the plain-text consent message and the verification provider's privacy-policy and terms/consent URLs. Supplying provider links is recommended. The website's WordPress Privacy Policy is displayed separately when configured under **Settings > Privacy**. For your website's own terms or disclaimer, select a published WordPress page or enter a custom URL. TrustGate stores the exact accepted wording and a version fingerprint tied to the displayed disclosure for successful registrations.
+Yes. Open **HDYHaus Identity Verification > Registration** to edit the plain-text consent message and the verification provider's privacy-policy and terms/consent URLs. Supplying provider links is recommended. The website's WordPress Privacy Policy is displayed separately when configured under **Settings > Privacy**. For your website's own terms or disclaimer, select a published WordPress page or enter a custom URL. HDYHaus Identity Verification stores the exact accepted wording and a version fingerprint tied to the displayed disclosure for successful registrations.
 
-= Does TrustGate support multisite? =
+= Does HDYHaus Identity Verification support multisite? =
 
 This release is tested for single-site WordPress installations. Multisite and network activation have not been verified and are not currently supported.
 
 = Where can I get support? =
 
-Report plugin bugs at https://github.com/HDYHaus/trustgate-registration/issues/. For verification widget configuration, billing, or provider reports, contact Prembly through https://prembly.com/.
+Report plugin bugs at https://github.com/HDYHaus/identity-verification/issues/. For verification widget configuration, billing, or provider reports, contact Prembly through https://prembly.com/.
 
 = Does this make my site KYC compliant? =
 
-No plugin can guarantee legal or regulatory compliance. TrustGate provides an identity-verification gate that can support a site's KYC workflow. Obtain appropriate legal advice for the site's countries, audience, and use case.
+No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verification provides an identity-verification gate that can support a site's KYC workflow. Obtain appropriate legal advice for the site's countries, audience, and use case.
 
 == Screenshots ==
 
-1. TrustGate adds identity verification fields, explicit consent, and a verification action to the native WordPress registration screen.
+1. HDYHaus Identity Verification adds identity verification fields, explicit consent, and a verification action to the native WordPress registration screen.
 2. Global Registration settings separate verification provider policies from website privacy and terms/disclaimer links.
 3. Prembly settings keep Sandbox and Live widget credentials separate and control the active verification provider.
 
 == Changelog ==
 
+= 0.9.8 =
+* Rename the plugin to HDYHaus Identity Verification.
+* Use a persistent plugin secret for identity fingerprints independent of WordPress authentication salts.
+* Require a valid registration-form nonce before processing verification fields.
+* Update public repository and support links.
+
 = 0.9.7 =
-* Move global registration settings to TrustGate > Registration.
+* Move global registration settings to HDYHaus Identity Verification > Registration.
 * Clarify recommended verification provider privacy and terms links and the website Privacy Policy configuration.
 * Add a published WordPress page selector or custom URL for website terms/disclaimers, included in the consent record fingerprint.
 
@@ -135,7 +141,7 @@ No plugin can guarantee legal or regulatory compliance. TrustGate provides an id
 = 0.9.3 =
 
 * Fix saving provider activation and Prembly widget settings after a fresh installation.
-* Route settings updates through a nonce-protected TrustGate admin handler.
+* Route settings updates through a nonce-protected HDYHaus Identity Verification admin handler.
 
 = 0.9.2 =
 
@@ -145,7 +151,7 @@ No plugin can guarantee legal or regulatory compliance. TrustGate provides an id
 
 = 0.9.1 =
 
-* Add a read-only TrustGate verification and consent record to WordPress user profile screens for administrators.
+* Add a read-only HDYHaus Identity Verification verification and consent record to WordPress user profile screens for administrators.
 * Show when privacy erasure has removed verification details while retaining replay protection.
 
 = 0.9.0 =
@@ -171,7 +177,7 @@ No plugin can guarantee legal or regulatory compliance. TrustGate provides an id
 
 = 0.1.3 =
 
-* Add a top-level TrustGate admin area, Plugins screen settings link, and separate Sandbox and Live credentials.
+* Add a top-level HDYHaus Identity Verification admin area, Plugins screen settings link, and separate Sandbox and Live credentials.
 
 = 0.1.2 =
 

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<ruleset name="TrustGate Registration">
-	<description>WordPress Coding Standards for TrustGate Registration.</description>
+<ruleset name="HDYHaus Identity Verification">
+	<description>WordPress Coding Standards for HDYHaus Identity Verification.</description>
 
 	<file>.</file>
 

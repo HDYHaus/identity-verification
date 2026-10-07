@@ -1,6 +1,6 @@
 # WordPress.org Submission Checks
 
-Candidate: TrustGate Registration 0.9.7. Checks completed on October 3, 2026.
+Candidate: HDYHaus Identity Verification 0.9.7. Checks completed on October 3, 2026.
 
 ## Completed
 

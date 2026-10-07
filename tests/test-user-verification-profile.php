@@ -84,7 +84,7 @@ ob_start();
 $profile->render( new WP_User() );
 $output = (string) ob_get_clean();
 
-trustgate_profile_assert_contains( 'TrustGate Identity Verification', $output, 'Profile section is rendered.' );
+trustgate_profile_assert_contains( 'HDYHaus Identity Verification', $output, 'Profile section is rendered.' );
 trustgate_profile_assert_contains( 'session_123', $output, 'Provider session reference is shown.' );
 trustgate_profile_assert_contains( 'I consent to identity verification.', $output, 'Consent wording is shown.' );
 trustgate_profile_assert_contains( 'Identity uniqueness', $output, 'Identity uniqueness retention is shown.' );

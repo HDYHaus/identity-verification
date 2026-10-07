@@ -134,14 +134,14 @@ function trustgate_settings_assert_same( mixed $expected, mixed $actual, string 
 $registry = new ProviderRegistry( array( new TrustGateSettingsTestProvider() ), 'prembly' );
 $page     = new SettingsPage( 'trustgate_settings', $registry );
 $page->add_page();
-trustgate_settings_assert_same( 'Registration', $trustgate_test_submenus['trustgate-registration-flow'][2], 'Registration has a separate submenu under TrustGate.' );
+trustgate_settings_assert_same( 'Registration', $trustgate_test_submenus['hdyhaus-identity-verification-flow'][2], 'Registration has a separate submenu under HDYHaus Identity Verification.' );
 $tab_method  = new ReflectionMethod( SettingsPage::class, 'get_current_tab' );
 $tabs_method = new ReflectionMethod( SettingsPage::class, 'get_tabs' );
-$_GET = array( 'page' => 'trustgate-registration-flow', 'tab' => 'prembly' );
+$_GET = array( 'page' => 'hdyhaus-identity-verification-flow', 'tab' => 'prembly' );
 trustgate_settings_assert_same( 'registration', $tab_method->invoke( $page, $tabs_method->invoke( $page ) ), 'The Registration page always opens global registration settings.' );
-$_GET = array( 'page' => 'trustgate-registration', 'tab' => 'registration' );
+$_GET = array( 'page' => 'hdyhaus-identity-verification', 'tab' => 'registration' );
 trustgate_settings_assert_same( 'registration', $tab_method->invoke( $page, $tabs_method->invoke( $page ) ), 'Existing Registration tab links remain usable.' );
-$_GET = array( 'page' => 'trustgate-registration' );
+$_GET = array( 'page' => 'hdyhaus-identity-verification' );
 trustgate_settings_assert_same( 'prembly', $tab_method->invoke( $page, $tabs_method->invoke( $page ) ), 'Settings continues to open the provider settings.' );
 
 $clean    = $page->sanitize_settings(

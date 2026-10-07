@@ -3,10 +3,10 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION="$(sed -n "s/^ \* Version: //p" "$ROOT_DIR/trustgate-registration.php")"
-BUILD_DIR="${TMPDIR:-/tmp}/trustgate-registration-build"
-PACKAGE_DIR="$BUILD_DIR/trustgate-registration"
-ZIP_PATH="$ROOT_DIR/trustgate-registration-$VERSION.zip"
+VERSION="$(sed -n "s/^ \* Version: //p" "$ROOT_DIR/hdyhaus-identity-verification.php")"
+BUILD_DIR="${TMPDIR:-/tmp}/hdyhaus-identity-verification-build"
+PACKAGE_DIR="$BUILD_DIR/hdyhaus-identity-verification"
+ZIP_PATH="$ROOT_DIR/hdyhaus-identity-verification-$VERSION.zip"
 
 rm -rf "$BUILD_DIR"
 mkdir -p "$PACKAGE_DIR"
@@ -30,7 +30,7 @@ rsync -a \
 	"$ROOT_DIR/" "$PACKAGE_DIR/"
 
 rm -f "$ZIP_PATH"
-( cd "$BUILD_DIR" && zip -qr "$ZIP_PATH" trustgate-registration )
+( cd "$BUILD_DIR" && zip -qr "$ZIP_PATH" hdyhaus-identity-verification )
 unzip -t "$ZIP_PATH"
 
 printf 'Built %s\n' "$ZIP_PATH"

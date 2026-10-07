@@ -51,7 +51,7 @@ final class PremblyProvider implements VerificationProvider {
 	 * Get provider label.
 	 */
 	public function get_label(): string {
-		return __( 'Prembly', 'trustgate-registration' );
+		return __( 'Prembly', 'hdyhaus-identity-verification' );
 	}
 
 	/**
@@ -142,7 +142,7 @@ final class PremblyProvider implements VerificationProvider {
 	}
 
 	/**
-	 * Normalize Prembly status data into TrustGate status.
+	 * Normalize Prembly status data into HDYHaus Identity Verification status.
 	 *
 	 * @param array<string, mixed> $body Response body.
 	 * @param string               $fallback_reference Fallback reference.
@@ -331,11 +331,38 @@ final class PremblyProvider implements VerificationProvider {
 			return '';
 		}
 
+		$secret = $this->get_identity_secret();
+
+		if ( '' === $secret ) {
+			return '';
+		}
+
 		return hash_hmac(
 			'sha256',
 			implode( '|', array( $this->get_slug(), $document_country, $document_type, $document_number ) ),
-			wp_salt( 'auth' )
+			$secret
 		);
+	}
+
+	/**
+	 * Read the persistent key, allowing concurrent requests to share one winner.
+	 */
+	private function get_identity_secret(): string {
+		$option_name = 'trustgate_identity_secret';
+		$secret      = get_option( $option_name, false );
+
+		if ( false === $secret ) {
+			try {
+				$candidate = bin2hex( random_bytes( 32 ) );
+			} catch ( \Exception $exception ) {
+				return '';
+			}
+
+			add_option( $option_name, $candidate, '', false );
+			$secret = get_option( $option_name, false );
+		}
+
+		return is_string( $secret ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $secret ) ? $secret : '';
 	}
 
 	/**

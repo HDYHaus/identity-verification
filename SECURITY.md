@@ -1,6 +1,6 @@
 # Security Policy
 
-TrustGate Registration handles identity-verification state and must fail closed.
+HDYHaus Identity Verification handles identity-verification state and must fail closed.
 
 Please do not open public issues for vulnerabilities. Report security concerns privately to the repository maintainers.
 

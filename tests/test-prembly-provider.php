@@ -21,10 +21,9 @@ function sanitize_email( string $value ): string { // phpcs:ignore WordPress.Nam
 	return filter_var( $value, FILTER_SANITIZE_EMAIL );
 }
 
-function wp_salt( string $scheme = 'auth' ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
-	unset( $scheme );
-	return 'site-specific-test-salt';
-}
+$trustgate_test_secret = false;
+$trustgate_test_secret_mode = 'normal';
+$trustgate_test_secret_autoload = null;
 
 /** @var array<string, mixed> */
 $trustgate_test_settings = array();
@@ -39,11 +38,31 @@ $trustgate_test_request = array(
 );
 
 function get_option( string $option_name, mixed $default = false ): mixed { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
-	unset( $option_name );
+	global $trustgate_test_secret;
+	if ( 'trustgate_identity_secret' === $option_name ) {
+		return $trustgate_test_secret;
+	}
 
 	global $trustgate_test_settings;
 
 	return array() !== $trustgate_test_settings ? $trustgate_test_settings : $default;
+}
+
+function add_option( string $name, mixed $value, string $deprecated = '', bool $autoload = true ): bool {
+	global $trustgate_test_secret, $trustgate_test_secret_mode, $trustgate_test_secret_autoload;
+	$trustgate_test_secret_autoload = $autoload;
+	if ( 'failure' === $trustgate_test_secret_mode ) {
+		return false;
+	}
+	if ( 'race' === $trustgate_test_secret_mode ) {
+		$trustgate_test_secret = str_repeat( 'b', 64 );
+		return false;
+	}
+	if ( false !== $trustgate_test_secret ) {
+		return false;
+	}
+	$trustgate_test_secret = $value;
+	return true;
 }
 
 /**
@@ -150,10 +169,25 @@ $result = trustgate_normalize_fixture( $body, $settings, $context );
 trustgate_assert_same( true, $result['verified'], 'A bound completed session is verified.' );
 trustgate_assert_same( 'verified', $result['status'], 'A successful response has normalized status.' );
 trustgate_assert_same(
-	hash_hmac( 'sha256', 'prembly|ALB|PASSPORT|A123456', 'site-specific-test-salt' ),
+	hash_hmac( 'sha256', 'prembly|ALB|PASSPORT|A123456', $trustgate_test_secret ),
 	$result['identity_hash'] ?? '',
 	'A successful document check returns only a site-specific identity fingerprint.'
 );
+
+trustgate_assert_same( false, $trustgate_test_secret_autoload, 'The secret is not autoloaded.' );
+$initial_hash = $result['identity_hash'];
+$another_provider = new PremblyProvider( 'trustgate_registration_settings' );
+trustgate_assert_same( $initial_hash, $method->invoke( $another_provider, $body, 'sdk_session_123', $settings, $context )['identity_hash'], 'A new provider instance reuses the persisted key without authentication salts.' );
+$trustgate_test_secret = false;
+$trustgate_test_secret_mode = 'failure';
+trustgate_assert_same( false, trustgate_normalize_fixture( $body, $settings, $context )['verified'], 'Secret persistence failure rejects verification.' );
+$trustgate_test_secret_mode = 'race';
+$race_result = trustgate_normalize_fixture( $body, $settings, $context );
+trustgate_assert_same( hash_hmac( 'sha256', 'prembly|ALB|PASSPORT|A123456', str_repeat( 'b', 64 ) ), $race_result['identity_hash'], 'A concurrent initializer uses the winning persisted key.' );
+$trustgate_test_secret_mode = 'normal';
+$trustgate_test_secret = 'invalid';
+trustgate_assert_same( false, trustgate_normalize_fixture( $body, $settings, $context )['verified'], 'A corrupt key fails closed instead of regenerating.' );
+$trustgate_test_secret = str_repeat( 'b', 64 );
 
 $trustgate_test_settings = $settings + array(
 	'status_endpoint' => 'https://example.com/unsafe/{id}',

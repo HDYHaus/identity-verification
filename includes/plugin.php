@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Registers TrustGate services with WordPress.
+ * Registers HDYHaus Identity Verification services with WordPress.
  */
 final class Plugin {
 	/**

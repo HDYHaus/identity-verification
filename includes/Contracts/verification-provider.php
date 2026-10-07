@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Describes the provider behavior TrustGate needs.
+ * Describes the provider behavior HDYHaus Identity Verification needs.
  */
 interface VerificationProvider {
 	/**

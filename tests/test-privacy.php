@@ -164,7 +164,7 @@ trustgate_privacy_assert_same( false, str_contains( $trustgate_test_policy_conte
 
 $export = $privacy->export_user_data( 'person@example.com' );
 trustgate_privacy_assert_same( true, $export['done'], 'The exporter completes in one page.' );
-trustgate_privacy_assert_same( 'trustgate-registration', $export['data'][0]['group_id'], 'The export uses the TrustGate group.' );
+trustgate_privacy_assert_same( 'hdyhaus-identity-verification', $export['data'][0]['group_id'], 'The export uses the HDYHaus Identity Verification group.' );
 trustgate_privacy_assert_same( 10, count( $export['data'][0]['data'] ), 'Every stored verification field is exported.' );
 
 $erasure = $privacy->erase_user_data( 'person@example.com' );

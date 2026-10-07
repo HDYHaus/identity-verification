@@ -137,6 +137,17 @@ function check_ajax_referer( string $action, string $query_arg ): void { // phpc
 	unset( $action, $query_arg );
 }
 
+function wp_verify_nonce( string $nonce, string $action ): int|false {
+	return 'valid-form-nonce' === $nonce && 'trustgate_registration_form' === $action ? 1 : false;
+}
+
+final class WP_Error {
+	public array $errors = array();
+	public function add( string $code, string $message ): void {
+		$this->errors[ $code ] = $message;
+	}
+}
+
 /**
  * @param array<string, mixed> $data Response data.
  */
@@ -290,11 +301,28 @@ trustgate_registration_assert_same( false, isset( $attempt['raw'] ), 'The raw pr
 
 $_POST = array(
 	'trustgate_first_name'    => 'Maria',
+	'trustgate_registration_form_nonce' => 'valid-form-nonce',
+	'trustgate_consent'       => '1',
 	'trustgate_last_name'     => 'Job',
 	'trustgate_reference'     => $reference,
 	'trustgate_attempt_token' => $token,
 );
 
+$valid_post = $_POST;
+foreach ( array( null, 'invalid', array( 'invalid' ) ) as $nonce ) {
+	$_POST = $valid_post;
+	if ( null === $nonce ) {
+		unset( $_POST['trustgate_registration_form_nonce'] );
+	} else {
+		$_POST['trustgate_registration_form_nonce'] = $nonce;
+	}
+	$errors = $controller->validate_registration( new WP_Error(), 'person', 'person@example.com' );
+	trustgate_registration_assert_same( true, isset( $errors->errors['trustgate_invalid_nonce'] ), 'Missing, invalid, and malformed nonces reject registration.' );
+	$controller->store_user_meta( 42 );
+	trustgate_registration_assert_same( array(), $trustgate_test_user_meta, 'Invalid nonces cannot write metadata.' );
+}
+$_POST = $valid_post;
+trustgate_registration_assert_same( array(), $controller->validate_registration( new WP_Error(), 'person', 'person@example.com' )->errors, 'A verified public registration with a valid nonce passes.' );
 $controller->store_user_meta( 42 );
 
 trustgate_registration_assert_same( 'verified', $trustgate_test_user_meta['trustgate_verification_status'] ?? '', 'The normalized status is stored for the user.' );
@@ -309,6 +337,11 @@ trustgate_registration_assert_same(
 	$trustgate_test_options[ RegistrationController::IDENTITY_OPTION_PREFIX . hash( 'sha256', 'identity-1' ) ] ?? '',
 	'The identity fingerprint becomes a permanent uniqueness record.'
 );
+
+trustgate_registration_assert_same( true, isset( $controller->validate_registration( new WP_Error(), 'person', 'person@example.com' )->errors['trustgate_verification_required'] ), 'A consumed verification attempt cannot register again.' );
+$saved_meta = $trustgate_test_user_meta;
+$controller->store_user_meta( 42 );
+trustgate_registration_assert_same( $saved_meta, $trustgate_test_user_meta, 'A consumed attempt cannot rewrite verification metadata.' );
 
 $second_token       = 'second-attempt-token';
 $second_attempt_key = 'trustgate_attempt_' . hash( 'sha256', $second_token );

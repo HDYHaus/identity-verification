@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Displays stored TrustGate records to administrators.
+ * Displays stored HDYHaus Identity Verification records to administrators.
  */
 final class UserVerificationProfile {
 	/**
@@ -51,37 +51,37 @@ final class UserVerificationProfile {
 
 		$has_record = array_filter( $values, static fn ( string $value ): bool => '' !== $value );
 		?>
-		<h2><?php esc_html_e( 'TrustGate Identity Verification', 'trustgate-registration' ); ?></h2>
+		<h2><?php esc_html_e( 'HDYHaus Identity Verification', 'hdyhaus-identity-verification' ); ?></h2>
 		<table class="form-table" role="presentation">
 			<tr>
-				<th><?php esc_html_e( 'Record status', 'trustgate-registration' ); ?></th>
+				<th><?php esc_html_e( 'Record status', 'hdyhaus-identity-verification' ); ?></th>
 				<td>
 					<?php if ( empty( $has_record ) ) : ?>
-						<?php esc_html_e( 'No TrustGate verification record.', 'trustgate-registration' ); ?>
+						<?php esc_html_e( 'No HDYHaus Identity Verification verification record.', 'hdyhaus-identity-verification' ); ?>
 					<?php elseif ( '' === $values['status'] && ( '' !== $values['reference_hash'] || '' !== $values['identity_hash'] ) ) : ?>
-						<?php esc_html_e( 'Verification data erased; replay-prevention record retained.', 'trustgate-registration' ); ?>
+						<?php esc_html_e( 'Verification data erased; replay-prevention record retained.', 'hdyhaus-identity-verification' ); ?>
 					<?php else : ?>
-						<strong><?php esc_html_e( 'Verified', 'trustgate-registration' ); ?></strong>
+						<strong><?php esc_html_e( 'Verified', 'hdyhaus-identity-verification' ); ?></strong>
 					<?php endif; ?>
 				</td>
 			</tr>
-			<?php $this->render_row( __( 'Verification status', 'trustgate-registration' ), $values['status'] ); ?>
-			<?php $this->render_row( __( 'Provider', 'trustgate-registration' ), $values['provider'] ); ?>
-			<?php $this->render_row( __( 'Verified at', 'trustgate-registration' ), $values['verified_at'] ); ?>
-			<?php $this->render_row( __( 'Consent accepted at', 'trustgate-registration' ), $values['consent_at'] ); ?>
-			<?php $this->render_row( __( 'Consent wording', 'trustgate-registration' ), $values['consent_text'] ); ?>
-			<?php $this->render_row( __( 'Provider session reference', 'trustgate-registration' ), $values['reference'] ); ?>
-			<?php $this->render_row( __( 'Consent record ID', 'trustgate-registration' ), $values['consent_version'] ); ?>
+			<?php $this->render_row( __( 'Verification status', 'hdyhaus-identity-verification' ), $values['status'] ); ?>
+			<?php $this->render_row( __( 'Provider', 'hdyhaus-identity-verification' ), $values['provider'] ); ?>
+			<?php $this->render_row( __( 'Verified at', 'hdyhaus-identity-verification' ), $values['verified_at'] ); ?>
+			<?php $this->render_row( __( 'Consent accepted at', 'hdyhaus-identity-verification' ), $values['consent_at'] ); ?>
+			<?php $this->render_row( __( 'Consent wording', 'hdyhaus-identity-verification' ), $values['consent_text'] ); ?>
+			<?php $this->render_row( __( 'Provider session reference', 'hdyhaus-identity-verification' ), $values['reference'] ); ?>
+			<?php $this->render_row( __( 'Consent record ID', 'hdyhaus-identity-verification' ), $values['consent_version'] ); ?>
 			<?php if ( '' !== $values['reference_hash'] ) : ?>
 				<tr>
-					<th><?php esc_html_e( 'Replay protection', 'trustgate-registration' ); ?></th>
-					<td><?php esc_html_e( 'Retained', 'trustgate-registration' ); ?></td>
+					<th><?php esc_html_e( 'Replay protection', 'hdyhaus-identity-verification' ); ?></th>
+					<td><?php esc_html_e( 'Retained', 'hdyhaus-identity-verification' ); ?></td>
 				</tr>
 			<?php endif; ?>
 			<?php if ( '' !== $values['identity_hash'] ) : ?>
 				<tr>
-					<th><?php esc_html_e( 'Identity uniqueness', 'trustgate-registration' ); ?></th>
-					<td><?php esc_html_e( 'Retained', 'trustgate-registration' ); ?></td>
+					<th><?php esc_html_e( 'Identity uniqueness', 'hdyhaus-identity-verification' ); ?></th>
+					<td><?php esc_html_e( 'Retained', 'hdyhaus-identity-verification' ); ?></td>
 				</tr>
 			<?php endif; ?>
 		</table>

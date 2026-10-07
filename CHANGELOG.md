@@ -1,8 +1,15 @@
 # Changelog
 
+## 0.9.8
+
+- Rename the plugin and package to HDYHaus Identity Verification.
+- Persist a dedicated identity fingerprint key independently of authentication salts.
+- Validate registration-form nonces before processing verification fields or storing user metadata.
+- Update public repository and support URLs.
+
 ## 0.9.7
 
-- Move global registration settings to a dedicated TrustGate > Registration submenu.
+- Move global registration settings to a dedicated HDYHaus Identity Verification > Registration submenu.
 - Clarify recommended verification provider privacy and terms links, and show the website's WordPress Privacy Policy configuration.
 - Add a published WordPress page selector or custom URL for website terms/disclaimers, included in the registration disclosure and consent fingerprint.
 
@@ -21,7 +28,7 @@
 ## 0.9.3
 
 - Fix saving provider activation and Prembly widget settings after a fresh installation.
-- Route settings updates through a nonce-protected TrustGate admin handler.
+- Route settings updates through a nonce-protected HDYHaus Identity Verification admin handler.
 
 ## 0.9.2
 
@@ -31,7 +38,7 @@
 
 ## 0.9.1
 
-- Add a read-only TrustGate verification and consent record to WordPress user profile screens for administrators.
+- Add a read-only HDYHaus Identity Verification verification and consent record to WordPress user profile screens for administrators.
 - Show when privacy erasure has removed verification details while retaining replay protection.
 
 ## 0.9.0
@@ -67,7 +74,7 @@
 - Support Prembly's V3 SDK callback and session identifier.
 - Confirm sandbox and live widget completions through the SDK session endpoint.
 - Add optional authenticated session lookup with a Prembly Organisation ID.
-- Show normalized Prembly failure codes while TrustGate is in Test mode.
+- Show normalized Prembly failure codes while HDYHaus Identity Verification is in Test mode.
 
 ## 0.1.0
 

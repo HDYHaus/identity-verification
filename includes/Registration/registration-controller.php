@@ -49,7 +49,7 @@ final class RegistrationController {
 	 * Get the migration-safe default consent wording.
 	 */
 	public static function get_default_consent_text(): string {
-		return __( 'I consent to Prembly processing my name, email, identity document, and biometric information to verify my identity.', 'trustgate-registration' );
+		return __( 'I consent to Prembly processing my name, email, identity document, and biometric information to verify my identity.', 'hdyhaus-identity-verification' );
 	}
 
 	/**
@@ -104,33 +104,33 @@ final class RegistrationController {
 
 		wp_enqueue_script( 'trustgate-prembly-widget', 'https://js.prembly.com/v1/inline/widget-v3.js', array(), '3.0.0', true );
 		wp_enqueue_script(
-			'trustgate-registration',
+			'hdyhaus-identity-verification',
 			TRUSTGATE_REGISTRATION_URL . 'assets/js/registration.js',
 			array( 'jquery', 'trustgate-prembly-widget' ),
 			TRUSTGATE_REGISTRATION_VERSION,
 			true
 		);
 		wp_localize_script(
-			'trustgate-registration',
+			'hdyhaus-identity-verification',
 			'trustgateRegistration',
 			array(
 				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
 				'nonce'    => wp_create_nonce( 'trustgate_registration' ),
 				'provider' => $this->provider->get_public_config(),
 				'i18n'     => array(
-					'verify'            => __( 'Verify Identity', 'trustgate-registration' ),
-					'verified'          => __( 'Identity verified. You can finish registration.', 'trustgate-registration' ),
-					'failed'            => __( 'We could not confirm your identity verification. Please try again.', 'trustgate-registration' ),
-					'working'           => __( 'Checking verification...', 'trustgate-registration' ),
-					'invalid'           => __( 'Please enter your email, first name, and last name before verifying.', 'trustgate-registration' ),
-					'consent'           => __( 'Please confirm that you consent to identity verification.', 'trustgate-registration' ),
-					'unready'           => __( 'Identity verification is not configured yet.', 'trustgate-registration' ),
-					'duplicateIdentity' => __( 'This identity is already associated with an account. Please sign in or contact the site administrator.', 'trustgate-registration' ),
+					'verify'            => __( 'Verify Identity', 'hdyhaus-identity-verification' ),
+					'verified'          => __( 'Identity verified. You can finish registration.', 'hdyhaus-identity-verification' ),
+					'failed'            => __( 'We could not confirm your identity verification. Please try again.', 'hdyhaus-identity-verification' ),
+					'working'           => __( 'Checking verification...', 'hdyhaus-identity-verification' ),
+					'invalid'           => __( 'Please enter your email, first name, and last name before verifying.', 'hdyhaus-identity-verification' ),
+					'consent'           => __( 'Please confirm that you consent to identity verification.', 'hdyhaus-identity-verification' ),
+					'unready'           => __( 'Identity verification is not configured yet.', 'hdyhaus-identity-verification' ),
+					'duplicateIdentity' => __( 'This identity is already associated with an account. Please sign in or contact the site administrator.', 'hdyhaus-identity-verification' ),
 				),
 			)
 		);
 		wp_enqueue_style(
-			'trustgate-registration',
+			'hdyhaus-identity-verification',
 			TRUSTGATE_REGISTRATION_URL . 'assets/css/registration.css',
 			array(),
 			TRUSTGATE_REGISTRATION_VERSION
@@ -141,10 +141,11 @@ final class RegistrationController {
 	 * Render extra registration fields.
 	 */
 	public function render_registration_fields(): void {
-		$first_name = isset( $_POST['trustgate_first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_first_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$last_name  = isset( $_POST['trustgate_last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_last_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$valid_form = $this->has_registration_nonce();
+		$first_name = $valid_form && isset( $_POST['trustgate_first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_first_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked by has_registration_nonce().
+		$last_name  = $valid_form && isset( $_POST['trustgate_last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_last_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked by has_registration_nonce().
 		$token      = $this->get_or_create_attempt_token();
-		$consent    = isset( $_POST['trustgate_consent'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['trustgate_consent'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$consent    = $valid_form && isset( $_POST['trustgate_consent'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['trustgate_consent'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked by has_registration_nonce().
 		$privacy    = get_privacy_policy_url();
 		$links      = array_filter(
 			array(
@@ -152,7 +153,7 @@ final class RegistrationController {
 					'url'   => $this->get_provider_privacy_url(),
 					'label' => sprintf(
 						/* translators: %s: verification provider name */
-						__( '%s Privacy Policy', 'trustgate-registration' ),
+						__( '%s Privacy Policy', 'hdyhaus-identity-verification' ),
 						$this->provider->get_label()
 					),
 				),
@@ -160,28 +161,29 @@ final class RegistrationController {
 					'url'   => $this->get_provider_terms_url(),
 					'label' => sprintf(
 						/* translators: %s: verification provider name */
-						__( '%s Terms / Consent', 'trustgate-registration' ),
+						__( '%s Terms / Consent', 'hdyhaus-identity-verification' ),
 						$this->provider->get_label()
 					),
 				),
 				array(
 					'url'   => $privacy,
-					'label' => __( 'Website Privacy Policy', 'trustgate-registration' ),
+					'label' => __( 'Website Privacy Policy', 'hdyhaus-identity-verification' ),
 				),
 				array(
 					'url'   => $this->get_site_terms_url(),
-					'label' => __( 'Website Terms / Disclaimer', 'trustgate-registration' ),
+					'label' => __( 'Website Terms / Disclaimer', 'hdyhaus-identity-verification' ),
 				),
 			),
 			static fn ( array $link ): bool => '' !== $link['url']
 		);
 		?>
+		<?php wp_nonce_field( 'trustgate_registration_form', 'trustgate_registration_form_nonce' ); ?>
 		<p>
-			<label for="trustgate_first_name"><?php esc_html_e( 'First Name', 'trustgate-registration' ); ?></label>
+			<label for="trustgate_first_name"><?php esc_html_e( 'First Name', 'hdyhaus-identity-verification' ); ?></label>
 			<input type="text" name="trustgate_first_name" id="trustgate_first_name" class="input" value="<?php echo esc_attr( $first_name ); ?>" autocomplete="given-name" />
 		</p>
 		<p>
-			<label for="trustgate_last_name"><?php esc_html_e( 'Last Name', 'trustgate-registration' ); ?></label>
+			<label for="trustgate_last_name"><?php esc_html_e( 'Last Name', 'hdyhaus-identity-verification' ); ?></label>
 			<input type="text" name="trustgate_last_name" id="trustgate_last_name" class="input" value="<?php echo esc_attr( $last_name ); ?>" autocomplete="family-name" />
 		</p>
 		<p class="trustgate-verification-control">
@@ -202,7 +204,7 @@ final class RegistrationController {
 			<input type="hidden" name="trustgate_attempt_token" id="trustgate_attempt_token" value="<?php echo esc_attr( $token ); ?>" />
 			<input type="hidden" name="trustgate_reference" id="trustgate_reference" value="" />
 			<button type="button" class="button button-secondary" id="trustgate_verify_button">
-				<?php esc_html_e( 'Verify Identity', 'trustgate-registration' ); ?>
+				<?php esc_html_e( 'Verify Identity', 'hdyhaus-identity-verification' ); ?>
 			</button>
 			<span id="trustgate_verification_status" role="status" aria-live="polite"></span>
 		</p>
@@ -220,6 +222,11 @@ final class RegistrationController {
 	public function validate_registration( WP_Error $errors, string $sanitized_user_login, string $user_email ): WP_Error {
 		unset( $sanitized_user_login );
 
+		if ( ! $this->has_registration_nonce() ) {
+			$errors->add( 'trustgate_invalid_nonce', __( 'Please reload the registration page and try again.', 'hdyhaus-identity-verification' ) );
+			return $errors;
+		}
+
 		$first_name = isset( $_POST['trustgate_first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_first_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$last_name  = isset( $_POST['trustgate_last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_last_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$reference  = isset( $_POST['trustgate_reference'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_reference'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -227,19 +234,19 @@ final class RegistrationController {
 		$consent    = isset( $_POST['trustgate_consent'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['trustgate_consent'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
 		if ( '' === $first_name ) {
-			$errors->add( 'trustgate_first_name_required', __( 'Please enter your first name.', 'trustgate-registration' ) );
+			$errors->add( 'trustgate_first_name_required', __( 'Please enter your first name.', 'hdyhaus-identity-verification' ) );
 		}
 
 		if ( '' === $last_name ) {
-			$errors->add( 'trustgate_last_name_required', __( 'Please enter your last name.', 'trustgate-registration' ) );
+			$errors->add( 'trustgate_last_name_required', __( 'Please enter your last name.', 'hdyhaus-identity-verification' ) );
 		}
 
 		if ( ! $consent ) {
-			$errors->add( 'trustgate_consent_required', __( 'Please consent to identity verification before registering.', 'trustgate-registration' ) );
+			$errors->add( 'trustgate_consent_required', __( 'Please consent to identity verification before registering.', 'hdyhaus-identity-verification' ) );
 		}
 
 		if ( ! $this->is_valid_attempt( $token, $reference, $user_email, $first_name, $last_name ) ) {
-			$errors->add( 'trustgate_verification_required', __( 'Please complete identity verification before registering.', 'trustgate-registration' ) );
+			$errors->add( 'trustgate_verification_required', __( 'Please complete identity verification before registering.', 'hdyhaus-identity-verification' ) );
 		}
 
 		return $errors;
@@ -279,7 +286,7 @@ final class RegistrationController {
 		}
 
 		wp_enqueue_style(
-			'trustgate-registration-success',
+			'hdyhaus-identity-verification-success',
 			TRUSTGATE_REGISTRATION_URL . 'assets/css/success.css',
 			array(),
 			TRUSTGATE_REGISTRATION_VERSION
@@ -297,11 +304,11 @@ final class RegistrationController {
 		}
 
 		$notice = sprintf(
-			'<div class="trustgate-registration-success" role="status"><h2>%1$s</h2><p>%2$s</p><p><a class="wp-element-button" href="%3$s">%4$s</a></p></div>',
-			esc_html__( 'Registration complete', 'trustgate-registration' ),
-			esc_html__( 'Your account has been created. Check your email for the link to set your password, then sign in.', 'trustgate-registration' ),
+			'<div class="hdyhaus-identity-verification-success" role="status"><h2>%1$s</h2><p>%2$s</p><p><a class="wp-element-button" href="%3$s">%4$s</a></p></div>',
+			esc_html__( 'Registration complete', 'hdyhaus-identity-verification' ),
+			esc_html__( 'Your account has been created. Check your email for the link to set your password, then sign in.', 'hdyhaus-identity-verification' ),
 			esc_url( wp_login_url() ),
-			esc_html__( 'Go to login', 'trustgate-registration' )
+			esc_html__( 'Go to login', 'hdyhaus-identity-verification' )
 		);
 
 		return $notice . $content;
@@ -322,6 +329,9 @@ final class RegistrationController {
 	 * @param int $user_id User ID.
 	 */
 	public function store_user_meta( int $user_id ): void {
+		if ( ! $this->has_registration_nonce() ) {
+			return;
+		}
 		$first_name = isset( $_POST['trustgate_first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_first_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$last_name  = isset( $_POST['trustgate_last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_last_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$reference  = isset( $_POST['trustgate_reference'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_reference'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -463,7 +473,7 @@ final class RegistrationController {
 	 * Reuse a valid posted attempt token or issue a new one.
 	 */
 	private function get_or_create_attempt_token(): string {
-		$posted_token = isset( $_POST['trustgate_attempt_token'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_attempt_token'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$posted_token = $this->has_registration_nonce() && isset( $_POST['trustgate_attempt_token'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_attempt_token'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked by has_registration_nonce().
 
 		if ( array() !== $this->get_attempt( $posted_token ) ) {
 			return $posted_token;
@@ -480,6 +490,13 @@ final class RegistrationController {
 		);
 
 		return $token;
+	}
+
+	/**
+	 * Validate the public registration form before consuming its fields.
+	 */
+	private function has_registration_nonce(): bool {
+		return isset( $_POST['trustgate_registration_form_nonce'] ) && is_string( $_POST['trustgate_registration_form_nonce'] ) && false !== wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['trustgate_registration_form_nonce'] ) ), 'trustgate_registration_form' );
 	}
 
 	/**

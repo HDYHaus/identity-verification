@@ -60,36 +60,36 @@ final class Privacy {
 		$privacy_url = array_key_exists( 'provider_privacy_url', $settings ) ? esc_url_raw( (string) $settings['provider_privacy_url'] ) : RegistrationController::DEFAULT_PROVIDER_PRIVACY_URL;
 		$terms_url   = array_key_exists( 'provider_terms_url', $settings ) ? esc_url_raw( (string) $settings['provider_terms_url'] ) : RegistrationController::DEFAULT_PROVIDER_TERMS_URL;
 
-		$content  = '<p>' . esc_html__( 'When identity verification is enabled, the registrant\'s name and email address are sent to Prembly when the registrant starts verification. Prembly may then collect and process identity document images, selfies, biometric information, device information, and IP-derived location information to perform the checks configured by the site owner.', 'trustgate-registration' ) . '</p>';
-		$content .= '<p>' . esc_html__( 'The registration form requires agreement to this statement:', 'trustgate-registration' ) . ' &ldquo;' . esc_html( $consent ) . '&rdquo;</p>';
-		$content .= '<p>' . esc_html__( 'This site stores whether verification succeeded, the normalized verification status, the verification provider, the provider session reference, one-way reference and identity hashes, the verification time, and the consent time, wording, and version. The one-way hashes may be retained after privacy erasure or account deletion to prevent reuse of a completed verification or identity. The site owner determines how long other information is retained.', 'trustgate-registration' ) . '</p>';
+		$content  = '<p>' . esc_html__( 'When identity verification is enabled, the registrant\'s name and email address are sent to Prembly when the registrant starts verification. Prembly may then collect and process identity document images, selfies, biometric information, device information, and IP-derived location information to perform the checks configured by the site owner.', 'hdyhaus-identity-verification' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'The registration form requires agreement to this statement:', 'hdyhaus-identity-verification' ) . ' &ldquo;' . esc_html( $consent ) . '&rdquo;</p>';
+		$content .= '<p>' . esc_html__( 'This site stores whether verification succeeded, the normalized verification status, the verification provider, the provider session reference, one-way reference and identity hashes, the verification time, and the consent time, wording, and version. The one-way hashes may be retained after privacy erasure or account deletion to prevent reuse of a completed verification or identity. The site owner determines how long other information is retained.', 'hdyhaus-identity-verification' ) . '</p>';
 
 		$links = array();
 
 		if ( '' !== $privacy_url ) {
-			$links[] = '<a href="' . esc_url( $privacy_url ) . '">' . esc_html__( 'Verification Provider Privacy Policy', 'trustgate-registration' ) . '</a>';
+			$links[] = '<a href="' . esc_url( $privacy_url ) . '">' . esc_html__( 'Verification Provider Privacy Policy', 'hdyhaus-identity-verification' ) . '</a>';
 		}
 
 		if ( '' !== $terms_url ) {
-			$links[] = '<a href="' . esc_url( $terms_url ) . '">' . esc_html__( 'Verification Provider Terms / Consent', 'trustgate-registration' ) . '</a>';
+			$links[] = '<a href="' . esc_url( $terms_url ) . '">' . esc_html__( 'Verification Provider Terms / Consent', 'hdyhaus-identity-verification' ) . '</a>';
 		}
 
 		if ( ! empty( $links ) ) {
 			$content .= '<p>' . implode( ' | ', $links ) . '</p>';
 		}
 
-		wp_add_privacy_policy_content( __( 'TrustGate Registration', 'trustgate-registration' ), wp_kses_post( wpautop( $content, false ) ) );
+		wp_add_privacy_policy_content( __( 'HDYHaus Identity Verification', 'hdyhaus-identity-verification' ), wp_kses_post( wpautop( $content, false ) ) );
 	}
 
 	/**
-	 * Register the TrustGate personal data exporter.
+	 * Register the HDYHaus Identity Verification personal data exporter.
 	 *
 	 * @param array<string, array<string, mixed>> $exporters Registered exporters.
 	 * @return array<string, array<string, mixed>>
 	 */
 	public function register_exporter( array $exporters ): array {
-		$exporters['trustgate-registration'] = array(
-			'exporter_friendly_name' => __( 'TrustGate Registration', 'trustgate-registration' ),
+		$exporters['hdyhaus-identity-verification'] = array(
+			'exporter_friendly_name' => __( 'HDYHaus Identity Verification', 'hdyhaus-identity-verification' ),
 			'callback'               => array( $this, 'export_user_data' ),
 		);
 
@@ -97,14 +97,14 @@ final class Privacy {
 	}
 
 	/**
-	 * Register the TrustGate personal data eraser.
+	 * Register the HDYHaus Identity Verification personal data eraser.
 	 *
 	 * @param array<string, array<string, mixed>> $erasers Registered erasers.
 	 * @return array<string, array<string, mixed>>
 	 */
 	public function register_eraser( array $erasers ): array {
-		$erasers['trustgate-registration'] = array(
-			'eraser_friendly_name' => __( 'TrustGate Registration', 'trustgate-registration' ),
+		$erasers['hdyhaus-identity-verification'] = array(
+			'eraser_friendly_name' => __( 'HDYHaus Identity Verification', 'hdyhaus-identity-verification' ),
 			'callback'             => array( $this, 'erase_user_data' ),
 		);
 
@@ -112,7 +112,7 @@ final class Privacy {
 	}
 
 	/**
-	 * Export TrustGate metadata for a user email.
+	 * Export HDYHaus Identity Verification metadata for a user email.
 	 *
 	 * @param string $email_address User email address.
 	 * @return array<string, mixed>
@@ -144,9 +144,9 @@ final class Privacy {
 		return array(
 			'data' => empty( $data ) ? array() : array(
 				array(
-					'group_id'    => 'trustgate-registration',
-					'group_label' => __( 'Identity Verification', 'trustgate-registration' ),
-					'item_id'     => 'trustgate-registration-' . $user->ID,
+					'group_id'    => 'hdyhaus-identity-verification',
+					'group_label' => __( 'Identity Verification', 'hdyhaus-identity-verification' ),
+					'item_id'     => 'hdyhaus-identity-verification-' . $user->ID,
 					'data'        => $data,
 				),
 			),
@@ -155,7 +155,7 @@ final class Privacy {
 	}
 
 	/**
-	 * Erase TrustGate metadata for a user email.
+	 * Erase HDYHaus Identity Verification metadata for a user email.
 	 *
 	 * @param string $email_address User email address.
 	 * @return array<string, mixed>
@@ -176,14 +176,14 @@ final class Privacy {
 			$items_retained = '' !== get_user_meta( $user->ID, 'trustgate_reference_hash', true );
 
 			if ( $items_retained ) {
-				$messages[] = __( 'A one-way verification reference hash was retained to prevent a completed verification from being reused.', 'trustgate-registration' );
+				$messages[] = __( 'A one-way verification reference hash was retained to prevent a completed verification from being reused.', 'hdyhaus-identity-verification' );
 			}
 
 			$identity_hash = (string) get_user_meta( $user->ID, 'trustgate_identity_hash', true );
 
 			if ( '' !== $identity_hash ) {
 				$items_retained = true;
-				$messages[]     = __( 'A one-way identity hash was retained to prevent the same verified identity from creating another account.', 'trustgate-registration' );
+				$messages[]     = __( 'A one-way identity hash was retained to prevent the same verified identity from creating another account.', 'hdyhaus-identity-verification' );
 				update_option( RegistrationController::IDENTITY_OPTION_PREFIX . $identity_hash, 'retained', false );
 			}
 		}
@@ -218,16 +218,16 @@ final class Privacy {
 	 */
 	private function get_meta_labels(): array {
 		return array(
-			'trustgate_verified'            => __( 'Verification successful', 'trustgate-registration' ),
-			'trustgate_verification_status' => __( 'Verification status', 'trustgate-registration' ),
-			'trustgate_verified_at'         => __( 'Verification time', 'trustgate-registration' ),
-			'trustgate_provider'            => __( 'Verification provider', 'trustgate-registration' ),
-			'trustgate_reference'           => __( 'Verification reference', 'trustgate-registration' ),
-			'trustgate_reference_hash'      => __( 'Verification reference hash', 'trustgate-registration' ),
-			'trustgate_identity_hash'       => __( 'Identity uniqueness hash', 'trustgate-registration' ),
-			'trustgate_consent_at'          => __( 'Verification consent time', 'trustgate-registration' ),
-			'trustgate_consent_text'        => __( 'Verification consent wording', 'trustgate-registration' ),
-			'trustgate_consent_version'     => __( 'Verification consent version', 'trustgate-registration' ),
+			'trustgate_verified'            => __( 'Verification successful', 'hdyhaus-identity-verification' ),
+			'trustgate_verification_status' => __( 'Verification status', 'hdyhaus-identity-verification' ),
+			'trustgate_verified_at'         => __( 'Verification time', 'hdyhaus-identity-verification' ),
+			'trustgate_provider'            => __( 'Verification provider', 'hdyhaus-identity-verification' ),
+			'trustgate_reference'           => __( 'Verification reference', 'hdyhaus-identity-verification' ),
+			'trustgate_reference_hash'      => __( 'Verification reference hash', 'hdyhaus-identity-verification' ),
+			'trustgate_identity_hash'       => __( 'Identity uniqueness hash', 'hdyhaus-identity-verification' ),
+			'trustgate_consent_at'          => __( 'Verification consent time', 'hdyhaus-identity-verification' ),
+			'trustgate_consent_text'        => __( 'Verification consent wording', 'hdyhaus-identity-verification' ),
+			'trustgate_consent_version'     => __( 'Verification consent version', 'hdyhaus-identity-verification' ),
 		);
 	}
 }

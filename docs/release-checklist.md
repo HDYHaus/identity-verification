@@ -38,4 +38,4 @@
 - Test WordPress personal data export and erasure for a verified user.
 - Confirm the production Prembly widget permits the public registration domain.
 - Validate `readme.txt` and prepare WordPress.org icon, banner, and screenshots.
-- Confirm the `trustgate-registration` WordPress.org slug is available before submission.
+- Confirm the `hdyhaus-identity-verification` WordPress.org slug is available before submission.
