@@ -113,7 +113,7 @@ final class SettingsPage {
 	public function add_page(): void {
 		add_menu_page(
 			__( 'HDYHaus Identity Verification', 'hdyhaus-identity-verification' ),
-			__( 'HDYHaus Identity Verification', 'hdyhaus-identity-verification' ),
+			__( 'Identity Verification', 'hdyhaus-identity-verification' ),
 			'manage_options',
 			self::PAGE_SLUG,
 			array( $this, 'render' ),
