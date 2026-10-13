@@ -281,7 +281,7 @@ final class SettingsPage {
 			'trustgate_registration_flow',
 			array(
 				'consent_text'         => __( 'Consent message', 'hdyhaus-identity-verification' ),
-				'provider_privacy_url' => __( 'Verification Provider Privacy Policy URL', 'hdyhaus-identity-verification' ),
+				'provider_privacy_url' => __( 'Verification Provider Privacy / Data Protection Policy URL', 'hdyhaus-identity-verification' ),
 				'provider_terms_url'   => __( 'Verification Provider Terms / Consent URL', 'hdyhaus-identity-verification' ),
 				'site_privacy_policy'  => __( 'Website Privacy Policy', 'hdyhaus-identity-verification' ),
 				'site_terms_page_id'   => __( 'Website Terms / Disclaimer Page', 'hdyhaus-identity-verification' ),
@@ -348,7 +348,7 @@ final class SettingsPage {
 
 			foreach ( array( 'provider_privacy_url', 'provider_terms_url', 'site_terms_url' ) as $url_field ) {
 				if ( array_key_exists( $url_field, $settings ) ) {
-					$clean[ $url_field ] = esc_url_raw( (string) $settings[ $url_field ] );
+					$clean[ $url_field ] = RegistrationController::normalize_provider_policy_url( $url_field, esc_url_raw( (string) $settings[ $url_field ] ) );
 				}
 			}
 
@@ -552,8 +552,8 @@ final class SettingsPage {
 			'test_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Sandbox widget.', 'hdyhaus-identity-verification' ),
 			'live_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Production is selected.', 'hdyhaus-identity-verification' ),
 			'live_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Live widget.', 'hdyhaus-identity-verification' ),
-			'provider_privacy_url'  => __( 'Recommended: enter the Privacy Policy URL of the verification provider you use. This link appears below the registration consent message.', 'hdyhaus-identity-verification' ),
-			'provider_terms_url'    => __( 'Recommended: enter the terms or consent URL of the verification provider you use. This is the provider\'s policy, not your website\'s terms.', 'hdyhaus-identity-verification' ),
+			'provider_privacy_url'  => __( 'Recommended: enter the privacy or data protection policy URL of the verification provider you use. This link appears below the registration consent message.', 'hdyhaus-identity-verification' ),
+			'provider_terms_url'    => __( 'Optional: enter a working terms or consent URL supplied by your verification provider. This is the provider\'s policy, not your website\'s terms.', 'hdyhaus-identity-verification' ),
 			'site_terms_url'        => __( 'Enter your website\'s terms or disclaimer URL when using a custom URL instead of a WordPress page. This link appears separately from the verification provider\'s policies.', 'hdyhaus-identity-verification' ),
 			'success_redirect'      => __( 'Optional same-site URL visited after WordPress successfully creates the verified account.', 'hdyhaus-identity-verification' ),
 		);
@@ -582,7 +582,7 @@ final class SettingsPage {
 		$settings = $this->get_settings();
 
 		if ( isset( $settings[ $key ] ) ) {
-			return (string) $settings[ $key ];
+			return RegistrationController::normalize_provider_policy_url( $key, (string) $settings[ $key ] );
 		}
 
 		$defaults = array(

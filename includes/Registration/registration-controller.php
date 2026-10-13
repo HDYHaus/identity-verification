@@ -38,12 +38,30 @@ final class RegistrationController {
 	/**
 	 * Default provider privacy-policy URL.
 	 */
-	public const DEFAULT_PROVIDER_PRIVACY_URL = 'https://prembly.com/Policy';
+	public const DEFAULT_PROVIDER_PRIVACY_URL = 'https://prembly.com/data-protection/';
 
 	/**
 	 * Default provider terms URL.
 	 */
-	public const DEFAULT_PROVIDER_TERMS_URL = 'https://prembly.com/terms';
+	public const DEFAULT_PROVIDER_TERMS_URL = '';
+
+	/**
+	 * Correct previously saved defaults while retaining custom policy URLs.
+	 *
+	 * @param string $key Policy setting key.
+	 * @param string $url Saved URL.
+	 */
+	public static function normalize_provider_policy_url( string $key, string $url ): string {
+		if ( 'provider_privacy_url' === $key && 'https://prembly.com/Policy' === rtrim( $url, '/' ) ) {
+			return self::DEFAULT_PROVIDER_PRIVACY_URL;
+		}
+
+		if ( 'provider_terms_url' === $key && 'https://prembly.com/terms' === rtrim( $url, '/' ) ) {
+			return self::DEFAULT_PROVIDER_TERMS_URL;
+		}
+
+		return $url;
+	}
 
 	/**
 	 * Get the migration-safe default consent wording.
@@ -152,8 +170,11 @@ final class RegistrationController {
 				array(
 					'url'   => $this->get_provider_privacy_url(),
 					'label' => sprintf(
-						/* translators: %s: verification provider name */
-						__( '%s Privacy Policy', 'hdyhaus-identity-verification' ),
+						$this->get_provider_privacy_url() === self::DEFAULT_PROVIDER_PRIVACY_URL
+							/* translators: %s: verification provider name */
+							? __( '%s Data Protection Policy', 'hdyhaus-identity-verification' )
+							/* translators: %s: verification provider name */
+							: __( '%s Privacy Policy', 'hdyhaus-identity-verification' ),
 						$this->provider->get_label()
 					),
 				),
@@ -568,7 +589,9 @@ final class RegistrationController {
 	private function get_configured_url( string $key, string $fallback_url ): string {
 		$settings = $this->get_settings();
 
-		return array_key_exists( $key, $settings ) ? esc_url_raw( (string) $settings[ $key ] ) : $fallback_url;
+		$url = array_key_exists( $key, $settings ) ? esc_url_raw( (string) $settings[ $key ] ) : $fallback_url;
+
+		return self::normalize_provider_policy_url( $key, $url );
 	}
 
 	/**

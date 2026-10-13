@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.9
+
+- Link the HDY Haus author credit to the plugin landing page.
+- Use Prembly's Data Protection Policy and remove the obsolete default Terms link.
+- Correct saved legacy provider policy defaults while retaining custom URLs.
+- Refresh listing screenshots to match the Identity Verification menu label.
+
 ## 0.9.8
 
 - Rename the plugin and package to HDYHaus Identity Verification.

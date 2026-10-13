@@ -4,7 +4,7 @@ Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.8
+Stable tag: 0.9.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,17 +43,16 @@ After the verification interface reports completion, the site's WordPress server
 This service is provided by Prembly Inc:
 
 * Prembly: https://prembly.com/
-* Prembly Terms of Use: https://prembly.com/terms
-* Prembly Privacy Policy: https://prembly.com/Policy
+* Prembly Data Protection Policy: https://prembly.com/data-protection/
 
-These are the default provider links. Site administrators can replace them under **HDYHaus Identity Verification > Registration**. Supplying the verification provider's privacy and terms links is recommended. When WordPress has a website Privacy Policy configured, HDYHaus Identity Verification displays that link separately. Website terms or a disclaimer can also be linked by selecting a published WordPress page or entering a custom URL.
+The Data Protection Policy is the default provider policy link. Site administrators can replace it and optionally add a working provider terms or consent URL under **Identity Verification > Registration**. When WordPress has a website Privacy Policy configured, HDYHaus Identity Verification displays that link separately. Website terms or a disclaimer can also be linked by selecting a published WordPress page or entering a custom URL.
 
 == Installation ==
 
 1. Install and activate HDYHaus Identity Verification.
 2. In WordPress, enable **Settings > General > Anyone can register**.
 3. In Prembly, create separate SDK Setup widgets for Sandbox and Production as needed.
-4. In WordPress, open **HDYHaus Identity Verification > Settings > Prembly**.
+4. In WordPress, open **Identity Verification > Settings > Prembly**.
 5. Add the Widget Key and Configuration ID for the appropriate environment.
 6. Choose Sandbox or Live and select **Enable Prembly**.
 7. Add identity verification information to the site's privacy policy. Suggested text is available under **Settings > Privacy**.
@@ -65,7 +64,7 @@ No Prembly Secret API Key, Organisation ID, or App ID is required for the SDK se
 
 = Does HDYHaus Identity Verification replace the WordPress registration form? =
 
-No. Version 0.9.8 integrates with the default WordPress registration screen. It does not currently add verification to WooCommerce, BuddyPress, MemberPress, Ultimate Member, or other custom registration forms.
+No. Version 0.9.9 integrates with the default WordPress registration screen. It does not currently add verification to WooCommerce, BuddyPress, MemberPress, Ultimate Member, or other custom registration forms.
 
 = What happens when Prembly is disabled? =
 
@@ -93,7 +92,7 @@ Yes. HDYHaus Identity Verification integrates with **Tools > Export Personal Dat
 
 = Can I change the consent wording and provider links? =
 
-Yes. Open **HDYHaus Identity Verification > Registration** to edit the plain-text consent message and the verification provider's privacy-policy and terms/consent URLs. Supplying provider links is recommended. The website's WordPress Privacy Policy is displayed separately when configured under **Settings > Privacy**. For your website's own terms or disclaimer, select a published WordPress page or enter a custom URL. HDYHaus Identity Verification stores the exact accepted wording and a version fingerprint tied to the displayed disclosure for successful registrations.
+Yes. Open **Identity Verification > Registration** to edit the plain-text consent message and the verification provider's privacy/data-protection and optional terms/consent URLs. The website's WordPress Privacy Policy is displayed separately when configured under **Settings > Privacy**. For your website's own terms or disclaimer, select a published WordPress page or enter a custom URL. HDYHaus Identity Verification stores the exact accepted wording and a version fingerprint tied to the displayed disclosure for successful registrations.
 
 = Does HDYHaus Identity Verification support multisite? =
 
@@ -114,6 +113,12 @@ No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verific
 3. Prembly settings keep Sandbox and Live widget credentials separate and control the active verification provider.
 
 == Changelog ==
+
+= 0.9.9 =
+* Link the HDY Haus author credit to the plugin landing page.
+* Use Prembly's Data Protection Policy and remove the obsolete default Terms link.
+* Correct saved legacy provider policy defaults while retaining custom URLs.
+* Refresh listing screenshots to match the Identity Verification menu label.
 
 = 0.9.8 =
 * Rename the plugin to HDYHaus Identity Verification.

@@ -12,7 +12,7 @@ HDYHaus Identity Verification is a WordPress plugin for verified account registr
 
 ## Current Status
 
-Version 0.9.8 is the WordPress.org release candidate. The plugin includes the settings interface, native registration hooks, provider registry, Prembly widget integration, fail-closed server-side session confirmation, explicit registrant consent, session and identity replay protection, WordPress privacy tool integration, and read-only verification details on administrator user-profile screens.
+Version 0.9.9 corrects the provider policy links in the WordPress.org release. The plugin includes the settings interface, native registration hooks, provider registry, Prembly widget integration, fail-closed server-side session confirmation, explicit registrant consent, session and identity replay protection, WordPress privacy tool integration, and read-only verification details on administrator user-profile screens.
 
 Identity fingerprints use a persistent site-specific plugin secret. Keep this option with database backups; WordPress authentication salt changes do not affect it. Version 0.9.8 preserves existing settings but does not migrate earlier development fingerprints. Retest using fresh verification records. When installing the renamed package over a development installation, deactivate the old TrustGate package before activating the new one.
 

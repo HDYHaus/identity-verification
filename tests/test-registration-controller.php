@@ -373,4 +373,20 @@ $trustgate_test_settings['site_terms_page_id'] = '0';
 $trustgate_test_settings['site_terms_url'] = '';
 trustgate_registration_assert_same( '', $terms_method->invoke( $controller ), 'No website terms link is supplied when neither source is configured.' );
 
+$privacy_method = new ReflectionMethod( RegistrationController::class, 'get_provider_privacy_url' );
+$provider_terms_method = new ReflectionMethod( RegistrationController::class, 'get_provider_terms_url' );
+$trustgate_test_settings['provider_privacy_url'] = 'https://prembly.com/Policy';
+$trustgate_test_settings['provider_terms_url'] = 'https://prembly.com/terms';
+trustgate_registration_assert_same( 'https://prembly.com/data-protection/', $privacy_method->invoke( $controller ), 'Saved legacy policy URLs resolve to the Data Protection Policy.' );
+trustgate_registration_assert_same( '', $provider_terms_method->invoke( $controller ), 'The obsolete saved default terms link is omitted.' );
+$trustgate_test_settings['provider_privacy_url'] = 'https://provider.example/privacy';
+$trustgate_test_settings['provider_terms_url'] = 'https://provider.example/consent';
+trustgate_registration_assert_same( 'https://provider.example/privacy', $privacy_method->invoke( $controller ), 'Custom privacy URLs are retained.' );
+trustgate_registration_assert_same( 'https://provider.example/consent', $provider_terms_method->invoke( $controller ), 'Custom terms URLs are retained.' );
+$trustgate_test_settings['provider_privacy_url'] = '';
+trustgate_registration_assert_same( '', $privacy_method->invoke( $controller ), 'An intentionally empty privacy URL remains empty.' );
+unset( $trustgate_test_settings['provider_privacy_url'], $trustgate_test_settings['provider_terms_url'] );
+trustgate_registration_assert_same( 'https://prembly.com/data-protection/', $privacy_method->invoke( $controller ), 'Older settings without policy fields use the corrected default.' );
+trustgate_registration_assert_same( '', $provider_terms_method->invoke( $controller ), 'Older settings without terms fields do not show an obsolete link.' );
+
 fwrite( STDOUT, "Registration metadata tests passed.\n" );
