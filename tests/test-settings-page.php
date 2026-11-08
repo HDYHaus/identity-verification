@@ -26,6 +26,14 @@ function __( string $text ): string { // phpcs:ignore WordPress.NamingConvention
 	return $text;
 }
 
+function esc_attr( string $value ): string {
+	return htmlspecialchars( $value, ENT_QUOTES, 'UTF-8' );
+}
+
+function esc_html( string $value ): string {
+	return htmlspecialchars( $value, ENT_QUOTES, 'UTF-8' );
+}
+
 function sanitize_key( string $value ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $value ) ) ?? '';
 }
@@ -97,8 +105,9 @@ use HDYHaus\TrustGateRegistration\Providers\ProviderRegistry;
 use HDYHaus\TrustGateRegistration\Registration\RegistrationController;
 
 final class TrustGateSettingsTestProvider implements VerificationProvider {
+	public function __construct( private string $slug = 'prembly' ) {}
 	public function get_slug(): string {
-		return 'prembly';
+		return $this->slug;
 	}
 
 	public function get_label(): string {
@@ -131,7 +140,7 @@ function trustgate_settings_assert_same( mixed $expected, mixed $actual, string 
 	exit( 1 );
 }
 
-$registry = new ProviderRegistry( array( new TrustGateSettingsTestProvider() ), 'prembly' );
+$registry = new ProviderRegistry( array( new TrustGateSettingsTestProvider(), new TrustGateSettingsTestProvider( 'sumsub' ) ), 'prembly' );
 $page     = new SettingsPage( 'trustgate_settings', $registry );
 $page->add_page();
 trustgate_settings_assert_same( 'Registration', $trustgate_test_submenus['hdyhaus-identity-verification-flow'][2], 'Registration has a separate submenu under HDYHaus Identity Verification.' );
@@ -202,4 +211,37 @@ $prembly_second_pass = $page->sanitize_settings( $prembly );
 
 trustgate_settings_assert_same( $prembly, $prembly_second_pass, 'Prembly settings survive WordPress sanitizing a new option twice.' );
 
+
+$sumsub = $page->sanitize_settings( array(
+	'settings_tab' => 'sumsub', 'provider' => 'sumsub', 'sumsub_mode' => 'test',
+	'sumsub_test_app_token' => 'sbx:test', 'sumsub_test_secret_key' => 'secret', 'sumsub_test_level' => 'id-and-liveness',
+	'sumsub_live_app_token' => 'live-token', 'sumsub_live_secret_key' => 'live-secret', 'sumsub_live_level' => 'live-level',
+) );
+trustgate_settings_assert_same( 'sumsub', $sumsub['provider'], 'Sumsub exclusively replaces the active provider.' );
+trustgate_settings_assert_same( 'wdgt_existing', $sumsub['test_public_key'], 'Switching providers preserves Prembly settings.' );
+trustgate_settings_assert_same( 'live-token', $sumsub['sumsub_live_app_token'], 'Both Sumsub environments are retained.' );
+$trustgate_test_settings = $sumsub;
+foreach ( array( 'sumsub_test_app_token', 'sumsub_test_secret_key' ) as $credential_key ) {
+	ob_start();
+	$page->render_field( array( 'key' => $credential_key, 'label_for' => $credential_key ) );
+	$field_html = ob_get_clean();
+	trustgate_settings_assert_same( true, str_contains( $field_html, 'Credential saved.' ), 'Saved credentials have an explicit indicator.' );
+	trustgate_settings_assert_same( false, str_contains( $field_html, 'value="' . $sumsub[ $credential_key ] . '"' ), 'Saved credentials are never rendered into inputs.' );
+}
+$trustgate_test_settings['sumsub_test_secret_key'] = '';
+ob_start();
+$page->render_field( array( 'key' => 'sumsub_test_secret_key', 'label_for' => 'sumsub_test_secret_key' ) );
+$field_html = ob_get_clean();
+trustgate_settings_assert_same( true, str_contains( $field_html, 'Not configured.' ), 'Missing credentials are clearly identified.' );
+$trustgate_test_settings = $sumsub;
+$again = $page->sanitize_settings( array( 'settings_tab' => 'sumsub', 'provider' => 'sumsub', 'sumsub_test_app_token' => '', 'sumsub_test_secret_key' => '' ) );
+trustgate_settings_assert_same( 'secret', $again['sumsub_test_secret_key'], 'Blank credential fields preserve saved secrets.' );
+trustgate_settings_assert_same( 'live-secret', $again['sumsub_live_secret_key'], 'Saving Sandbox leaves Live credentials intact.' );
+$disclosure = $page->sanitize_settings( array( 'settings_tab' => 'registration', 'consent_text' => 'Sumsub consent', 'provider_privacy_url' => '' ) );
+trustgate_settings_assert_same( 'Sumsub consent', $disclosure['sumsub_consent_text'], 'Sumsub consent is saved separately.' );
+trustgate_settings_assert_same( '', $disclosure['sumsub_provider_privacy_url'], 'Sumsub links can be intentionally omitted.' );
+trustgate_settings_assert_same( false, isset( $disclosure['consent_text'] ), 'Sumsub changes do not overwrite Prembly consent.' );
+$disabled = $page->sanitize_settings( array( 'settings_tab' => 'sumsub' ) );
+trustgate_settings_assert_same( '', $disabled['provider'], 'Unchecking Sumsub disables verification.' );
+trustgate_settings_assert_same( 'secret', $disabled['sumsub_test_secret_key'], 'Disabling retains saved credentials.' );
 fwrite( STDOUT, "Settings sanitization tests passed.\n" );

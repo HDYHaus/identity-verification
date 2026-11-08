@@ -12,6 +12,7 @@ namespace HDYHaus\TrustGateRegistration;
 use HDYHaus\TrustGateRegistration\Admin\SettingsPage;
 use HDYHaus\TrustGateRegistration\Admin\UserVerificationProfile;
 use HDYHaus\TrustGateRegistration\Providers\PremblyProvider;
+use HDYHaus\TrustGateRegistration\Providers\SumsubProvider;
 use HDYHaus\TrustGateRegistration\Providers\ProviderRegistry;
 use HDYHaus\TrustGateRegistration\Privacy\Privacy;
 use HDYHaus\TrustGateRegistration\Registration\RegistrationController;
@@ -41,7 +42,7 @@ final class Plugin {
 
 		$providers = apply_filters(
 			'trustgate_registration_providers',
-			array( new PremblyProvider( self::OPTION_NAME ) )
+			array( new PremblyProvider( self::OPTION_NAME ), new SumsubProvider( self::OPTION_NAME ) )
 		);
 		$providers = is_array( $providers ) ? $providers : array();
 		$providers = array_values(

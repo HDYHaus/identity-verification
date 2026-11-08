@@ -39,6 +39,12 @@ The optional Success Redirect URL must be on the WordPress site's allowed hosts.
 
 See [Prembly setup](docs/prembly-setup.md) for the recommended sandbox widget configuration and a field-by-field dashboard mapping.
 
+## Sumsub (development)
+
+The Sumsub adapter supports the native registration flow through the official WebSDK and signed server-side applicant lookups. Configure separate Sandbox/Production app credentials and verification levels under **Identity Verification > Settings > Sumsub**. Sumsub defaults to Sandbox, and consent wording and provider policy links are stored separately from Prembly's disclosure. Only the selected provider's SDK is loaded.
+
+See [Sumsub setup and acceptance checklist](docs/sumsub-setup.md). Automated tests pass. The development site completed a Sandbox smoke test on November 8, 2026: WebSDK launch, document/liveness completion, server confirmation, blocked unverified registration, successful account creation, redirect, and stored verification metadata. Production real-document checks remain untested.
+
 ## Verification Data
 
 For a successfully created account, HDYHaus Identity Verification stores the normalized verification status, verification time, provider slug, Prembly session reference, site-specific one-way session and identity hashes, and the accepted consent time, wording, and disclosure-version fingerprint as WordPress metadata. The identity hash is derived with a site secret from the verified document country, type, and number; the underlying document data is never stored. HDYHaus Identity Verification does not copy identity documents, document numbers, selfies, biometric information, raw Prembly responses, or detailed provider reports into WordPress. The metadata is available through WordPress personal data export and erasure tools; one-way hashes are retained after privacy erasure or account deletion to prevent reuse of a completed verification or identity.

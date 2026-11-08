@@ -252,6 +252,23 @@ final class SettingsPage {
 				$slug
 			);
 
+			if ( 'sumsub' === $slug ) {
+				$this->add_fields(
+					$page,
+					$section,
+					array(
+						'sumsub_mode'            => __( 'Active environment', 'hdyhaus-identity-verification' ),
+						'sumsub_test_app_token'  => __( 'Sandbox App Token', 'hdyhaus-identity-verification' ),
+						'sumsub_test_secret_key' => __( 'Sandbox Secret Key', 'hdyhaus-identity-verification' ),
+						'sumsub_test_level'      => __( 'Sandbox Verification Level', 'hdyhaus-identity-verification' ),
+						'sumsub_live_app_token'  => __( 'Live App Token', 'hdyhaus-identity-verification' ),
+						'sumsub_live_secret_key' => __( 'Live Secret Key', 'hdyhaus-identity-verification' ),
+						'sumsub_live_level'      => __( 'Live Verification Level', 'hdyhaus-identity-verification' ),
+					),
+					$slug
+				);
+			}
+
 			/**
 			 * Fires while an external provider's settings tab is being registered.
 			 *
@@ -338,17 +355,18 @@ final class SettingsPage {
 			: '';
 
 		if ( 'registration' === $tab ) {
+			$prefix                = 'sumsub' === $this->registry->get_active_slug( $current ) ? 'sumsub_' : '';
 			$clean['settings_tab'] = 'registration';
 
 			if ( array_key_exists( 'consent_text', $settings ) ) {
 					$consent_text = sanitize_textarea_field( (string) $settings['consent_text'] );
 
-					$clean['consent_text'] = '' !== $consent_text ? $consent_text : RegistrationController::get_default_consent_text();
+					$clean[ $prefix . 'consent_text' ] = '' !== $consent_text ? $consent_text : ( '' === $prefix ? RegistrationController::get_default_consent_text() : RegistrationController::get_sumsub_disclosure_defaults()['consent_text'] );
 			}
 
 			foreach ( array( 'provider_privacy_url', 'provider_terms_url', 'site_terms_url' ) as $url_field ) {
 				if ( array_key_exists( $url_field, $settings ) ) {
-					$clean[ $url_field ] = RegistrationController::normalize_provider_policy_url( $url_field, esc_url_raw( (string) $settings[ $url_field ] ) );
+					$clean[ ( 'site_terms_url' === $url_field ? '' : $prefix ) . $url_field ] = RegistrationController::normalize_provider_policy_url( $url_field, esc_url_raw( (string) $settings[ $url_field ] ) );
 				}
 			}
 
@@ -392,6 +410,23 @@ final class SettingsPage {
 			if ( '' === $current_provider || $tab === $current_provider ) {
 				$clean['provider'] = '';
 			}
+		}
+
+		if ( 'sumsub' === $tab ) {
+			$clean['sumsub_mode'] = 'live' === ( $settings['sumsub_mode'] ?? '' ) ? 'live' : 'test';
+			foreach ( array( 'test', 'live' ) as $environment ) {
+				foreach ( array( 'app_token', 'secret_key', 'level' ) as $suffix ) {
+					$key = 'sumsub_' . $environment . '_' . $suffix;
+					if ( isset( $settings[ $key ] ) && is_string( $settings[ $key ] ) ) {
+						$value = sanitize_text_field( $settings[ $key ] );
+						// Empty credential inputs preserve saved values without echoing them in HTML.
+						if ( '' !== $value || 'level' === $suffix ) {
+							$clean[ $key ] = $value;
+						}
+					}
+				}
+			}
+			return $clean;
 		}
 
 		if ( 'prembly' !== $tab ) {
@@ -512,7 +547,7 @@ final class SettingsPage {
 			return;
 		}
 
-		if ( 'mode' === $key ) {
+		if ( in_array( $key, array( 'mode', 'sumsub_mode' ), true ) ) {
 			?>
 			<select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>">
 				<option value="test" <?php selected( 'test', '' !== $value ? $value : 'test' ); ?>>
@@ -522,7 +557,7 @@ final class SettingsPage {
 					<?php esc_html_e( 'Live / Production', 'hdyhaus-identity-verification' ); ?>
 				</option>
 			</select>
-			<p class="description"><?php esc_html_e( 'Live mode uses only the Live widget settings below.', 'hdyhaus-identity-verification' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Live mode uses only the Live settings below.', 'hdyhaus-identity-verification' ); ?></p>
 			<?php
 			return;
 		}
@@ -543,8 +578,14 @@ final class SettingsPage {
 		$url_fields = array( 'provider_privacy_url', 'provider_terms_url', 'site_terms_url', 'success_redirect' );
 		$type       = in_array( $key, $url_fields, true ) ? 'url' : 'text';
 
-		if ( str_contains( $key, 'secret_key' ) ) {
+		if ( str_contains( $key, 'secret_key' ) || str_ends_with( $key, 'app_token' ) ) {
 			$type = 'password';
+		}
+
+		$is_sumsub_credential = 'password' === $type && str_starts_with( $key, 'sumsub_' );
+		$credential_saved     = $is_sumsub_credential && '' !== $value;
+		if ( $is_sumsub_credential ) {
+			$value = '';
 		}
 
 		$descriptions = array(
@@ -558,6 +599,11 @@ final class SettingsPage {
 			'success_redirect'      => __( 'Optional same-site URL visited after WordPress successfully creates the verified account.', 'hdyhaus-identity-verification' ),
 		);
 		$description  = $descriptions[ $key ] ?? '';
+		if ( str_starts_with( $key, 'sumsub_' ) ) {
+			$description = 'password' === $type
+				? __( 'Copied from Sumsub Developers > App tokens in the matching environment. Leave blank to keep a saved credential.', 'hdyhaus-identity-verification' )
+				: __( 'Exact, case-sensitive verification level name from Sumsub, for example id-and-liveness.', 'hdyhaus-identity-verification' );
+		}
 		?>
 		<input
 			type="<?php echo esc_attr( $type ); ?>"
@@ -567,6 +613,9 @@ final class SettingsPage {
 			class="regular-text"
 			<?php echo 'password' === $type ? ' autocomplete="new-password"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 		/>
+		<?php if ( $is_sumsub_credential ) : ?>
+			<p class="description"><?php echo esc_html( $credential_saved ? __( 'Credential saved.', 'hdyhaus-identity-verification' ) : __( 'Not configured.', 'hdyhaus-identity-verification' ) ); ?></p>
+		<?php endif; ?>
 		<?php if ( '' !== $description ) : ?>
 			<p class="description"><?php echo esc_html( $description ); ?></p>
 		<?php endif; ?>
@@ -580,6 +629,11 @@ final class SettingsPage {
 	 */
 	private function get_display_value( string $key ): string {
 		$settings = $this->get_settings();
+
+		if ( 'sumsub' === $this->registry->get_active_slug( $settings ) && in_array( $key, array( 'consent_text', 'provider_privacy_url', 'provider_terms_url' ), true ) ) {
+			$defaults = RegistrationController::get_sumsub_disclosure_defaults();
+			return isset( $settings[ 'sumsub_' . $key ] ) ? (string) $settings[ 'sumsub_' . $key ] : $defaults[ $key ];
+		}
 
 		if ( isset( $settings[ $key ] ) ) {
 			return RegistrationController::normalize_provider_policy_url( $key, (string) $settings[ $key ] );
@@ -724,6 +778,20 @@ final class SettingsPage {
 				</p>
 			</div>
 			<?php
+			return;
+		}
+
+		if ( 'sumsub' === $tab ) {
+			$mode     = 'live' === $this->get_display_value( 'sumsub_mode' ) ? 'live' : 'test';
+			$complete = true;
+			foreach ( array( 'app_token', 'secret_key', 'level' ) as $suffix ) {
+				$complete = $complete && '' !== $this->get_display_value( 'sumsub_' . $mode . '_' . $suffix );
+			}
+			printf(
+				'<div class="notice notice-info inline"><p>%1$s %2$s</p></div>',
+				esc_html( 'test' === $mode ? __( 'Sumsub Sandbox.', 'hdyhaus-identity-verification' ) : __( 'Sumsub Production.', 'hdyhaus-identity-verification' ) ),
+				esc_html( $complete ? __( 'Configuration complete. Test registration before enabling public access.', 'hdyhaus-identity-verification' ) : __( 'Enter the App Token, Secret Key, and verification level for this environment.', 'hdyhaus-identity-verification' ) )
+			);
 			return;
 		}
 

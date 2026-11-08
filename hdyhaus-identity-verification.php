@@ -3,7 +3,7 @@
  * Plugin Name: HDYHaus Identity Verification
  * Plugin URI: https://github.com/HDYHaus/identity-verification
  * Description: Verify people during WordPress registration with pluggable identity verification providers. Prembly support is the first provider.
- * Version: 0.9.9
+ * Version: 0.10.0-beta.3
  * Requires at least: 6.4
  * Requires PHP: 8.1
  * Author: HDY Haus
@@ -22,13 +22,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TRUSTGATE_REGISTRATION_VERSION', '0.9.9' );
+define( 'TRUSTGATE_REGISTRATION_VERSION', '0.10.0-beta.3' );
 define( 'TRUSTGATE_REGISTRATION_FILE', __FILE__ );
 define( 'TRUSTGATE_REGISTRATION_PATH', plugin_dir_path( __FILE__ ) );
 define( 'TRUSTGATE_REGISTRATION_URL', plugin_dir_url( __FILE__ ) );
 
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Contracts/verification-provider.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Providers/prembly-provider.php';
+require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Providers/sumsub-provider.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Providers/provider-registry.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Admin/settings-page.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Admin/user-verification-profile.php';

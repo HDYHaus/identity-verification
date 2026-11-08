@@ -4,7 +4,7 @@ Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.9
+Stable tag: 0.10.0-beta.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,12 +23,12 @@ HDYHaus Identity Verification is a verification gate, not a membership suite. It
 * Binds each verification to the submitted email, configured widget, and one-time registration attempt.
 * Prevents a completed verification session from being reused for another account.
 * Prevents the same verified identity document from creating another account, even after account deletion.
-* Keeps Sandbox and Live Prembly credentials separate.
+* Keeps Sandbox and Live credentials separate for Prembly and Sumsub.
 * Supports an optional same-site success redirect with email activation instructions.
 * Lets site owners customize the plain-text consent message, provider policy links, and a website terms/disclaimer page or URL.
 * Stores normalized verification metadata in the WordPress user account.
 * Integrates with WordPress personal data export and erasure tools.
-* Uses a provider adapter architecture, with Prembly as the first provider.
+* Supports Prembly and Sumsub through provider adapters.
 
 HDYHaus Identity Verification supports identity verification and KYC workflows. Installing it does not by itself make a website compliant with any law or regulatory framework. Site owners remain responsible for their verification policy, lawful basis, privacy notice, retention period, and provider configuration.
 
@@ -46,6 +46,18 @@ This service is provided by Prembly Inc:
 * Prembly Data Protection Policy: https://prembly.com/data-protection/
 
 The Data Protection Policy is the default provider policy link. Site administrators can replace it and optionally add a working provider terms or consent URL under **Identity Verification > Registration**. When WordPress has a website Privacy Policy configured, HDYHaus Identity Verification displays that link separately. Website terms or a disclaimer can also be linked by selecting a published WordPress page or entering a custom URL.
+
+== External Service: Sumsub ==
+
+When Sumsub is enabled, the registration page loads the official WebSDK from `https://static.sumsub.com/idensic/static/sns-websdk-builder.js`. After the registrant consents and starts verification, WordPress sends their email address, an opaque registration identifier, and the configured verification level to `https://api.sumsub.com/resources/accessTokens/sdk` through an authenticated, signed server request. This returns a short-lived token scoped to one applicant. App credentials remain server-side.
+
+The WebSDK sends the documents, selfie, biometric information, and device data collected in the verification flow directly to Sumsub. WordPress requests the applicant record from `https://api.sumsub.com/resources/applicants/{id}/one` to validate approval, applicant binding, email, verification level, and verified document attributes. Document attributes are used only to derive a one-way identity fingerprint; raw applicant responses, documents, selfies, and biometric data are not retained in WordPress.
+
+A Sumsub account and API credentials are required. Sandbox uses simulated decisions. Real checks require separately configured Production credentials and a commercial Sumsub plan. Consent wording and provider links are configured separately for Sumsub and Prembly under Identity Verification > Registration while that provider is active.
+
+* Sumsub: https://sumsub.com/
+* Sumsub Privacy Notice: https://sumsub.com/privacy-notice/
+* Sumsub Terms of Use: https://sumsub.com/terms-of-use/
 
 == Installation ==
 
