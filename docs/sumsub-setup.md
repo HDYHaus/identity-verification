@@ -58,3 +58,11 @@ This test exposed a review interpretation bug: the completed decision could reta
 Remaining checklist items above have automated coverage where noted in the test suite but have not all been repeated manually through the hosted UI. Production remains untested.
 
 Automated failure checks passed for RED/RETRY decisions, expired approvals, consumed attempts, duplicate documents, mismatched applicants, and form changes during an in-flight confirmation. These are server/controller and browser-logic regression tests; the hosted browser could not restore the submitted registration POST for a manual replay check.
+
+## Manual failure checks — November 9, 2026
+
+On the development site, switching to Prembly Sandbox changed the registration disclosure to Prembly and made Sumsub inactive while retaining both configurations. Restoring Sumsub retained its Sandbox credentials and level; Prembly's original environment preference was restored. This verifies provider switching and disclosure selection, not a new end-to-end Prembly verification.
+
+For a new synthetic Sumsub applicant, final RED rejection and retryable resubmission were simulated in the Sandbox dashboard. WordPress returned `not_verified` and kept account creation disabled in both cases. A long document-picker delay also exercised attempt expiry: the SDK displayed Verification expired and WordPress returned `invalid_attempt`, with registration still disabled. Sumsub refused to approve an applicant with incomplete required steps; the plugin's missing-document guard remains covered by automated tests. Duplicate-document and post-approval form-change checks still require a fresh completed attempt.
+
+WordPress Plugin Check passed all selected categories with errors and warnings enabled on November 9, 2026. The first run caught an omitted empty translation directory; adding a tracked `languages/index.php` retained that directory in the package, and the corrected development package passed without errors or warnings.
