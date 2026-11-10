@@ -16,19 +16,10 @@ $trustgate_sumsub_response = array();
 $trustgate_sumsub_request = array();
 $trustgate_sumsub_code = 200;
 $trustgate_sumsub_review = null;
-$trustgate_sumsub_fallback = null;
 function wp_json_encode( mixed $value ): string|false { return json_encode( $value ); }
 function wp_safe_remote_request( string $url, array $args ): array {
-	global $trustgate_sumsub_response, $trustgate_sumsub_request, $trustgate_sumsub_code, $trustgate_sumsub_review, $trustgate_sumsub_fallback;
+	global $trustgate_sumsub_response, $trustgate_sumsub_request, $trustgate_sumsub_code, $trustgate_sumsub_review;
 	$trustgate_sumsub_request = array( 'url' => $url, 'args' => $args );
-	if ( is_array( $trustgate_sumsub_fallback ) ) {
-		if ( str_contains( $url, '/-;externalUserId=' ) ) {
-			return array( 'body' => json_encode( $trustgate_sumsub_fallback ), 'response' => array( 'code' => 200 ) );
-		}
-		if ( ! str_ends_with( $url, '/status' ) ) {
-			return array( 'body' => '{}', 'response' => array( 'code' => 404 ) );
-		}
-	}
 
 		$data = str_ends_with( $url, '/status' ) ? ( $trustgate_sumsub_review ?? $trustgate_sumsub_response['review'] ?? array() ) : $trustgate_sumsub_response;
 	return array( 'body' => json_encode( $data ), 'response' => array( 'code' => $trustgate_sumsub_code ) );
@@ -68,16 +59,6 @@ $fixture = array(
 	'info' => array( 'idDocs' => array( array( 'country' => 'ALB', 'idDocType' => 'PASSPORT', 'number' => 'A-123 456' ) ) ),
 );
 $trustgate_test_options['trustgate_identity_secret'] = str_repeat( 'b', 64 );
-$trustgate_sumsub_fallback = $fixture;
-$trustgate_sumsub_review = $fixture['review'];
-$fallback_result = $provider->confirm_verification( str_repeat( 'c', 24 ), $context );
-trustgate_registration_assert_same( true, $fallback_result['verified'], 'A missing SDK reference can resolve the server-bound applicant.' );
-trustgate_registration_assert_same( $reference, $fallback_result['reference'], 'The canonical reference comes from the authenticated API response.' );
-$trustgate_sumsub_fallback['externalUserId'] = 'unrelated';
-trustgate_registration_assert_same( false, $provider->confirm_verification( str_repeat( 'c', 24 ), $context )['verified'], 'Fallback cannot approve an unrelated applicant.' );
-$trustgate_sumsub_fallback = null;
-$trustgate_sumsub_review = null;
-
 $trustgate_sumsub_response = $fixture;
 $result = $provider->confirm_verification( $reference, $context );
 trustgate_registration_assert_same( true, $result['verified'], 'Completed approval with all bindings passes.' );

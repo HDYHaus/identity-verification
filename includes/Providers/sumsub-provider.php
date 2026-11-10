@@ -126,14 +126,6 @@ final class SumsubProvider implements VerificationProvider {
 		}
 		$external_id = $this->external_user_id( $context );
 		$data        = $this->request( 'GET', '/resources/applicants/' . rawurlencode( $reference ) . '/one' );
-		if ( array() === $data && 'api_http_404' === $this->request_status && '' !== $external_id ) {
-			// Resolve only this server-bound applicant when the SDK reference is unavailable.
-			$data = $this->request( 'GET', '/resources/applicants/-;externalUserId=' . rawurlencode( $external_id ) . '/one' );
-			if ( isset( $data['id'] ) && is_string( $data['id'] ) && 1 === preg_match( '/^[a-f0-9]{24}$/', $data['id'] ) ) {
-				$reference           = $data['id'];
-				$result['reference'] = $reference;
-			}
-		}
 
 		if ( array() === $data ) {
 			$result['status']     = $this->request_status;
