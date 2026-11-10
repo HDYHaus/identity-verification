@@ -55,7 +55,7 @@ Sandbox approval is simulated; it is not evidence of successful real identity ve
 
 Tested on `https://dev.hdyhaus.com` using the `id-and-liveness` Sandbox level. The unverified registration was blocked. The official German passport template was uploaded and the site owner completed the liveness step. Sumsub approved the applicant, WordPress confirmed approval through signed API calls, and the `sumsub-sandbox-test` account (user ID 16) was created with the configured success redirect. The administrator profile showed provider `sumsub`, status `verified`, consent evidence, replay protection, and identity uniqueness retention.
 
-This test exposed a review interpretation bug: the completed decision could retain a `reprocessing` flag. The adapter now uses the dedicated `/resources/applicants/{id}/status` endpoint and its documented completed/GREEN decision instead of treating that historical flag as a pending result. The Create Your Account button stays disabled until WordPress confirms verification. Regression tests cover both changes. The current development build is `0.10.0-beta.3`, including explicit saved-credential indicators.
+This test exposed a review interpretation bug: the completed decision could retain a `reprocessing` flag. The adapter now uses the dedicated `/resources/applicants/{id}/status` endpoint and its documented completed/GREEN decision instead of treating that historical flag as a pending result. The Create Your Account button stays disabled until WordPress confirms verification. Regression tests cover both changes. The current development build is `0.10.0-beta.4`, including explicit saved-credential indicators and the provider-switch review fix.
 
 Remaining checklist items above have automated coverage where noted in the test suite but have not all been repeated manually through the hosted UI. Production remains untested.
 
@@ -76,3 +76,5 @@ A fresh Sandbox applicant completed the official test passport and owner-operate
 ## Review follow-up
 
 Final code review found that a Sumsub approval could remain usable if the active provider changed to Prembly before account creation. Registration now rejects any provider-tagged attempt whose provider differs from the active provider. A controller regression test reproduces the switch and confirms rejection. Legacy Prembly attempts without a provider tag retain their existing behavior; Sumsub still requires its provider and configuration binding.
+
+On November 10, beta 4 was installed on the development site and passed WordPress Plugin Check with all categories, errors and warnings enabled. The site owner activated the Sumsub Live trial; the dashboard showed 15 days and 50 individual checks remaining. Production credential setup and owner-operated Live testing are pending.
