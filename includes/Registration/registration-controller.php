@@ -702,6 +702,10 @@ final class RegistrationController {
 	private function is_valid_attempt( string $token, string $reference, string $email, string $first_name, string $last_name ): bool {
 		$attempt = $this->get_attempt( $token );
 
+		if ( isset( $attempt['provider'] ) && $attempt['provider'] !== $this->provider->get_slug() ) {
+			return false;
+		}
+
 		if ( $this->provider instanceof SumsubProvider && ( ( $attempt['provider'] ?? '' ) !== 'sumsub' || ( $attempt['configuration_hash'] ?? '' ) !== $this->provider->get_configuration_hash() ) ) {
 			return false;
 		}

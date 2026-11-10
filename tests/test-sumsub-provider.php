@@ -143,6 +143,8 @@ trustgate_registration_assert_same( 'sumsub', $attempt['provider'], 'Attempts re
 trustgate_registration_assert_same( HDYHaus\TrustGateRegistration\Registration\RegistrationController::get_sumsub_disclosure_defaults()['consent_text'], $attempt['consent_text'], 'Sumsub never inherits Prembly consent.' );
 $valid = new ReflectionMethod( $controller, 'is_valid_attempt' );
 trustgate_registration_assert_same( true, $valid->invoke( $controller, $context['token'], $reference, $context['email'], 'Maria', 'Job' ), 'Current Sumsub approval can register.' );
+$other_controller = new HDYHaus\TrustGateRegistration\Registration\RegistrationController( 'trustgate_settings', new TrustGateTestProvider() );
+trustgate_registration_assert_same( false, $valid->invoke( $other_controller, $context['token'], $reference, $context['email'], 'Maria', 'Job' ), 'Switching away from Sumsub rejects a prior Sumsub approval.' );
 $trustgate_test_settings['sumsub_test_level'] = 'changed';
 trustgate_registration_assert_same( false, $valid->invoke( $controller, $context['token'], $reference, $context['email'], 'Maria', 'Job' ), 'Changing provider configuration invalidates prior approval.' );
 // Exercise failed decisions and expired approvals through registration, not only normalization.

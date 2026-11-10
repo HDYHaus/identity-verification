@@ -72,3 +72,7 @@ WordPress Plugin Check passed all selected categories with errors and warnings e
 ## Manual form-change check — November 10, 2026
 
 A fresh Sandbox applicant completed the official test passport and owner-operated liveness flow. To isolate this check from duplicate-document blocking, its approved Sandbox document metadata was changed to a distinct synthetic passport number (`SBXEDIT110`) through the Sumsub dashboard. This is a simulated test fixture, not a real identity or a production verification. WordPress then confirmed approval and enabled Create Your Account. Changing the registration surname from Edit Test to Changed Test immediately removed the SDK result and disabled Create Your Account. No additional WordPress account was created. The surname edit passed manually; email edits and stale-response/server-binding scenarios retain automated coverage.
+
+## Review follow-up
+
+Final code review found that a Sumsub approval could remain usable if the active provider changed to Prembly before account creation. Registration now rejects any provider-tagged attempt whose provider differs from the active provider. A controller regression test reproduces the switch and confirms rejection. Legacy Prembly attempts without a provider tag retain their existing behavior; Sumsub still requires its provider and configuration binding.
