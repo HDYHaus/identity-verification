@@ -13,6 +13,12 @@ Sumsub is an optional provider for native WordPress registration. Enable it unde
 7. Ensure the registration origin is allowed in Sumsub's WebSDK settings. Use HTTPS for camera access, except where the browser supports secure localhost development.
 8. Enable WordPress registration under **Settings > General > Anyone can register**, then test `wp-login.php?action=register`.
 
+## Optional Sumsub ID prompt
+
+The “Get verified faster with Sumsub ID” option is controlled in Sumsub's dashboard. To hide it for the registration level, open **Configurations > Applicant verification > Individual levels**, select the level, then **Configurations > Advanced settings > Sumsub ID**. Select **Disable Sumsub ID experience in this level** and save. This section appears when Sumsub ID is enabled globally under **Verification sharing > Sumsub ID settings**. Check the intended Sandbox or Production environment before changing it. This hides the reusable Sumsub ID experience for that level; the document and liveness checks remain configured separately.
+
+See [Sumsub ID settings documentation](https://docs.sumsub.com/docs/sumsub-id). The WordPress plugin does not control this dashboard preference.
+
 ## Verification flow
 
 WordPress generates an opaque applicant identifier bound to the server-issued registration attempt, entered email and names, selected environment, app credentials, and verification level. After consent, the server sends that identifier and email to Sumsub to request a short-lived, applicant-scoped WebSDK token. The app secret stays on the server. Documents and selfies are collected directly by the Sumsub WebSDK.
@@ -78,3 +84,9 @@ A fresh Sandbox applicant completed the official test passport and owner-operate
 Final code review found that a Sumsub approval could remain usable if the active provider changed to Prembly before account creation. Registration now rejects any provider-tagged attempt whose provider differs from the active provider. A controller regression test reproduces the switch and confirms rejection. Legacy Prembly attempts without a provider tag retain their existing behavior; Sumsub still requires its provider and configuration binding.
 
 On November 10, beta 4 was installed on the development site and passed WordPress Plugin Check with all categories, errors and warnings enabled. The site owner activated the Sumsub Live trial; the dashboard showed 15 days and 50 individual checks remaining. Production credential setup and owner-operated Live testing are pending.
+
+For troubleshooting, the Sumsub settings tab shows the last server confirmation status and UTC timestamp for the selected environment for up to ten minutes. The diagnostic stores status, environment, time and a redacted API error description. On failed lookups it includes only the last four characters of the applicant and expected external identifiers to aid correlation. Full identifiers, emails, credentials, document data and raw API responses are not stored in this diagnostic.
+
+## Live test status — November 10, 2026
+
+The site owner completed real document verification and liveness in Production. Sumsub displayed Approved, while WordPress kept Create Your Account disabled because signed applicant lookups returned HTTP 404. The Live integration is not yet accepted end to end and the PR must remain unmerged. Beta 6 is deployed with precise API failure statuses and a fallback lookup restricted to the server-bound external identifier; both lookup methods still returned 404. Beta 7 adds redacted error descriptions and identifier suffixes for the next diagnosis but its deployment was interrupted by the browser file-picker connection failure. No real applicant or approval data was changed.

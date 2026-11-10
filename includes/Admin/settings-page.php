@@ -792,6 +792,16 @@ final class SettingsPage {
 				esc_html( 'test' === $mode ? __( 'Sumsub Sandbox.', 'hdyhaus-identity-verification' ) : __( 'Sumsub Production.', 'hdyhaus-identity-verification' ) ),
 				esc_html( $complete ? __( 'Configuration complete. Test registration before enabling public access.', 'hdyhaus-identity-verification' ) : __( 'Enter the App Token, Secret Key, and verification level for this environment.', 'hdyhaus-identity-verification' ) )
 			);
+			$last_check = get_transient( 'trustgate_sumsub_last_confirmation' );
+			if ( is_array( $last_check ) && ( $last_check['mode'] ?? '' ) === $mode ) {
+				printf(
+					'<p class="description">%1$s <code>%2$s</code> (%3$s) %4$s</p>',
+					esc_html__( 'Last Sumsub server confirmation:', 'hdyhaus-identity-verification' ),
+					esc_html( (string) ( $last_check['status'] ?? '' ) ),
+					esc_html( (string) ( $last_check['at'] ?? '' ) ),
+					esc_html( (string) ( $last_check['detail'] ?? '' ) )
+				);
+			}
 			return;
 		}
 

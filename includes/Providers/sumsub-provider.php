@@ -27,6 +27,20 @@ final class SumsubProvider implements VerificationProvider {
 	private string $option_name;
 
 	/**
+	 * Sanitized outcome of the last API request, without response data.
+	 *
+	 * @var string
+	 */
+	private string $request_status = 'request_failed';
+
+	/**
+	 * Redacted API error description for administrator troubleshooting.
+	 *
+	 * @var string
+	 */
+	private string $request_error = '';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $option_name Settings option name.
@@ -110,11 +124,32 @@ final class SumsubProvider implements VerificationProvider {
 		if ( 1 !== preg_match( '/^[a-f0-9]{24}$/', $reference ) ) {
 			return $result;
 		}
-		$data             = $this->request( 'GET', '/resources/applicants/' . rawurlencode( $reference ) . '/one' );
-		$result['status'] = 'applicant_mismatch';
-		$external_id      = $this->external_user_id( $context );
-		if ( '' === $external_id || ( $data['id'] ?? '' ) !== $reference || ( $data['externalUserId'] ?? '' ) !== $external_id || ( $data['type'] ?? '' ) !== 'individual' || ! empty( $data['deleted'] ) || ! empty( $data['deactivated'] ) ) {
+		$external_id = $this->external_user_id( $context );
+		$data        = $this->request( 'GET', '/resources/applicants/' . rawurlencode( $reference ) . '/one' );
+		if ( array() === $data && 'api_http_404' === $this->request_status && '' !== $external_id ) {
+			// Resolve only this server-bound applicant when the SDK reference is unavailable.
+			$data = $this->request( 'GET', '/resources/applicants/-;externalUserId=' . rawurlencode( $external_id ) . '/one' );
+			if ( isset( $data['id'] ) && is_string( $data['id'] ) && 1 === preg_match( '/^[a-f0-9]{24}$/', $data['id'] ) ) {
+				$reference           = $data['id'];
+				$result['reference'] = $reference;
+			}
+		}
+
+		if ( array() === $data ) {
+			$result['status']     = $this->request_status;
+			$result['diagnostic'] = 'Applicant suffix: ' . substr( $reference, -4 ) . '; expected external suffix: ' . substr( $external_id, -4 ) . '. ' . $this->request_error;
 			return $result;
+		}
+		foreach ( array(
+			'applicant_id_mismatch' => ( $data['id'] ?? '' ) === $reference,
+			'applicant_mismatch'    => '' !== $external_id && ( $data['externalUserId'] ?? '' ) === $external_id,
+			'applicant_type'        => ( $data['type'] ?? '' ) === 'individual',
+			'applicant_inactive'    => empty( $data['deleted'] ) && empty( $data['deactivated'] ),
+		) as $status => $matches ) {
+			if ( ! $matches ) {
+				$result['status'] = $status;
+				return $result;
+			}
 		}
 		$result['status'] = 'email_mismatch';
 		if ( ! isset( $data['email'] ) || ! is_string( $data['email'] ) || strtolower( $data['email'] ) !== strtolower( $context['email'] ?? '' ) ) {
@@ -191,15 +226,19 @@ final class SumsubProvider implements VerificationProvider {
 	 * @return array<string, mixed>
 	 */
 	private function request( string $method, string $path, array $payload = array() ): array {
-		$environment = $this->environment();
+		$this->request_error  = '';
+		$this->request_status = 'configuration_missing';
+		$environment          = $this->environment();
 		if ( '' === $environment['app_token'] || '' === $environment['secret_key'] || '' === $environment['level'] ) {
 			return array();
 		}
 		// Sumsub marks Sandbox app tokens with this prefix. Reject cross-mode keys.
+		$this->request_status = 'environment_mismatch';
 		if ( str_starts_with( $environment['app_token'], 'sbx:' ) !== ( 'test' === $environment['mode'] ) ) {
 			return array();
 		}
-		$body = array() !== $payload ? wp_json_encode( $payload ) : '';
+		$this->request_status = 'request_failed';
+		$body                 = array() !== $payload ? wp_json_encode( $payload ) : '';
 		if ( ! is_string( $body ) ) {
 			return array();
 		}
@@ -221,10 +260,21 @@ final class SumsubProvider implements VerificationProvider {
 				),
 			)
 		);
-		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+		if ( is_wp_error( $response ) ) {
 			return array();
 		}
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+		$code = wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $code ) {
+			$this->request_status = 'api_http_' . abs( (int) $code );
+			$error                = json_decode( wp_remote_retrieve_body( $response ), true );
+			$description          = is_array( $error ) && is_string( $error['description'] ?? null ) ? sanitize_text_field( $error['description'] ) : '';
+			$description          = preg_replace( '/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}|(?:prd|sbx):[^\s]+|[A-Z0-9_\-]{24,}/i', '[redacted]', $description );
+			$this->request_error  = is_string( $description ) ? substr( $description, 0, 240 ) : '';
+
+			return array();
+		}
+		$this->request_status = 'invalid_response';
+		$data                 = json_decode( wp_remote_retrieve_body( $response ), true );
 		return is_array( $data ) ? $data : array();
 	}
 

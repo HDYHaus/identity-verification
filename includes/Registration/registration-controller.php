@@ -481,6 +481,19 @@ final class RegistrationController {
 			)
 		);
 
+		if ( $this->provider instanceof SumsubProvider ) {
+			set_transient(
+				'trustgate_sumsub_last_confirmation',
+				array(
+					'status' => sanitize_key( (string) $result['status'] ),
+					'mode'   => $this->provider->get_public_config()['isTest'] ? 'test' : 'live',
+					'at'     => gmdate( 'c' ),
+					'detail' => sanitize_text_field( (string) ( $result['diagnostic'] ?? '' ) ),
+				),
+				10 * MINUTE_IN_SECONDS
+			);
+		}
+
 		if ( ! $result['verified'] ) {
 			wp_send_json_error(
 				array(
