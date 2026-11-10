@@ -28,10 +28,12 @@ Only normalized status, applicant reference, one-way hashes, and consent evidenc
 - [x] Enter real Sandbox app credentials and confirm the SDK launches on the HTTPS development site.
 - [x] Use Sumsub's test passport template and complete liveness; confirm the Sandbox GREEN decision creates one WordPress account.
 - [ ] Simulate RED, pending, on-hold, and resubmission states; confirm registration remains blocked until a current GREEN decision.
-- [ ] Change email/name after verification; confirm the prior result cannot register the changed details.
+- [x] Change the surname after server-confirmed approval; confirm the SDK result clears and account creation becomes disabled.
+- [ ] Repeat the post-approval email edit manually (covered by automated regression tests).
 - [ ] Try another attempt's applicant ID; confirm approval is rejected.
 - [ ] Test expired attempts and SDK token refresh.
-- [ ] Attempt to reuse an approved applicant or document; confirm replay/identity protection blocks it.
+- [x] Reuse the official test document on a fresh approved attempt; confirm identity protection blocks a second account.
+- [ ] Repeat consumed-applicant replay through the hosted UI (covered by automated tests).
 - [ ] Confirm consent text, provider label, privacy export/erasure, and admin profile metadata.
 - [ ] Switch back to Prembly; confirm its saved settings and registration flow still work.
 
@@ -63,6 +65,10 @@ Automated failure checks passed for RED/RETRY decisions, expired approvals, cons
 
 On the development site, switching to Prembly Sandbox changed the registration disclosure to Prembly and made Sumsub inactive while retaining both configurations. Restoring Sumsub retained its Sandbox credentials and level; Prembly's original environment preference was restored. This verifies provider switching and disclosure selection, not a new end-to-end Prembly verification.
 
-For a new synthetic Sumsub applicant, final RED rejection and retryable resubmission were simulated in the Sandbox dashboard. WordPress returned `not_verified` and kept account creation disabled in both cases. A long document-picker delay also exercised attempt expiry: the SDK displayed Verification expired and WordPress returned `invalid_attempt`, with registration still disabled. Sumsub refused to approve an applicant with incomplete required steps; the plugin's missing-document guard remains covered by automated tests. The duplicate-document check was subsequently completed on a fresh attempt: the same official test passport and liveness received Sumsub approval, while WordPress displayed “This identity is already associated with an account” and kept Create Your Account disabled. Post-approval form changes still have automated coverage only; a manual check needs a distinct, unused test document to reach a registrable approval.
+For a new synthetic Sumsub applicant, final RED rejection and retryable resubmission were simulated in the Sandbox dashboard. WordPress returned `not_verified` and kept account creation disabled in both cases. A long document-picker delay also exercised attempt expiry: the SDK displayed Verification expired and WordPress returned `invalid_attempt`, with registration still disabled. Sumsub refused to approve an applicant with incomplete required steps; the plugin's missing-document guard remains covered by automated tests. The duplicate-document check was subsequently completed on a fresh attempt: the same official test passport and liveness received Sumsub approval, while WordPress displayed “This identity is already associated with an account” and kept Create Your Account disabled. A post-approval surname edit was subsequently tested manually on November 10, as recorded below.
 
 WordPress Plugin Check passed all selected categories with errors and warnings enabled on November 9, 2026. The first run caught an omitted empty translation directory; adding a tracked `languages/index.php` retained that directory in the package, and the corrected development package passed without errors or warnings.
+
+## Manual form-change check — November 10, 2026
+
+A fresh Sandbox applicant completed the official test passport and owner-operated liveness flow. To isolate this check from duplicate-document blocking, its approved Sandbox document metadata was changed to a distinct synthetic passport number (`SBXEDIT110`) through the Sumsub dashboard. This is a simulated test fixture, not a real identity or a production verification. WordPress then confirmed approval and enabled Create Your Account. Changing the registration surname from Edit Test to Changed Test immediately removed the SDK result and disabled Create Your Account. No additional WordPress account was created. The surname edit passed manually; email edits and stale-response/server-binding scenarios retain automated coverage.
