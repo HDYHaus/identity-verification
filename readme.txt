@@ -4,7 +4,7 @@ Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.10.0-beta.9
+Stable tag: 0.10.0-beta.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,16 +63,12 @@ A Sumsub account and API credentials are required. Sandbox uses simulated decisi
 
 1. Install and activate HDYHaus Identity Verification.
 2. In WordPress, enable **Settings > General > Anyone can register**.
-3. Open **Identity Verification > Settings > Prembly**. Copy the **Prembly SDK Redirect URL** shown there. This is your site's registration URL, normally `https://your-domain.com/wp-login.php?action=register`; retain any WordPress subdirectory or development port.
-4. In Prembly, choose **Sandbox** or **Production**, then open **SDK Setup** and create a widget. Sandbox is recommended for testing; you may start with Production if ready for live checks. Create a separate widget for each environment you use.
-5. On Prembly's **Brand Details** screen, enter your site name, a short visitor-facing description, and your brand colour. Paste your registration URL into **Redirect URL**. Leave **Webhook URL** blank; this plugin has no Prembly webhook receiver.
-6. Configure the document and face checks appropriate for your site, then save the widget. Copy its **Configuration ID** using **Copy Config ID**, and its **Widget Key** from the widget's **Integration** panel. Use the widget key beginning `wdgt_`, not the API Integrations public key.
-7. Return to **Identity Verification > Settings > Prembly**. Enter both values in the matching Sandbox or Live fields, choose the matching active environment, select **Enable Prembly**, and save.
-8. Open **Identity Verification > Registration** to review consent wording and policy links. The optional **Success Redirect URL** is a same-site page shown after WordPress creates the account. It is separate from Prembly's **Redirect URL**, which uses your registration URL.
-9. Add identity verification information to the site's privacy policy. Suggested text is available under **Settings > Privacy**.
-10. Test the full registration and password-setup email flow before opening registration to visitors.
-
-For a field-by-field widget walkthrough, see https://github.com/HDYHaus/identity-verification/blob/main/docs/prembly-setup.md.
+3. In Prembly, create separate SDK Setup widgets for Sandbox and Production as needed.
+4. In WordPress, open **Identity Verification > Settings > Prembly**.
+5. Add the Widget Key and Configuration ID for the appropriate environment.
+6. Choose Sandbox or Live and select **Enable Prembly**.
+7. Add identity verification information to the site's privacy policy. Suggested text is available under **Settings > Privacy**.
+8. Test the full registration and password-setup email flow before opening registration to visitors.
 
 No Prembly Secret API Key, Organisation ID, or App ID is required for the SDK session confirmation used by this plugin.
 
@@ -129,11 +125,6 @@ No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verific
 3. Prembly settings keep Sandbox and Live widget credentials separate and control the active verification provider.
 
 == Changelog ==
-
-= 0.10.0-beta.9 =
-* Display the site's registration URL in Prembly settings for use as the SDK Redirect URL.
-* Explain Brand Details, the blank Webhook URL, and the separate success redirect.
-* Recommend Sandbox for testing while allowing Production-first setup.
 
 = 0.9.9 =
 * Link the HDY Haus author credit to the plugin landing page.

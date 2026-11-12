@@ -469,14 +469,6 @@ final class SettingsPage {
 			'<p>%s</p>',
 			esc_html__( 'Keep Sandbox and Live widget settings separate. Changing the active environment never overwrites the other environment.', 'hdyhaus-identity-verification' )
 		);
-		?>
-		<p><?php esc_html_e( 'Choose Sandbox or Production in Prembly before creating your SDK widget. Sandbox is recommended for testing; you can start with Production if you are ready for live checks. Match that environment to Sandbox / Test or Live / Production below.', 'hdyhaus-identity-verification' ); ?></p>
-		<p><label for="trustgate-prembly-registration-url"><strong><?php esc_html_e( 'Prembly SDK Redirect URL', 'hdyhaus-identity-verification' ); ?></strong></label></p>
-		<input type="url" id="trustgate-prembly-registration-url" class="large-text code" value="<?php echo esc_attr( wp_registration_url() ); ?>" readonly aria-describedby="trustgate-prembly-registration-url-help" />
-		<p id="trustgate-prembly-registration-url-help" class="description"><?php esc_html_e( 'Copy this site\'s registration URL into Redirect URL on Prembly\'s Brand Details screen when creating your SDK widget. Select the URL and copy it. Use the URL for the site where this widget will run, including any WordPress subdirectory or local development port.', 'hdyhaus-identity-verification' ); ?></p>
-		<p><?php esc_html_e( 'On that screen, enter your site name, a short visitor-facing description, and your brand colour. Leave Webhook URL blank: this plugin confirms verification sessions directly and has no Prembly webhook receiver.', 'hdyhaus-identity-verification' ); ?></p>
-		<p><?php esc_html_e( 'The optional Success Redirect URL on the Registration tab has a different purpose: it is the same-site page visitors see after WordPress successfully creates their account. Use the registration URL above for the Prembly SDK Redirect URL.', 'hdyhaus-identity-verification' ); ?></p>
-		<?php
 	}
 
 	/**

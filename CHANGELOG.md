@@ -1,11 +1,5 @@
 # Changelog
 
-## 0.10.0-beta.9
-
-- Display the site's registration URL in Prembly settings for copying into the SDK Redirect URL field.
-- Explain Prembly's Brand Details fields, the blank Webhook URL, and the separate post-registration success redirect.
-- Recommend Sandbox for testing while supporting customers who configure Production first.
-
 ## 0.9.9
 
 - Link the HDY Haus author credit to the plugin landing page.
