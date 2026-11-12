@@ -1,27 +1,32 @@
 # Prembly Setup
 
-This guide creates a reproducible Prembly sandbox widget for identity verification during WordPress registration. Dashboard labels reflect Prembly as observed on September 24, 2026.
+Use this guide to configure a Prembly widget for identity verification during WordPress registration. Choose Sandbox or Production according to your needs. Sandbox is recommended for testing, but you can start with Production if you are ready for live checks. Dashboard labels and screen order may vary; the Brand Details screen shown in November 2026 includes both Redirect URL and Webhook URL.
 
 Never add Prembly secret keys to source control, screenshots, support tickets, or public documentation.
 
 ## Recommended Widget
 
-In the Prembly dashboard, make sure the environment selector is set to **Sandbox**. Open **Integrations > SDK Setup**, choose **Add New SDK**, then choose **Manual Setup**.
+Before creating the widget, open **Identity Verification > Settings > Prembly** in WordPress. Copy the read-only **Prembly SDK Redirect URL** displayed there. It is generated for the current site; select the URL and copy it. If your installed version does not display this field, use your site's native WordPress registration URL as described under Brand Details below.
+
+In the Prembly dashboard, select **Sandbox** or **Production**. Open **Integrations > SDK Setup**, choose the option to add a widget (such as **Add New SDK**), then choose **Manual Setup** if offered. Create a separate widget for each environment you use. You do not need to create a Sandbox widget before a Production widget.
+
+The dashboard may show Brand Details first. Follow the field names below even if the order differs.
 
 Use these settings:
 
-1. Services
+1. Brand Details
+   - Brand name: the site or community name. The development widget uses `HDYHaus Identity Verification`.
+   - Short Description: `Verify your identity to complete account registration.`
+   - Theme: choose a color that meets the site's contrast and brand requirements.
+   - **Redirect URL:** paste the **Prembly SDK Redirect URL** copied from the plugin settings. This is the WordPress registration URL, normally `https://your-domain.com/wp-login.php?action=register`. Replace the example domain with your own; preserve any WordPress subdirectory or local development port. For example, WordPress installed at `https://example.com/community` uses `https://example.com/community/wp-login.php?action=register`. Use the plugin's displayed URL rather than constructing one if registration URL filters are in use.
+   - This URL is separate from the plugin's optional **Success Redirect URL**. Prembly's field uses the registration page; the plugin's success redirect runs only after WordPress creates the account.
+   - Webhook URL: leave blank until HDYHaus Identity Verification implements and documents a webhook receiver.
+2. Services
    - Enable **Document Verification**.
    - Select **All Countries**.
    - Select **All Document Types**: Passport, Driver's License, and Government Issued Identity Card.
    - Leave Data Verification off for the baseline widget. It uses country-specific government data sources and can be added for supported markets later.
    - Leave Address Verification off unless proof of address is part of the site's registration policy.
-2. Brand Details
-   - Brand name: the site or community name. The development widget uses `HDYHaus Identity Verification`.
-   - Description: `Verify your identity to complete account registration.`
-   - Theme: choose a color that meets the site's contrast and brand requirements.
-   - Redirect URL: the WordPress registration URL. For the Local development site, this is `http://localhost:10043/wp-login.php?action=register`.
-   - Webhook URL: leave blank until HDYHaus Identity Verification implements and documents a webhook receiver.
 3. Security/Fraud Check
    - PEP screening: Off for the baseline identity check. Enable it only when the site's compliance policy requires AML or politically exposed person screening.
    - Face Scan: On.
@@ -37,13 +42,14 @@ The saved widget appears under **Integrations > SDK Setup**. Use **Copy Config I
 
 ## WordPress Settings
 
-Open **HDYHaus Identity Verification > Settings** in WordPress and map the fields as follows:
+Open **Identity Verification > Settings** in WordPress and map the fields as follows:
 
 Open the **Prembly** tab and select **Enable Prembly**. HDYHaus Identity Verification permits one active verification provider at a time. Clearing the checkbox disables identity verification and allows the normal WordPress registration flow, but it does not remove saved Prembly widget settings.
 
 | HDYHaus Identity Verification field | Prembly source |
 | --- | --- |
-| Mode | `Test` while the Prembly dashboard is in Sandbox mode |
+| Active environment | **Sandbox / Test** for a Sandbox widget, or **Live / Production** for a Production widget |
+| Prembly SDK Redirect URL (read-only) | Copy this site-generated registration URL into **Redirect URL** on Prembly's **Brand Details** screen |
 | Sandbox Widget Key | **SDK Setup > Integration > Widget Key** for a widget created while Sandbox is selected |
 | Sandbox Configuration ID | **SDK Setup > Copy Config ID** for the Sandbox widget |
 | Live Widget Key | **SDK Setup > Integration > Widget Key** for a widget created while Live/Production is selected |
@@ -75,7 +81,7 @@ Document verification works across the broadest set of countries and identity do
 
 - Repeat the successful Sandbox and Production smoke tests after every change to the Prembly adapter or browser SDK integration.
 - Complete Prembly's business onboarding requirements and obtain live widget access.
-- Replace the Local redirect URL with the production HTTPS registration URL.
+- Use the production site's HTTPS registration URL for the Production widget; copy it from that site's Prembly settings. A Production widget can be configured first.
 - Confirm the production domain is permitted by Prembly.
 - Review the HDYHaus Identity Verification consent text and add the suggested disclosure under **Settings > Privacy** to the site's published privacy policy.
 - Confirm retention, deletion, and data-subject request procedures with legal counsel and Prembly.

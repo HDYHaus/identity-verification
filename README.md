@@ -37,6 +37,8 @@ Prembly support confirmed that the fixed SDK session endpoint at `https://backen
 
 The optional Success Redirect URL must be on the WordPress site's allowed hosts. It runs after WordPress successfully creates the verified account, not immediately after the Prembly widget completes. HDYHaus Identity Verification adds a completion marker and prepends an account-created notice reminding the user to check their email for the password setup link.
 
+Before creating a Prembly widget, copy **Prembly SDK Redirect URL** from **Identity Verification > Settings > Prembly** into the dashboard's **Brand Details > Redirect URL**. This is the current site's registration URL, normally `https://your-domain.com/wp-login.php?action=register`, including any WordPress subdirectory or development port. Leave Prembly's **Webhook URL** blank; the plugin has no Prembly webhook receiver. Choose Sandbox or Production as needed. Sandbox is recommended for testing, and starting with Production is supported.
+
 See [Prembly setup](docs/prembly-setup.md) for the recommended sandbox widget configuration and a field-by-field dashboard mapping.
 
 ## Sumsub (development)

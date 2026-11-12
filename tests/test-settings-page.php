@@ -34,6 +34,18 @@ function esc_html( string $value ): string {
 	return htmlspecialchars( $value, ENT_QUOTES, 'UTF-8' );
 }
 
+function esc_html__( string $value ): string {
+	return esc_html( $value );
+}
+
+function esc_html_e( string $value ): void {
+	echo esc_html( $value );
+}
+
+function wp_registration_url(): string {
+	return 'https://example.test:10043/community/wp-login.php?action=register&source=site';
+}
+
 function sanitize_key( string $value ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $value ) ) ?? '';
 }
@@ -143,6 +155,11 @@ function trustgate_settings_assert_same( mixed $expected, mixed $actual, string 
 $registry = new ProviderRegistry( array( new TrustGateSettingsTestProvider(), new TrustGateSettingsTestProvider( 'sumsub' ) ), 'prembly' );
 $page     = new SettingsPage( 'trustgate_settings', $registry );
 $page->add_page();
+ob_start();
+$page->render_prembly_section();
+$prembly_setup_html = ob_get_clean();
+trustgate_settings_assert_same( true, str_contains( $prembly_setup_html, 'value="https://example.test:10043/community/wp-login.php?action=register&amp;source=site" readonly' ), 'The read-only SDK redirect preserves the site registration URL, including port, subdirectory, and query parameters, with safe HTML escaping.' );
+trustgate_settings_assert_same( false, str_contains( $prembly_setup_html, 'name=' ), 'The displayed SDK redirect is guidance and cannot overwrite saved settings.' );
 trustgate_settings_assert_same( 'Registration', $trustgate_test_submenus['hdyhaus-identity-verification-flow'][2], 'Registration has a separate submenu under HDYHaus Identity Verification.' );
 $tab_method  = new ReflectionMethod( SettingsPage::class, 'get_current_tab' );
 $tabs_method = new ReflectionMethod( SettingsPage::class, 'get_tabs' );
