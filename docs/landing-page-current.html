@@ -1,0 +1,931 @@
+<!-- wp:html -->
+<style>
+.tg-landing {
+    --tg-ink: #17202b;
+    --tg-muted: #5f6673;
+    --tg-line: #e7dfd6;
+    --tg-paper: #fffaf5;
+    --tg-soft: #f6efe7;
+    --tg-accent: #b85f2f;
+    --tg-accent-dark: #8f4324;
+    --tg-green: #44604a;
+    --tg-gold: #d7a64a;
+    color: var(--tg-ink);
+    font-family: inherit;
+    overflow: hidden;
+  }
+  .tg-landing * { box-sizing: border-box; }
+  .tg-landing a { color: inherit; }
+  .tg-landing a.tg-button { text-decoration: none; }
+  .tg-wrap {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  .tg-hero {
+    background:
+      linear-gradient(135deg, rgba(255,250,245,.96), rgba(246,239,231,.94)),
+      radial-gradient(circle at top right, rgba(184,95,47,.16), transparent 34%);
+    padding: 84px 0 58px;
+    border-bottom: 1px solid var(--tg-line);
+  }
+  .tg-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(340px, .98fr);
+    gap: 48px;
+    align-items: center;
+  }
+  .tg-kicker {
+    display: inline-flex;
+    gap: 9px;
+    align-items: center;
+    margin: 0 0 18px;
+    color: var(--tg-accent-dark);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+  .tg-kicker:before {
+    content: "";
+    width: 34px;
+    height: 2px;
+    background: var(--tg-accent);
+  }
+  .tg-hero h1 {
+    max-width: 780px;
+    margin: 0;
+    color: var(--tg-ink);
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+  .tg-lede {
+    max-width: 670px;
+    margin: 24px 0 0;
+    color: var(--tg-muted);
+    font-size: 20px;
+    line-height: 1.65;
+  }
+  .tg-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .tg-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 13px 19px;
+    border: 1px solid var(--tg-ink);
+    border-radius: 6px;
+    font-weight: 800;
+    text-decoration: none;
+    line-height: 1.1;
+  }
+  .tg-landing .tg-button-primary {
+    background: var(--tg-ink);
+    color: #fff;
+  }
+  .tg-landing .tg-button-secondary {
+    background: transparent;
+    color: var(--tg-ink);
+  }
+  .tg-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+    color: var(--tg-muted);
+    font-size: 14px;
+  }
+  .tg-pill {
+    border: 1px solid var(--tg-line);
+    border-radius: 999px;
+    background: rgba(255,255,255,.7);
+    padding: 8px 12px;
+  }
+  .tg-product-frame {
+    border: 1px solid rgba(23,32,43,.16);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 22px 60px rgba(23,32,43,.14);
+    overflow: hidden;
+  }
+  .tg-product-topbar {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    height: 38px;
+    padding: 0 15px;
+    border-bottom: 1px solid var(--tg-line);
+    background: #f7f3ee;
+  }
+  .tg-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 99px;
+    background: var(--tg-accent);
+  }
+  .tg-dot:nth-child(2) { background: var(--tg-gold); }
+  .tg-dot:nth-child(3) { background: var(--tg-green); }
+  .tg-frame-media img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .tg-section {
+    padding: 74px 0;
+  }
+  .tg-section-soft { background: var(--tg-paper); }
+  .tg-section h2 {
+    max-width: 760px;
+    margin: 0;
+    font-size: 44px;
+    line-height: 1.08;
+    letter-spacing: 0;
+  }
+  .tg-section-intro {
+    max-width: 740px;
+    margin: 18px 0 0;
+    color: var(--tg-muted);
+    font-size: 18px;
+    line-height: 1.65;
+  }
+  .tg-split {
+    display: grid;
+    grid-template-columns: .9fr 1.1fr;
+    gap: 44px;
+    align-items: start;
+  }
+  .tg-check-list {
+    display: grid;
+    gap: 14px;
+    margin: 22px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tg-check-list li {
+    position: relative;
+    padding-left: 32px;
+    color: var(--tg-muted);
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  .tg-check-list li:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .45em;
+    width: 16px;
+    height: 16px;
+    border-radius: 99px;
+    background: var(--tg-green);
+    box-shadow: inset 0 0 0 5px #fff;
+    border: 1px solid var(--tg-green);
+  }
+  .tg-check-list a { text-decoration: underline; }
+  .tg-compare {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-top: 34px;
+  }
+  .tg-compare-card {
+    border: 1px solid var(--tg-line);
+    border-radius: 8px;
+    background: #fff;
+    padding: 22px;
+  }
+  .tg-compare-label {
+    display: inline-flex;
+    border-radius: 999px;
+    background: #f1e7dc;
+    color: var(--tg-accent-dark);
+    padding: 6px 11px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+  .tg-compare-card h3 {
+    margin: 14px 0 0;
+    font-size: 21px;
+    line-height: 1.2;
+    letter-spacing: 0;
+  }
+  .tg-compare-card p {
+    margin: 10px 0 18px;
+    color: var(--tg-muted);
+    line-height: 1.6;
+  }
+  .tg-shot {
+    border: 1px solid var(--tg-line);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--tg-paper);
+  }
+  .tg-shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .tg-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 34px;
+  }
+  .tg-feature-card {
+    border: 1px solid var(--tg-line);
+    border-radius: 8px;
+    background: #fff;
+    padding: 24px;
+    min-height: 205px;
+  }
+  .tg-feature-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    margin-bottom: 17px;
+    border-radius: 8px;
+    background: var(--tg-soft);
+    color: var(--tg-accent-dark);
+    font-weight: 900;
+  }
+  .tg-feature-card h3,
+  .tg-workflow-card h3 {
+    margin: 0;
+    font-size: 21px;
+    line-height: 1.2;
+    letter-spacing: 0;
+  }
+  .tg-feature-card p,
+  .tg-workflow-card p {
+    margin: 12px 0 0;
+    color: var(--tg-muted);
+    line-height: 1.6;
+  }
+  .tg-workflow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin-top: 34px;
+    border: 1px solid var(--tg-line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .tg-workflow-card {
+    min-height: 230px;
+    padding: 26px;
+    border-right: 1px solid var(--tg-line);
+  }
+  .tg-workflow-card:last-child { border-right: 0; }
+  .tg-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    margin-bottom: 18px;
+    border-radius: 99px;
+    background: var(--tg-ink);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+  }
+  .tg-open-source {
+    border-top: 1px solid var(--tg-line);
+    border-bottom: 1px solid var(--tg-line);
+    background: #17202b;
+    color: #fff;
+  }
+  .tg-open-source .tg-section-intro,
+  .tg-open-source .tg-check-list li { color: rgba(255,255,255,.74); }
+  .tg-open-source h2 { color: #fff; }
+  .tg-open-source .tg-kicker { color: var(--tg-gold); }
+  .tg-open-source .tg-check-list li:before {
+    background: var(--tg-gold);
+    border-color: var(--tg-gold);
+    box-shadow: inset 0 0 0 5px #17202b;
+  }
+  .tg-requirements {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 30px;
+  }
+  .tg-req {
+    border: 1px solid var(--tg-line);
+    border-radius: 8px;
+    background: #fff;
+    padding: 18px;
+  }
+  .tg-req strong { display: block; }
+  .tg-req span { display: block; margin-top: 6px; color: var(--tg-muted); font-size: 14px; }
+  .tg-final {
+    padding: 72px 0 86px;
+    background: var(--tg-soft);
+    text-align: center;
+  }
+  .tg-final h2 {
+    max-width: 780px;
+    margin: 0 auto;
+    font-size: 52px;
+    line-height: 1.06;
+  }
+  .tg-final p {
+    max-width: 650px;
+    margin: 18px auto 0;
+    color: var(--tg-muted);
+    font-size: 18px;
+    line-height: 1.65;
+  }
+  .tg-final .tg-actions { justify-content: center; }
+  .tg-final-note {
+    max-width: 620px;
+    margin: 26px auto 0;
+    font-size: 15px;
+  }
+  .tg-final-note a { text-decoration: underline; }
+  @media (max-width: 900px) {
+    .tg-hero-grid,
+    .tg-split { grid-template-columns: 1fr; }
+    .tg-feature-grid { grid-template-columns: repeat(2, 1fr); }
+    .tg-workflow { grid-template-columns: repeat(2, 1fr); }
+    .tg-workflow-card:nth-child(2) { border-right: 0; }
+    .tg-workflow-card:nth-child(1),
+    .tg-workflow-card:nth-child(2) { border-bottom: 1px solid var(--tg-line); }
+    .tg-requirements { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .tg-wrap { padding: 0 18px; }
+    .tg-hero { padding: 56px 0 42px; }
+    .tg-section { padding: 54px 0; }
+    .tg-lede { font-size: 18px; }
+    .tg-feature-grid,
+    .tg-workflow,
+    .tg-compare,
+    .tg-requirements { grid-template-columns: 1fr; }
+    .tg-workflow-card,
+    .tg-workflow-card:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--tg-line); }
+    .tg-workflow-card:last-child { border-bottom: 0; }
+    .tg-button { width: 100%; }
+  }
+.tg-landing .wp-block-group { box-sizing: border-box; }
+.tg-landing .wp-block-group__inner-container { display:contents; }
+.tg-landing .tg-wrap { width:100%; max-width:1160px; margin-left:auto; margin-right:auto; }
+.tg-landing .tg-hero { background:#fffaf5; }
+.tg-landing .tg-actions { gap:12px; }
+.tg-landing .tg-actions .wp-block-button { margin:0; padding:0; background:transparent; border-radius:6px; }
+.tg-landing .tg-actions .wp-block-button__link { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:13px 19px; border:1px solid var(--tg-ink); border-radius:6px; font-size:18px; font-weight:800; line-height:1.1; text-decoration:none; }
+.tg-landing .tg-button-primary .wp-block-button__link { background:var(--tg-ink); color:#fff; }
+.tg-landing .tg-button-secondary .wp-block-button__link { background:transparent; color:var(--tg-ink); }
+.tg-landing .tg-actions a:focus-visible { outline:3px solid var(--tg-accent); outline-offset:4px; }
+.tg-landing .tg-actions a:hover { opacity:.88; }
+.tg-landing .tg-meta-row p { margin:0; }
+.tg-landing .tg-product-frame figure { margin:0; }
+.tg-landing .tg-product-topbar p { margin:0; color:var(--tg-muted); font-size:12px; }
+.tg-landing .tg-registration-shot img { display:block; width:100%; height:560px; object-fit:contain; background:#f0f0f1; }
+.tg-landing .tg-provider-note { margin-top:20px; color:var(--tg-muted); font-size:15px; line-height:1.5; }
+.tg-landing .tg-feature-card { min-width:0; }
+.tg-landing .tg-feature-icon,.tg-landing .tg-step { margin-top:0; }
+.tg-landing .tg-workflow { border:0; border-radius:0; gap:24px; background:transparent; overflow:visible; }
+.tg-landing .tg-workflow-card { min-width:0; min-height:0; padding:0; border:0; }
+.tg-landing .tg-req p { margin:0; font-size:16px; line-height:1.5; }
+.tg-landing .tg-req p + p { margin-top:6px; color:var(--tg-muted); font-size:14px; }
+.tg-landing h1,.tg-landing h2,.tg-landing h3,.tg-landing p { overflow-wrap:break-word; }
+@media(max-width:900px) { .tg-landing .tg-hero h1 { font-size:52px; } .tg-landing .tg-section h2 { font-size:38px; } }
+@media(max-width:640px) { .tg-landing .tg-hero h1 { font-size:42px; } .tg-landing .tg-section h2 { font-size:32px; } .tg-landing .tg-final h2 { font-size:36px; } .tg-landing .tg-actions .wp-block-button { width:100%; } .tg-landing .tg-actions .wp-block-button__link { width:100%; } .tg-landing .tg-registration-shot img { height:auto; } .tg-landing .tg-workflow-card,.tg-landing .tg-workflow-card:nth-child(2) { border:0; } }
+.tg-landing .wp-block-group { box-sizing: border-box; }
+.tg-landing .wp-block-group__inner-container { display:contents; }
+.tg-landing .tg-wrap { width:100%; max-width:1160px; margin-left:auto; margin-right:auto; }
+.tg-landing .tg-hero { background:#fffaf5; }
+.tg-landing .tg-actions { gap:12px; }
+.tg-landing .tg-actions .wp-block-button { margin:0; padding:0; background:transparent; border-radius:6px; }
+.tg-landing .tg-actions .wp-block-button__link { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:13px 19px; border:1px solid var(--tg-ink); border-radius:6px; font-size:18px; font-weight:800; line-height:1.1; text-decoration:none; }
+.tg-landing .tg-button-primary .wp-block-button__link { background:var(--tg-ink); color:#fff; }
+.tg-landing .tg-button-secondary .wp-block-button__link { background:transparent; color:var(--tg-ink); }
+.tg-landing .tg-actions a:focus-visible { outline:3px solid var(--tg-accent); outline-offset:4px; }
+.tg-landing .tg-actions a:hover { opacity:.88; }
+.tg-landing .tg-meta-row p { margin:0; }
+.tg-landing .tg-product-frame figure { margin:0; }
+.tg-landing .tg-product-topbar p { margin:0; color:var(--tg-muted); font-size:12px; }
+.tg-landing .tg-registration-shot img { display:block; width:100%; height:560px; object-fit:contain; background:#f0f0f1; }
+.tg-landing .tg-provider-note { margin-top:20px; color:var(--tg-muted); font-size:15px; line-height:1.5; }
+.tg-landing .tg-feature-card { min-width:0; }
+.tg-landing .tg-feature-icon,.tg-landing .tg-step { margin-top:0; }
+.tg-landing .tg-workflow { border:0; border-radius:0; gap:24px; background:transparent; overflow:visible; }
+.tg-landing .tg-workflow-card { min-width:0; min-height:0; padding:0; border:0; }
+.tg-landing .tg-req p { margin:0; font-size:16px; line-height:1.5; }
+.tg-landing .tg-req p + p { margin-top:6px; color:var(--tg-muted); font-size:14px; }
+.tg-landing h1,.tg-landing h2,.tg-landing h3,.tg-landing p { overflow-wrap:break-word; }
+@media(max-width:900px) { .tg-landing .tg-hero h1 { font-size:52px; } .tg-landing .tg-section h2 { font-size:38px; } }
+@media(max-width:640px) { .tg-landing .tg-hero h1 { font-size:42px; } .tg-landing .tg-section h2 { font-size:32px; } .tg-landing .tg-final h2 { font-size:36px; } .tg-landing .tg-actions .wp-block-button { width:100%; } .tg-landing .tg-actions .wp-block-button__link { width:100%; } .tg-landing .tg-registration-shot img { height:auto; } .tg-landing .tg-workflow-card,.tg-landing .tg-workflow-card:nth-child(2) { border:0; } }
+.tg-landing .wp-block-group { box-sizing: border-box; }
+.tg-landing .wp-block-group__inner-container { display:contents; }
+.tg-landing .tg-wrap { width:100%; max-width:1160px; margin-left:auto; margin-right:auto; }
+.tg-landing .tg-hero { background:#fffaf5; }
+.tg-landing .tg-actions { gap:12px; }
+.tg-landing .tg-actions .wp-block-button { margin:0; padding:0; background:transparent; border-radius:6px; }
+.tg-landing .tg-actions .wp-block-button__link { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:13px 19px; border:1px solid var(--tg-ink); border-radius:6px; font-size:18px; font-weight:800; line-height:1.1; text-decoration:none; }
+.tg-landing .tg-button-primary .wp-block-button__link { background:var(--tg-ink); color:#fff; }
+.tg-landing .tg-button-secondary .wp-block-button__link { background:transparent; color:var(--tg-ink); }
+.tg-landing .tg-actions a:focus-visible { outline:3px solid var(--tg-accent); outline-offset:4px; }
+.tg-landing .tg-actions a:hover { opacity:.88; }
+.tg-landing .tg-meta-row p { margin:0; }
+.tg-landing .tg-product-frame figure { margin:0; }
+.tg-landing .tg-product-topbar p { margin:0; color:var(--tg-muted); font-size:12px; }
+.tg-landing .tg-registration-shot img { display:block; width:100%; height:560px; object-fit:contain; background:#f0f0f1; }
+.tg-landing .tg-provider-note { margin-top:20px; color:var(--tg-muted); font-size:15px; line-height:1.5; }
+.tg-landing .tg-feature-card { min-width:0; }
+.tg-landing .tg-feature-icon,.tg-landing .tg-step { margin-top:0; }
+.tg-landing .tg-workflow { border:0; border-radius:0; gap:24px; background:transparent; overflow:visible; }
+.tg-landing .tg-workflow-card { min-width:0; min-height:0; padding:0; border:0; }
+.tg-landing .tg-req p { margin:0; font-size:16px; line-height:1.5; }
+.tg-landing .tg-req p + p { margin-top:6px; color:var(--tg-muted); font-size:14px; }
+.tg-landing h1,.tg-landing h2,.tg-landing h3,.tg-landing p { overflow-wrap:break-word; }
+@media(max-width:900px) { .tg-landing .tg-hero h1 { font-size:52px; } .tg-landing .tg-section h2 { font-size:38px; } }
+@media(max-width:640px) { .tg-landing .tg-hero h1 { font-size:42px; } .tg-landing .tg-section h2 { font-size:32px; } .tg-landing .tg-final h2 { font-size:36px; } .tg-landing .tg-actions .wp-block-button { width:100%; } .tg-landing .tg-actions .wp-block-button__link { width:100%; } .tg-landing .tg-registration-shot img { height:auto; } .tg-landing .tg-workflow-card,.tg-landing .tg-workflow-card:nth-child(2) { border:0; } }
+</style>
+<!-- /wp:html -->
+
+<!-- wp:group {"align":"full","className":"tg-landing","layout":{"type":"default"}} -->
+<div class="wp-block-group alignfull tg-landing"><!-- wp:group {"className":"tg-hero","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-hero"><!-- wp:group {"className":"tg-wrap tg-hero-grid","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-wrap tg-hero-grid"><!-- wp:group {"layout":{"type":"default"}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"className":"tg-kicker"} -->
+<p class="tg-kicker">Free WordPress plugin</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":1} -->
+<h1 class="wp-block-heading">Verify people before WordPress creates their account.</h1>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"className":"tg-lede"} -->
+<p class="tg-lede">HDYHaus Identity Verification adds identity verification to the native WordPress registration flow. WordPress creates an account only after your server confirms a successful verification.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:buttons {"className":"tg-actions"} -->
+<div class="wp-block-buttons tg-actions"><!-- wp:button {"className":"tg-button-primary"} -->
+<div class="wp-block-button tg-button-primary"><a class="wp-block-button__link wp-element-button" href="https://github.com/HDYHaus/identity-verification/releases/download/v0.9.9/hdyhaus-identity-verification-0.9.9.zip">Download plugin</a></div>
+<!-- /wp:button -->
+
+<!-- wp:button {"className":"tg-button-secondary"} -->
+<div class="wp-block-button tg-button-secondary"><a class="wp-block-button__link wp-element-button" href="https://github.com/HDYHaus/identity-verification">View on GitHub</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons -->
+
+<!-- wp:group {"className":"tg-meta-row","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-meta-row"><!-- wp:paragraph {"className":"tg-pill"} -->
+<p class="tg-pill">Version 0.9.9</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"className":"tg-pill"} -->
+<p class="tg-pill">WordPress 6.4+</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"className":"tg-pill"} -->
+<p class="tg-pill">PHP 8.1+</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"className":"tg-pill"} -->
+<p class="tg-pill">GPL-2.0-or-later</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:paragraph {"className":"tg-provider-note"} -->
+<p class="tg-provider-note">Requires a Prembly account and configured verification widget. Prembly account and service terms apply separately.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-product-frame","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-product-frame"><!-- wp:group {"className":"tg-product-topbar","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-product-topbar"><!-- wp:paragraph -->
+<p>WordPress registration</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:image {"sizeSlug":"full","linkDestination":"none","className":"tg-registration-shot"} -->
+<figure class="wp-block-image size-full tg-registration-shot"><img src="https://hdyhaus.com/wp-content/uploads/2026/10/screenshot-1.png" alt="HDYHaus Identity Verification adds first and last name fields, explicit Prembly consent, policy links, and a Verify Identity button to native WordPress registration."/></figure>
+<!-- /wp:image --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-section","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-section"><!-- wp:group {"className":"tg-wrap tg-split","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-wrap tg-split"><!-- wp:group {"layout":{"type":"default"}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"className":"tg-kicker"} -->
+<p class="tg-kicker">Why it exists</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">A verified identity should come before a user account.</h2>
+<!-- /wp:heading --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"layout":{"type":"default"}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"className":"tg-section-intro"} -->
+<p class="tg-section-intro">An email address alone does not establish who is registering. HDYHaus Identity Verification adds identity verification before the account exists, so you can require a confirmed identity from the start.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list {"className":"tg-check-list"} -->
+<ul class="wp-block-list tg-check-list"><!-- wp:list-item -->
+<li>Block account creation when verification is missing or cannot be confirmed.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Check the provider result on your server before allowing registration.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Keep the native WordPress form and password-setup email flow.</li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-section tg-section-soft","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-section tg-section-soft"><!-- wp:group {"className":"tg-wrap","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-wrap"><!-- wp:paragraph {"className":"tg-kicker"} -->
+<p class="tg-kicker">What it does</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Identity verification, built into registration.</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"className":"tg-section-intro"} -->
+<p class="tg-section-intro">A focused gate for native WordPress account creation.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:group {"className":"tg-feature-grid","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-feature-grid"><!-- wp:group {"className":"tg-feature-card","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-feature-card"><!-- wp:paragraph {"className":"tg-feature-icon"} -->
+<p class="tg-feature-icon">01</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Server confirmation</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Check the status, session ID, widget configuration, and registrant email before creating an account.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-feature-card","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-feature-card"><!-- wp:paragraph {"className":"tg-feature-icon"} -->
+<p class="tg-feature-icon">02</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">One identity, one account</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Prevent reuse of a completed session or verified document identity, even after account deletion.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-feature-card","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-feature-card"><!-- wp:paragraph {"className":"tg-feature-icon"} -->
+<p class="tg-feature-icon">03</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Explicit consent</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Display your consent wording and provider policy links before a registrant starts verification.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-feature-card","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-feature-card"><!-- wp:paragraph {"className":"tg-feature-icon"} -->
+<p class="tg-feature-icon">04</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Separate environments</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Keep Sandbox and Live widget settings separate while testing your registration flow.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-feature-card","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-feature-card"><!-- wp:paragraph {"className":"tg-feature-icon"} -->
+<p class="tg-feature-icon">05</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">WordPress privacy tools</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Export and erase verification metadata through WordPress personal-data tools.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-feature-card","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-feature-card"><!-- wp:paragraph {"className":"tg-feature-icon"} -->
+<p class="tg-feature-icon">06</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Provider adapters</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Use Prembly as the first supported provider, with an adapter interface for developers.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-section","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-section"><!-- wp:group {"className":"tg-wrap","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-wrap"><!-- wp:paragraph {"className":"tg-kicker"} -->
+<p class="tg-kicker">Who it is for</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">For sites that need to know who is joining.</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"className":"tg-section-intro"} -->
+<p class="tg-section-intro">For single-site WordPress communities and service portals where new accounts need a confirmed identity. Developers can add it to an existing native registration flow.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list {"className":"tg-check-list"} -->
+<ul class="wp-block-list tg-check-list"><!-- wp:list-item -->
+<li>Works with <code>wp-login.php?action=register</code>.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>WooCommerce, BuddyPress, MemberPress, Ultimate Member, and other custom registration forms are not currently supported.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Multisite and network activation are not currently supported.</li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-section tg-section-soft","layout":{"type":"default"},"anchor":"how-it-works"} -->
+<div id="how-it-works" class="wp-block-group tg-section tg-section-soft"><!-- wp:group {"className":"tg-wrap","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-wrap"><!-- wp:paragraph {"className":"tg-kicker"} -->
+<p class="tg-kicker">How it works</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Verification comes before account creation.</h2>
+<!-- /wp:heading -->
+
+<!-- wp:group {"className":"tg-workflow","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-workflow"><!-- wp:group {"className":"tg-workflow-card","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-workflow-card"><!-- wp:paragraph {"className":"tg-step"} -->
+<p class="tg-step">1</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Register</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>The person enters their username, name, and email on the native WordPress registration screen.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-workflow-card","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-workflow-card"><!-- wp:paragraph {"className":"tg-step"} -->
+<p class="tg-step">2</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Consent</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>They accept the displayed consent before opening the verification provider.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-workflow-card","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-workflow-card"><!-- wp:paragraph {"className":"tg-step"} -->
+<p class="tg-step">3</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Verify</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Prembly performs the identity checks selected by the site owner.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-workflow-card","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-workflow-card"><!-- wp:paragraph {"className":"tg-step"} -->
+<p class="tg-step">4</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Confirm</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>WordPress confirms the session on the server, creates the account, and sends the password-setup email.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-section","layout":{"type":"default"},"anchor":"installation"} -->
+<div id="installation" class="wp-block-group tg-section"><!-- wp:group {"className":"tg-wrap","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-wrap"><!-- wp:paragraph {"className":"tg-kicker"} -->
+<p class="tg-kicker">Getting started</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Connect Prembly to your registration flow.</h2>
+<!-- /wp:heading -->
+
+<!-- wp:list {"ordered":true} -->
+<ol class="wp-block-list"><!-- wp:list-item -->
+<li>Download the ZIP. Open <strong>Plugins &gt; Add New Plugin &gt; Upload Plugin</strong>, upload, install, and activate HDYHaus Identity Verification.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Enable <strong>Settings &gt; General &gt; Anyone can register</strong>.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>In Prembly, choose <strong>Sandbox</strong> or <strong>Production</strong>, then create an <strong>SDK Setup</strong> widget. Sandbox is recommended for testing; you can start with Production if ready for live checks. Create a separate widget for each environment you use.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>On Prembly’s <strong>Brand Details</strong> screen, enter your site name, a short visitor-facing description, and your brand colour. Set <strong>Redirect URL</strong> to your site’s WordPress registration URL, normally <code>https://your-domain.com/wp-login.php?action=register</code>. Replace the example domain with your own and retain any WordPress subdirectory or local development port.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Leave <strong>Webhook URL</strong> blank: this plugin confirms verification sessions directly and has no Prembly webhook receiver. Configure the document and face checks appropriate for your site, then save the widget. Use <strong>Copy Config ID</strong> for its Configuration ID and the widget’s <strong>Integration</strong> panel for its Widget Key, beginning <code>wdgt_</code>.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Open <strong>Identity Verification > Settings > Prembly</strong> in WordPress. Enter the Widget Key and Configuration ID in the matching Sandbox or Live fields.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Choose the matching active environment (<strong>Sandbox / Test</strong> or <strong>Live / Production</strong>), select <strong>Enable Prembly</strong>, and save.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Open <strong>Identity Verification > Registration</strong> to customize consent wording, provider policy URLs, and your website terms or disclaimer link. The optional <strong>Success Redirect URL</strong> is a same-site page shown after WordPress creates the account. Prembly’s <strong>Redirect URL</strong> uses your registration page.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Add identity verification information to the site privacy policy. Suggested text is available under <strong>Settings &gt; Privacy</strong>.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Test successful verification, blocked unverified registration, and password-setup emails before opening registration to visitors.</li>
+<!-- /wp:list-item --></ol>
+<!-- /wp:list -->
+
+<!-- wp:paragraph {"className":"tg-section-intro"} -->
+<p class="tg-section-intro"><a href="https://github.com/HDYHaus/identity-verification/blob/main/docs/prembly-setup.md">Read the Prembly setup guide</a></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-section tg-open-source","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-section tg-open-source"><!-- wp:group {"className":"tg-wrap tg-split","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-wrap tg-split"><!-- wp:group {"layout":{"type":"default"}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"className":"tg-kicker"} -->
+<p class="tg-kicker">Verification data</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Documents stay with your verification provider.</h2>
+<!-- /wp:heading --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"layout":{"type":"default"}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"className":"tg-section-intro"} -->
+<p class="tg-section-intro">Prembly processes identity documents and verification checks. HDYHaus Identity Verification stores normalized verification and consent metadata in WordPress, including a session reference and site-specific one-way fingerprints.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list {"className":"tg-check-list"} -->
+<ul class="wp-block-list tg-check-list"><!-- wp:list-item -->
+<li>Document images, document numbers, selfies, biometric information, and full provider reports are not copied into WordPress.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Verification metadata works with WordPress personal-data export and erasure tools.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>One-way session and identity fingerprints remain after erasure or account deletion to prevent reuse.</li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-section tg-section-soft","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-section tg-section-soft"><!-- wp:group {"className":"tg-wrap","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-wrap"><!-- wp:paragraph {"className":"tg-kicker"} -->
+<p class="tg-kicker">Requirements</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Check your site before installing.</h2>
+<!-- /wp:heading -->
+
+<!-- wp:group {"className":"tg-requirements","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-requirements"><!-- wp:group {"className":"tg-req","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-req"><!-- wp:paragraph -->
+<p><strong>WordPress</strong></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Version 6.4 or newer.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-req","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-req"><!-- wp:paragraph -->
+<p><strong>PHP</strong></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Version 8.1 or newer.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-req","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-req"><!-- wp:paragraph -->
+<p><strong>Registration</strong></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Native WordPress, single-site.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-req","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-req"><!-- wp:paragraph -->
+<p><strong>Prembly</strong></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>SDK Widget Key and Configuration ID.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:paragraph {"className":"tg-section-intro"} -->
+<p class="tg-section-intro">No Prembly Secret API Key, Organisation ID, or App ID is required for this integration.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"className":"tg-final","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-final"><!-- wp:group {"className":"tg-wrap","layout":{"type":"default"}} -->
+<div class="wp-block-group tg-wrap"><!-- wp:heading -->
+<h2 class="wp-block-heading">Know who is joining your WordPress site.</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Download HDYHaus Identity Verification and test your verification flow before opening registration to visitors.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:buttons {"className":"tg-actions"} -->
+<div class="wp-block-buttons tg-actions"><!-- wp:button {"className":"tg-button-primary"} -->
+<div class="wp-block-button tg-button-primary"><a class="wp-block-button__link wp-element-button" href="https://github.com/HDYHaus/identity-verification/releases/download/v0.9.9/hdyhaus-identity-verification-0.9.9.zip">Download plugin</a></div>
+<!-- /wp:button -->
+
+<!-- wp:button {"className":"tg-button-secondary"} -->
+<div class="wp-block-button tg-button-secondary"><a class="wp-block-button__link wp-element-button" href="https://github.com/HDYHaus/identity-verification">View on GitHub</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons -->
+
+<!-- wp:paragraph {"className":"tg-final-note"} -->
+<p class="tg-final-note"><a href="https://github.com/HDYHaus/identity-verification/releases/tag/v0.9.9">Release notes</a> · <a href="https://github.com/HDYHaus/identity-verification/issues">Report a plugin issue</a> · <a href="https://hdyhaus.com/contact/">Ask HDY Haus</a></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
