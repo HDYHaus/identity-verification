@@ -60,7 +60,17 @@ final class Privacy {
 		$privacy_url = array_key_exists( 'provider_privacy_url', $settings ) ? esc_url_raw( (string) $settings['provider_privacy_url'] ) : RegistrationController::DEFAULT_PROVIDER_PRIVACY_URL;
 		$terms_url   = array_key_exists( 'provider_terms_url', $settings ) ? esc_url_raw( (string) $settings['provider_terms_url'] ) : RegistrationController::DEFAULT_PROVIDER_TERMS_URL;
 
-		$content  = '<p>' . esc_html__( 'When identity verification is enabled, the registrant\'s name and email address are sent to Prembly when the registrant starts verification. Prembly may then collect and process identity document images, selfies, biometric information, device information, and IP-derived location information to perform the checks configured by the site owner.', 'hdyhaus-identity-verification' ) . '</p>';
+		if ( 'sumsub' === ( $settings['provider'] ?? '' ) ) {
+			$defaults    = RegistrationController::get_sumsub_disclosure_defaults();
+			$consent     = ! empty( $settings['sumsub_consent_text'] ) ? sanitize_textarea_field( (string) $settings['sumsub_consent_text'] ) : $defaults['consent_text'];
+			$privacy_url = array_key_exists( 'sumsub_provider_privacy_url', $settings ) ? esc_url_raw( (string) $settings['sumsub_provider_privacy_url'] ) : $defaults['provider_privacy_url'];
+			$terms_url   = array_key_exists( 'sumsub_provider_terms_url', $settings ) ? esc_url_raw( (string) $settings['sumsub_provider_terms_url'] ) : $defaults['provider_terms_url'];
+		}
+
+		$content = '<p>' . esc_html__( 'When identity verification is enabled, the registrant\'s name and email address are sent to Prembly when the registrant starts verification. Prembly may then collect and process identity document images, selfies, biometric information, device information, and IP-derived location information to perform the checks configured by the site owner.', 'hdyhaus-identity-verification' ) . '</p>';
+		if ( 'sumsub' === ( $settings['provider'] ?? '' ) ) {
+			$content = '<p>' . esc_html__( 'When Sumsub is selected, the registrant’s email and an opaque registration identifier are sent to Sumsub to start verification. Sumsub collects identity documents, selfies, biometric data, and device information directly through its WebSDK. WordPress retrieves the result and document attributes only to confirm approval and derive a one-way identity fingerprint; raw responses are not stored.', 'hdyhaus-identity-verification' ) . '</p>';
+		}
 		$content .= '<p>' . esc_html__( 'The registration form requires agreement to this statement:', 'hdyhaus-identity-verification' ) . ' &ldquo;' . esc_html( $consent ) . '&rdquo;</p>';
 		$content .= '<p>' . esc_html__( 'This site stores whether verification succeeded, the normalized verification status, the verification provider, the provider session reference, one-way reference and identity hashes, the verification time, and the consent time, wording, and version. The one-way hashes may be retained after privacy erasure or account deletion to prevent reuse of a completed verification or identity. The site owner determines how long other information is retained.', 'hdyhaus-identity-verification' ) . '</p>';
 

@@ -37,3 +37,6 @@ jobs:
 
       - name: Provider tests
         run: composer test
+
+      - name: Registration browser logic tests
+        run: node tests/test-registration-js.cjs

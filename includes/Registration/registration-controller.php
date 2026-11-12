@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace HDYHaus\TrustGateRegistration\Registration;
 
 use HDYHaus\TrustGateRegistration\Contracts\VerificationProvider;
+use HDYHaus\TrustGateRegistration\Providers\SumsubProvider;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -106,6 +107,8 @@ final class RegistrationController {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_success_assets' ) );
 		add_filter( 'the_content', array( $this, 'prepend_registration_success_notice' ) );
 		add_action( 'user_register', array( $this, 'store_user_meta' ), 10, 1 );
+		add_action( 'wp_ajax_nopriv_trustgate_start_verification', array( $this, 'start_verification' ) );
+		add_action( 'wp_ajax_trustgate_start_verification', array( $this, 'start_verification' ) );
 		add_action( 'wp_ajax_nopriv_trustgate_confirm_verification', array( $this, 'confirm_verification' ) );
 		add_action( 'wp_ajax_trustgate_confirm_verification', array( $this, 'confirm_verification' ) );
 	}
@@ -120,11 +123,17 @@ final class RegistrationController {
 			return;
 		}
 
-		wp_enqueue_script( 'trustgate-prembly-widget', 'https://js.prembly.com/v1/inline/widget-v3.js', array(), '3.0.0', true );
+		$sdk_handle = 'trustgate-prembly-widget';
+		if ( $this->provider instanceof SumsubProvider ) {
+			$sdk_handle = 'trustgate-sumsub-widget';
+			wp_enqueue_script( $sdk_handle, 'https://static.sumsub.com/idensic/static/sns-websdk-builder.js', array(), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Vendor-managed SDK URL.
+		} else {
+			wp_enqueue_script( $sdk_handle, 'https://js.prembly.com/v1/inline/widget-v3.js', array(), '3.0.0', true );
+		}
 		wp_enqueue_script(
 			'hdyhaus-identity-verification',
 			TRUSTGATE_REGISTRATION_URL . 'assets/js/registration.js',
-			array( 'jquery', 'trustgate-prembly-widget' ),
+			array( 'jquery', $sdk_handle ),
 			TRUSTGATE_REGISTRATION_VERSION,
 			true
 		);
@@ -139,6 +148,7 @@ final class RegistrationController {
 					'verify'            => __( 'Verify Identity', 'hdyhaus-identity-verification' ),
 					'verified'          => __( 'Identity verified. You can finish registration.', 'hdyhaus-identity-verification' ),
 					'failed'            => __( 'We could not confirm your identity verification. Please try again.', 'hdyhaus-identity-verification' ),
+					'pending'           => __( 'Verification is still being reviewed. Keep this page open, or check again shortly.', 'hdyhaus-identity-verification' ),
 					'working'           => __( 'Checking verification...', 'hdyhaus-identity-verification' ),
 					'invalid'           => __( 'Please enter your email, first name, and last name before verifying.', 'hdyhaus-identity-verification' ),
 					'consent'           => __( 'Please confirm that you consent to identity verification.', 'hdyhaus-identity-verification' ),
@@ -229,6 +239,7 @@ final class RegistrationController {
 			</button>
 			<span id="trustgate_verification_status" role="status" aria-live="polite"></span>
 		</p>
+		<div id="trustgate-sumsub-container"></div>
 		<?php
 	}
 
@@ -389,6 +400,55 @@ final class RegistrationController {
 	}
 
 	/**
+	 * Get Sumsub-specific disclosure defaults without reusing Prembly copy.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_sumsub_disclosure_defaults(): array {
+		return array(
+			'consent_text'         => __( 'I consent to Sumsub processing my email, identity document, and biometric information to verify my identity.', 'hdyhaus-identity-verification' ),
+			'provider_privacy_url' => 'https://sumsub.com/privacy-notice/',
+			'provider_terms_url'   => 'https://sumsub.com/terms-of-use/',
+		);
+	}
+
+	/**
+	 * Issue an applicant-scoped Sumsub token for an unexpired registration attempt.
+	 */
+	public function start_verification(): void {
+		check_ajax_referer( 'trustgate_registration', 'nonce' );
+		if ( ! $this->provider instanceof SumsubProvider ) {
+			wp_send_json_error( array( 'status' => 'unsupported_provider' ), 400 );
+		}
+		$context = array();
+		foreach ( array(
+			'token'      => 'token',
+			'email'      => 'email',
+			'first_name' => 'firstName',
+			'last_name'  => 'lastName',
+		) as $key => $field ) {
+			$context[ $key ] = isset( $_POST[ $field ] ) && is_string( $_POST[ $field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) : '';
+		}
+		$context['email'] = sanitize_email( $context['email'] );
+		$attempt          = $this->get_attempt( $context['token'] );
+		$expires          = (int) ( $attempt['expires_at'] ?? 0 );
+		if ( 'issued' !== ( $attempt['status'] ?? '' ) || $expires <= time() || ! is_email( $context['email'] ) || '' === $context['first_name'] || '' === $context['last_name'] || ! isset( $_POST['consent'] ) || '1' !== $_POST['consent'] ) {
+			wp_send_json_error( array( 'status' => 'invalid_attempt' ), 400 );
+		}
+		if ( (int) ( $attempt['last_token_at'] ?? 0 ) > time() - 10 ) {
+			wp_send_json_error( array( 'status' => 'rate_limited' ), 429 );
+		}
+		$attempt['last_token_at'] = time();
+		set_transient( $this->get_attempt_key( $context['token'] ), $attempt, max( 1, $expires - time() ) );
+		$result = $this->provider->start_verification( $context );
+		if ( ! isset( $result['token'] ) ) {
+			wp_send_json_error( array( 'status' => $result['status'] ), 400 );
+		}
+		nocache_headers();
+		wp_send_json_success( $result );
+	}
+
+	/**
 	 * Confirm provider verification over AJAX.
 	 */
 	public function confirm_verification(): void {
@@ -414,11 +474,25 @@ final class RegistrationController {
 		$result = $this->provider->confirm_verification(
 			$reference,
 			array(
+				'token'      => $token,
 				'email'      => $email,
 				'first_name' => $first_name,
 				'last_name'  => $last_name,
 			)
 		);
+
+		if ( $this->provider instanceof SumsubProvider ) {
+			set_transient(
+				'trustgate_sumsub_last_confirmation',
+				array(
+					'status' => sanitize_key( (string) $result['status'] ),
+					'mode'   => $this->provider->get_public_config()['isTest'] ? 'test' : 'live',
+					'at'     => gmdate( 'c' ),
+					'detail' => sanitize_text_field( (string) ( $result['diagnostic'] ?? '' ) ),
+				),
+				10 * MINUTE_IN_SECONDS
+			);
+		}
 
 		if ( ! $result['verified'] ) {
 			wp_send_json_error(
@@ -469,6 +543,8 @@ final class RegistrationController {
 			$this->get_attempt_key( $token ),
 			array(
 				'status'              => 'verified',
+				'provider'            => $this->provider->get_slug(),
+				'configuration_hash'  => $this->provider instanceof SumsubProvider ? $this->provider->get_configuration_hash() : '',
 				'verification_status' => sanitize_key( (string) $result['status'] ),
 				'reference'           => $verified_reference,
 				'email_hash'          => $this->hash_email( $email ),
@@ -505,7 +581,8 @@ final class RegistrationController {
 		set_transient(
 			$this->get_attempt_key( $token ),
 			array(
-				'status' => 'issued',
+				'status'     => 'issued',
+				'expires_at' => time() + self::ATTEMPT_TTL,
 			),
 			self::ATTEMPT_TTL
 		);
@@ -525,9 +602,10 @@ final class RegistrationController {
 	 */
 	private function get_consent_text(): string {
 		$settings = $this->get_settings();
-		$text     = isset( $settings['consent_text'] ) ? sanitize_textarea_field( (string) $settings['consent_text'] ) : '';
+		$key      = $this->provider instanceof SumsubProvider ? 'sumsub_consent_text' : 'consent_text';
+		$text     = isset( $settings[ $key ] ) ? sanitize_textarea_field( (string) $settings[ $key ] ) : '';
 
-		return '' !== $text ? $text : self::get_default_consent_text();
+		return '' !== $text ? $text : ( $this->provider instanceof SumsubProvider ? self::get_sumsub_disclosure_defaults()['consent_text'] : self::get_default_consent_text() );
 	}
 
 	/**
@@ -589,6 +667,10 @@ final class RegistrationController {
 	private function get_configured_url( string $key, string $fallback_url ): string {
 		$settings = $this->get_settings();
 
+		if ( $this->provider instanceof SumsubProvider && in_array( $key, array( 'provider_privacy_url', 'provider_terms_url' ), true ) ) {
+			return array_key_exists( 'sumsub_' . $key, $settings ) ? esc_url_raw( (string) $settings[ 'sumsub_' . $key ] ) : self::get_sumsub_disclosure_defaults()[ $key ];
+		}
+
 		$url = array_key_exists( $key, $settings ) ? esc_url_raw( (string) $settings[ $key ] ) : $fallback_url;
 
 		return self::normalize_provider_policy_url( $key, $url );
@@ -618,7 +700,7 @@ final class RegistrationController {
 
 		$attempt = get_transient( $this->get_attempt_key( $token ) );
 
-		return is_array( $attempt ) ? $attempt : array();
+		return is_array( $attempt ) && ( ! isset( $attempt['expires_at'] ) || (int) $attempt['expires_at'] > time() ) ? $attempt : array();
 	}
 
 	/**
@@ -632,6 +714,14 @@ final class RegistrationController {
 	 */
 	private function is_valid_attempt( string $token, string $reference, string $email, string $first_name, string $last_name ): bool {
 		$attempt = $this->get_attempt( $token );
+
+		if ( isset( $attempt['provider'] ) && $attempt['provider'] !== $this->provider->get_slug() ) {
+			return false;
+		}
+
+		if ( $this->provider instanceof SumsubProvider && ( ( $attempt['provider'] ?? '' ) !== 'sumsub' || ( $attempt['configuration_hash'] ?? '' ) !== $this->provider->get_configuration_hash() ) ) {
+			return false;
+		}
 
 		if (
 			'verified' !== ( $attempt['status'] ?? '' ) ||
