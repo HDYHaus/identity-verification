@@ -12,7 +12,8 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$PACKAGE_DIR"
 
 rsync -a \
-	--exclude '.git/' \
+	--exclude 'AGENTS.md' \
+	--exclude '.git' \
 	--exclude '.github/' \
 	--exclude '.wordpress-org/' \
 	--exclude '.editorconfig' \
