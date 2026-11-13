@@ -4,7 +4,7 @@ Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.10-rc.2
+Stable tag: 0.9.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -68,7 +68,7 @@ No Prembly Secret API Key, Organisation ID, or App ID is required for the SDK se
 
 = Does HDYHaus Identity Verification replace the WordPress registration form? =
 
-No. Version 0.9.9 integrates with the default WordPress registration screen. It does not currently add verification to WooCommerce, BuddyPress, MemberPress, Ultimate Member, or other custom registration forms.
+No. This plugin integrates with the default WordPress registration screen. It does not currently add verification to WooCommerce, BuddyPress, MemberPress, Ultimate Member, or other custom registration forms.
 
 = What happens when Prembly is disabled? =
 
@@ -118,7 +118,7 @@ No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verific
 
 == Changelog ==
 
-= 0.9.10-rc.2 =
+= 0.9.10 =
 * Include the declared languages directory in the release package.
 * Display the site's registration URL in Prembly settings for use as the SDK Redirect URL.
 * Explain Brand Details, the blank Webhook URL, and the separate success redirect.

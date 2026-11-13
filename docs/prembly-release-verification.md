@@ -26,4 +26,4 @@ Official Plugin Check 2.2.0 completed with all five categories and both errors a
 - Official Plugin Check 2.2.0 completed on WordPress 7.1.4 with all five categories enabled and both errors and warnings selected: no findings. AI analysis and custom exclusions were disabled.
 - No new live identity-verification session was performed. This correction was validated through automated tests, release-package comparisons, installed settings inspection, and official Plugin Check.
 
-The Prembly-only PR remains unmerged. No WordPress.org publication has been performed.
+At the end of RC 2 testing, the Prembly-only PR was unmerged and no WordPress.org publication had been performed. Stable 0.9.10 publication was subsequently authorized by the owner.

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.10-rc.2
+## 0.9.10
 
 - Include the declared languages directory in the release package.
 - Display the site registration URL in Prembly settings for copying into the SDK Redirect URL.
