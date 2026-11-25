@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.0-beta.4
+
+- Quote custom attempt-table identifiers with WordPress's `%i` placeholder in prepared queries.
+- Align the prerelease stable tag with the plugin header for development Plugin Check runs.
+
 ## 0.10.0-beta.3
 
 - Record verification starts and widget-reported failure, cancellation, and error states for administrator review.

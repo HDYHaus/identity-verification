@@ -236,8 +236,7 @@ class VerificationAttemptStore {
 	public function get_by_id( int $id ): array {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is generated from the site prefix; variable values use placeholders.
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . $this->table_name() . ' WHERE id = %d', $id ), ARRAY_A );
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $this->table_name(), $id ), ARRAY_A );
 		return is_array( $row ) ? $row : array();
 	}
 
@@ -305,7 +304,8 @@ class VerificationAttemptStore {
 
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT * FROM ' . $this->table_name() . ' WHERE resume_token_hash = %s AND resume_expires_at >= %s', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is generated from the site prefix; variable values use placeholders.
+				'SELECT * FROM %i WHERE resume_token_hash = %s AND resume_expires_at >= %s',
+				$this->table_name(),
 				hash( 'sha256', $token ),
 				gmdate( 'Y-m-d H:i:s' )
 			),
@@ -346,7 +346,8 @@ class VerificationAttemptStore {
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT id, email, username, first_name, last_name, provider_reference, environment, status, failure_code, verified_at, created_at, expires_at FROM ' . $this->table_name() . ' WHERE user_id IS NULL AND status IN (%s, %s, %s, %s, %s, %s, %s, %s) AND expires_at >= %s ORDER BY created_at DESC LIMIT 100', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is generated from the site prefix; variable values use placeholders.
+				'SELECT id, email, username, first_name, last_name, provider_reference, environment, status, failure_code, verified_at, created_at, expires_at FROM %i WHERE user_id IS NULL AND status IN (%s, %s, %s, %s, %s, %s, %s, %s) AND expires_at >= %s ORDER BY created_at DESC LIMIT 100',
+				$this->table_name(),
 				'verified_pending_registration',
 				'registration_failed',
 				'identity_conflict',
@@ -377,7 +378,7 @@ class VerificationAttemptStore {
 
 		$email_hash = hash( 'sha256', strtolower( sanitize_email( $email ) ) );
 		$rows       = $wpdb->get_results(
-			$wpdb->prepare( 'SELECT status, provider, environment, provider_reference, verified_at, failure_code, user_id, created_at FROM ' . $this->table_name() . ' WHERE email_hash = %s ORDER BY created_at DESC', $email_hash ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is generated from the site prefix; variable values use placeholders.
+			$wpdb->prepare( 'SELECT status, provider, environment, provider_reference, verified_at, failure_code, user_id, created_at FROM %i WHERE email_hash = %s ORDER BY created_at DESC', $this->table_name(), $email_hash ),
 			ARRAY_A
 		);
 
@@ -392,7 +393,8 @@ class VerificationAttemptStore {
 
 		$wpdb->query(
 			$wpdb->prepare(
-				'DELETE FROM ' . $this->table_name() . ' WHERE expires_at < %s', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is generated from the site prefix; variable values use placeholders.
+				'DELETE FROM %i WHERE expires_at < %s',
+				$this->table_name(),
 				gmdate( 'Y-m-d H:i:s' )
 			)
 		);
@@ -485,8 +487,7 @@ class VerificationAttemptStore {
 	private function get_by_token_hash( string $token_hash ): array {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is generated from the site prefix; variable values use placeholders.
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . $this->table_name() . ' WHERE attempt_hash = %s', $token_hash ), ARRAY_A );
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE attempt_hash = %s', $this->table_name(), $token_hash ), ARRAY_A );
 		return is_array( $row ) ? $row : array();
 	}
 }

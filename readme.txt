@@ -4,7 +4,7 @@ Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.10
+Stable tag: 0.10.0-beta.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -117,6 +117,11 @@ No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verific
 3. Prembly settings keep Sandbox and Live widget credentials separate and control the active verification provider.
 
 == Changelog ==
+
+= 0.10.0-beta.4 =
+
+* Quote custom attempt-table identifiers with WordPress's `%i` placeholder in prepared queries.
+* Align the prerelease stable tag with the plugin header for development Plugin Check runs.
 
 = 0.10.0-beta.3 =
 * Log verification starts and widget-reported failures, cancellations, or errors for admin review.

@@ -37,8 +37,18 @@ final class TrustGateTestDb {
 	public function prepare( string $query, mixed ...$args ): string {
 		$this->prepared_query = $query;
 		foreach ( $args as $value ) {
-			$replacement = is_int( $value ) ? (string) $value : "'" . addslashes( (string) $value ) . "'";
-			$this->prepared_query = preg_replace( '/%[sd]/', $replacement, $this->prepared_query, 1 ) ?? $this->prepared_query;
+			$this->prepared_query = preg_replace_callback(
+				'/%[sdi]/',
+				static function ( array $matches ) use ( $value ): string {
+					if ( 'i' === $matches[0][1] ) {
+						return '`' . str_replace( '`', '``', (string) $value ) . '`';
+					}
+
+					return is_int( $value ) ? (string) $value : "'" . addslashes( (string) $value ) . "'";
+				},
+				$this->prepared_query,
+				1
+			) ?? $this->prepared_query;
 		}
 		return $this->prepared_query;
 	}
