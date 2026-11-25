@@ -118,6 +118,12 @@ No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verific
 
 == Changelog ==
 
+= 0.10.0-beta.1 =
+* Keep provider-verified registration attempts in a dedicated WordPress table with bounded retention.
+* Email a secure, expiring link so users can finish registration without repeating verification.
+* Add an administrator review screen to create and link accounts for eligible verified attempts.
+* Export and erase registration-attempt personal data through WordPress privacy tools.
+
 = 0.9.10 =
 * Include the declared languages directory in the release package.
 * Display the site's registration URL in Prembly settings for use as the SDK Redirect URL.

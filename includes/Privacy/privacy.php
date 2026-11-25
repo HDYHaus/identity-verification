@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace HDYHaus\TrustGateRegistration\Privacy;
 
 use HDYHaus\TrustGateRegistration\Registration\RegistrationController;
+use HDYHaus\TrustGateRegistration\Registration\VerificationAttemptStore;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -27,12 +28,21 @@ final class Privacy {
 	private string $option_name;
 
 	/**
+	 * Persistent registration attempt store.
+	 *
+	 * @var VerificationAttemptStore
+	 */
+	private VerificationAttemptStore $attempt_store;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param string $option_name Settings option name.
+	 * @param string                        $option_name Settings option name.
+	 * @param VerificationAttemptStore|null $attempt_store Persistent attempt store.
 	 */
-	public function __construct( string $option_name ) {
-		$this->option_name = $option_name;
+	public function __construct( string $option_name, ?VerificationAttemptStore $attempt_store = null ) {
+		$this->option_name   = $option_name;
+		$this->attempt_store = $attempt_store ?? new VerificationAttemptStore();
 	}
 
 	/**
@@ -62,7 +72,7 @@ final class Privacy {
 
 		$content  = '<p>' . esc_html__( 'When identity verification is enabled, the registrant\'s name and email address are sent to Prembly when the registrant starts verification. Prembly may then collect and process identity document images, selfies, biometric information, device information, and IP-derived location information to perform the checks configured by the site owner.', 'hdyhaus-identity-verification' ) . '</p>';
 		$content .= '<p>' . esc_html__( 'The registration form requires agreement to this statement:', 'hdyhaus-identity-verification' ) . ' &ldquo;' . esc_html( $consent ) . '&rdquo;</p>';
-		$content .= '<p>' . esc_html__( 'This site stores whether verification succeeded, the normalized verification status, the verification provider, the provider session reference, one-way reference and identity hashes, the verification time, and the consent time, wording, and version. The one-way hashes may be retained after privacy erasure or account deletion to prevent reuse of a completed verification or identity. The site owner determines how long other information is retained.', 'hdyhaus-identity-verification' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'To allow a person to resume registration or an administrator to resolve a failed account creation, this site temporarily stores the registration email address, username, name, provider session reference, verification result, and consent record in WordPress. Unlinked verified attempts are kept for up to seven days; attempts linked to an account are kept for up to 90 days. The one-way reference and identity hashes may be retained after privacy erasure or account deletion to prevent reuse of a completed verification or identity.', 'hdyhaus-identity-verification' ) . '</p>';
 
 		$links = array();
 
@@ -141,6 +151,20 @@ final class Privacy {
 			}
 		}
 
+		foreach ( $this->attempt_store->get_by_email( $email_address ) as $attempt ) {
+			$data[] = array(
+				'name'  => __( 'Registration attempt', 'hdyhaus-identity-verification' ),
+				'value' => sprintf(
+					/* translators: 1: attempt status, 2: provider name, 3: verification timestamp */
+					__( 'Status: %1$s; provider: %2$s; verified at: %3$s; failure reason: %4$s', 'hdyhaus-identity-verification' ),
+					(string) $attempt['status'],
+					(string) $attempt['provider'],
+					(string) $attempt['verified_at'],
+					(string) $attempt['failure_code']
+				),
+			);
+		}
+
 		return array(
 			'data' => empty( $data ) ? array() : array(
 				array(
@@ -161,6 +185,7 @@ final class Privacy {
 	 * @return array<string, mixed>
 	 */
 	public function erase_user_data( string $email_address ): array {
+		$this->attempt_store->erase_email( $email_address );
 		$user           = get_user_by( 'email', $email_address );
 		$items_removed  = false;
 		$items_retained = false;
@@ -202,6 +227,11 @@ final class Privacy {
 	 * @param int $user_id User being deleted.
 	 */
 	public function retain_identity_after_user_deletion( int $user_id ): void {
+		$user = get_userdata( $user_id );
+		if ( $user && isset( $user->user_email ) ) {
+			$this->attempt_store->erase_email( (string) $user->user_email );
+		}
+
 		$identity_hash = (string) get_user_meta( $user_id, 'trustgate_identity_hash', true );
 
 		if ( 1 !== preg_match( '/^[a-f0-9]{64}$/', $identity_hash ) ) {

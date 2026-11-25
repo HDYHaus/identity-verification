@@ -15,6 +15,8 @@ use HDYHaus\TrustGateRegistration\Providers\PremblyProvider;
 use HDYHaus\TrustGateRegistration\Providers\ProviderRegistry;
 use HDYHaus\TrustGateRegistration\Privacy\Privacy;
 use HDYHaus\TrustGateRegistration\Registration\RegistrationController;
+use HDYHaus\TrustGateRegistration\Registration\VerificationAttemptStore;
+use HDYHaus\TrustGateRegistration\Admin\VerificationAttempts;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -33,11 +35,17 @@ final class Plugin {
 	 * Register hooks.
 	 */
 	public function register(): void {
-		$privacy = new Privacy( self::OPTION_NAME );
+		$attempt_store = new VerificationAttemptStore();
+		$attempt_store->install();
+
+		$privacy = new Privacy( self::OPTION_NAME, $attempt_store );
 		$privacy->register();
 
 		$user_profile = new UserVerificationProfile();
 		$user_profile->register();
+
+		$attempts = new VerificationAttempts( $attempt_store );
+		$attempts->register();
 
 		$providers = apply_filters(
 			'trustgate_registration_providers',
@@ -60,7 +68,7 @@ final class Plugin {
 		$provider       = $registry->resolve( $saved_settings );
 
 		if ( null !== $provider ) {
-			$registration = new RegistrationController( self::OPTION_NAME, $provider );
+			$registration = new RegistrationController( self::OPTION_NAME, $provider, $attempt_store );
 			$registration->register();
 		}
 	}

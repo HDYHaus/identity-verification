@@ -85,14 +85,23 @@ final class RegistrationController {
 	private VerificationProvider $provider;
 
 	/**
+	 * Persistent registration-attempt store.
+	 *
+	 * @var VerificationAttemptStore
+	 */
+	private VerificationAttemptStore $attempt_store;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param string               $option_name Settings option name.
-	 * @param VerificationProvider $provider Verification provider.
+	 * @param string                        $option_name Settings option name.
+	 * @param VerificationProvider          $provider Verification provider.
+	 * @param VerificationAttemptStore|null $attempt_store Persistent attempt store.
 	 */
-	public function __construct( string $option_name, VerificationProvider $provider ) {
-		$this->option_name = $option_name;
-		$this->provider    = $provider;
+	public function __construct( string $option_name, VerificationProvider $provider, ?VerificationAttemptStore $attempt_store = null ) {
+		$this->option_name   = $option_name;
+		$this->provider      = $provider;
+		$this->attempt_store = $attempt_store ?? new VerificationAttemptStore();
 	}
 
 	/**
@@ -120,6 +129,15 @@ final class RegistrationController {
 			return;
 		}
 
+		$resume_attempt = $this->get_attempt( $this->get_or_create_attempt_token() );
+		$resume_data    = 'verified' === ( $resume_attempt['status'] ?? '' ) ? array(
+			'username'  => (string) ( $resume_attempt['username'] ?? '' ),
+			'email'     => (string) ( $resume_attempt['email'] ?? '' ),
+			'firstName' => (string) ( $resume_attempt['first_name'] ?? '' ),
+			'lastName'  => (string) ( $resume_attempt['last_name'] ?? '' ),
+			'reference' => (string) ( $resume_attempt['reference'] ?? '' ),
+		) : array();
+
 		wp_enqueue_script( 'trustgate-prembly-widget', 'https://js.prembly.com/v1/inline/widget-v3.js', array(), '3.0.0', true );
 		wp_enqueue_script(
 			'hdyhaus-identity-verification',
@@ -135,9 +153,11 @@ final class RegistrationController {
 				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
 				'nonce'    => wp_create_nonce( 'trustgate_registration' ),
 				'provider' => $this->provider->get_public_config(),
+				'resume'   => $resume_data,
 				'i18n'     => array(
 					'verify'            => __( 'Verify Identity', 'hdyhaus-identity-verification' ),
 					'verified'          => __( 'Identity verified. You can finish registration.', 'hdyhaus-identity-verification' ),
+					'verifiedNoEmail'   => __( 'Identity verified. You can finish registration here, but we could not send the recovery email.', 'hdyhaus-identity-verification' ),
 					'failed'            => __( 'We could not confirm your identity verification. Please try again.', 'hdyhaus-identity-verification' ),
 					'working'           => __( 'Checking verification...', 'hdyhaus-identity-verification' ),
 					'invalid'           => __( 'Please enter your email, first name, and last name before verifying.', 'hdyhaus-identity-verification' ),
@@ -153,6 +173,12 @@ final class RegistrationController {
 			array(),
 			TRUSTGATE_REGISTRATION_VERSION
 		);
+		add_action(
+			'login_head',
+			static function (): void {
+				echo '<meta name="referrer" content="no-referrer" />'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			}
+		);
 	}
 
 	/**
@@ -163,9 +189,18 @@ final class RegistrationController {
 		$first_name = $valid_form && isset( $_POST['trustgate_first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_first_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked by has_registration_nonce().
 		$last_name  = $valid_form && isset( $_POST['trustgate_last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_last_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked by has_registration_nonce().
 		$token      = $this->get_or_create_attempt_token();
-		$consent    = $valid_form && isset( $_POST['trustgate_consent'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['trustgate_consent'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked by has_registration_nonce().
-		$privacy    = get_privacy_policy_url();
-		$links      = array_filter(
+		$attempt    = $this->get_attempt( $token );
+		if ( ! $valid_form && 'verified' === ( $attempt['status'] ?? '' ) ) {
+			$first_name = (string) ( $attempt['first_name'] ?? '' );
+			$last_name  = (string) ( $attempt['last_name'] ?? '' );
+		}
+		$reference = $valid_form && isset( $_POST['trustgate_reference'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_reference'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked by has_registration_nonce().
+		if ( '' === $reference && 'verified' === ( $attempt['status'] ?? '' ) ) {
+			$reference = (string) ( $attempt['reference'] ?? '' );
+		}
+		$consent = $valid_form && isset( $_POST['trustgate_consent'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['trustgate_consent'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked by has_registration_nonce().
+		$privacy = get_privacy_policy_url();
+		$links   = array_filter(
 			array(
 				array(
 					'url'   => $this->get_provider_privacy_url(),
@@ -223,11 +258,19 @@ final class RegistrationController {
 				</span>
 			<?php endif; ?>
 			<input type="hidden" name="trustgate_attempt_token" id="trustgate_attempt_token" value="<?php echo esc_attr( $token ); ?>" />
-			<input type="hidden" name="trustgate_reference" id="trustgate_reference" value="" />
+			<input type="hidden" name="trustgate_reference" id="trustgate_reference" value="<?php echo esc_attr( $reference ); ?>" />
 			<button type="button" class="button button-secondary" id="trustgate_verify_button">
 				<?php esc_html_e( 'Verify Identity', 'hdyhaus-identity-verification' ); ?>
 			</button>
-			<span id="trustgate_verification_status" role="status" aria-live="polite"></span>
+			<span id="trustgate_verification_status" role="status" aria-live="polite" data-state="<?php echo 'verified' === ( $attempt['status'] ?? '' ) ? 'verified' : ( 'identity_conflict' === ( $attempt['status'] ?? '' ) ? 'failed' : '' ); ?>">
+			<?php
+			if ( 'verified' === ( $attempt['status'] ?? '' ) ) {
+				esc_html_e( 'Identity verified. You can finish registration.', 'hdyhaus-identity-verification' );
+			} elseif ( 'identity_conflict' === ( $attempt['status'] ?? '' ) ) {
+				esc_html_e( 'Verification was received, but registration needs administrator review. Please contact the site administrator.', 'hdyhaus-identity-verification' );
+			}
+			?>
+			</span>
 		</p>
 		<?php
 	}
@@ -266,8 +309,29 @@ final class RegistrationController {
 			$errors->add( 'trustgate_consent_required', __( 'Please consent to identity verification before registering.', 'hdyhaus-identity-verification' ) );
 		}
 
-		if ( ! $this->is_valid_attempt( $token, $reference, $user_email, $first_name, $last_name ) ) {
+		$valid_attempt = $this->is_valid_attempt( $token, $reference, $user_email, $first_name, $last_name );
+
+		if ( ! $valid_attempt ) {
 			$errors->add( 'trustgate_verification_required', __( 'Please complete identity verification before registering.', 'hdyhaus-identity-verification' ) );
+		}
+
+		if ( $valid_attempt && ! empty( $errors->errors ) ) {
+			$failure_code = sanitize_key( (string) array_key_first( $errors->errors ) );
+			$this->attempt_store->update(
+				$token,
+				array(
+					'status'       => 'registration_failed',
+					'failure_code' => $failure_code,
+				)
+			);
+		} elseif ( $valid_attempt ) {
+			$this->attempt_store->update(
+				$token,
+				array(
+					'status'       => 'verified_pending_registration',
+					'failure_code' => '',
+				)
+			);
 		}
 
 		return $errors;
@@ -384,6 +448,17 @@ final class RegistrationController {
 		update_user_meta( $user_id, 'trustgate_consent_text', (string) ( $attempt['consent_text'] ?? $this->get_consent_text() ) );
 		update_user_meta( $user_id, 'trustgate_consent_version', (string) ( $attempt['consent_version'] ?? $this->get_consent_version() ) );
 		$this->finalize_identity( (string) $attempt['identity_hash'], $token, $user_id );
+		$this->attempt_store->update(
+			$token,
+			array(
+				'status'            => 'account_created',
+				'failure_code'      => '',
+				'user_id'           => $user_id,
+				'expires_at'        => gmdate( 'Y-m-d H:i:s', time() + 90 * DAY_IN_SECONDS ),
+				'resume_token_hash' => '',
+				'resume_expires_at' => null,
+			)
+		);
 
 		delete_transient( $this->get_attempt_key( $token ) );
 	}
@@ -399,6 +474,7 @@ final class RegistrationController {
 		$email      = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
 		$first_name = isset( $_POST['firstName'] ) ? sanitize_text_field( wp_unslash( $_POST['firstName'] ) ) : '';
 		$last_name  = isset( $_POST['lastName'] ) ? sanitize_text_field( wp_unslash( $_POST['lastName'] ) ) : '';
+		$username   = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ), true ) : '';
 		$consent    = isset( $_POST['consent'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['consent'] ) );
 		$attempt    = $this->get_attempt( $token );
 
@@ -443,7 +519,25 @@ final class RegistrationController {
 			);
 		}
 
+		$attempt_record = array(
+			'token'           => $token,
+			'provider'        => $this->provider->get_slug(),
+			'environment'     => ! empty( $this->provider->get_public_config()['isTest'] ) ? 'sandbox' : 'live',
+			'reference'       => $verified_reference,
+			'email'           => $email,
+			'username'        => $username,
+			'first_name'      => $first_name,
+			'last_name'       => $last_name,
+			'identity_hash'   => $identity_hash,
+			'consent_at'      => gmdate( 'Y-m-d H:i:s' ),
+			'consent_text'    => $this->get_consent_text(),
+			'consent_version' => $this->get_consent_version(),
+		);
+
 		if ( ! $this->reserve_identity( $identity_hash, $token ) ) {
+			$attempt_record['status']       = 'identity_conflict';
+			$attempt_record['failure_code'] = 'identity_unavailable';
+			$this->attempt_store->record( $attempt_record );
 			wp_send_json_error(
 				array(
 					'status' => 'identity_unavailable',
@@ -456,6 +550,9 @@ final class RegistrationController {
 			$this->is_registered_reference( $verified_reference ) ||
 			( is_string( $reservation ) && ! hash_equals( $reservation, $token ) )
 		) {
+			$attempt_record['status']       = 'reference_conflict';
+			$attempt_record['failure_code'] = 'reference_unavailable';
+			$this->attempt_store->record( $attempt_record );
 			wp_send_json_error(
 				array(
 					'status' => 'reference_unavailable',
@@ -481,11 +578,33 @@ final class RegistrationController {
 			),
 			self::ATTEMPT_TTL
 		);
+		$attempt_record['status'] = 'verified_pending_registration';
+		$this->attempt_store->record( $attempt_record );
+		$resume_token = $this->attempt_store->issue_resume_token( $token );
+		$resume_url   = '' !== $resume_token ? add_query_arg( 'trustgate_resume', rawurlencode( $resume_token ), wp_registration_url() ) : '';
+		$email_sent   = false;
+		if ( '' !== $resume_url ) {
+			$email_sent = wp_mail(
+				$email,
+				__( 'Finish your verified registration', 'hdyhaus-identity-verification' ),
+				sprintf(
+					/* translators: 1: site name, 2: registration resume URL, 3: expiration period */
+					str_replace( '\\n', "\n", __( 'Your identity verification is complete. Finish creating your account on %1$s by opening this secure link: %2$s\n\nThis link expires in %3$s. If you did not request this, you can ignore this email.', 'hdyhaus-identity-verification' ) ),
+					sanitize_text_field( (string) get_option( 'blogname', '' ) ),
+					$resume_url,
+					human_time_diff( time(), time() + VerificationAttemptStore::ATTEMPT_TTL )
+				)
+			);
+		}
+		if ( ! $email_sent ) {
+			$this->attempt_store->update( $token, array( 'failure_code' => 'resume_email_failed' ) );
+		}
 
 		wp_send_json_success(
 			array(
-				'reference' => $verified_reference,
-				'status'    => $result['status'],
+				'reference'       => $verified_reference,
+				'status'          => $result['status'],
+				'resumeEmailSent' => $email_sent,
 			)
 		);
 	}
@@ -495,6 +614,9 @@ final class RegistrationController {
 	 */
 	private function get_or_create_attempt_token(): string {
 		$posted_token = $this->has_registration_nonce() && isset( $_POST['trustgate_attempt_token'] ) ? sanitize_text_field( wp_unslash( $_POST['trustgate_attempt_token'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checked by has_registration_nonce().
+		if ( '' === $posted_token && isset( $_GET['trustgate_resume'] ) && is_string( $_GET['trustgate_resume'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$posted_token = sanitize_text_field( wp_unslash( $_GET['trustgate_resume'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		}
 
 		if ( array() !== $this->get_attempt( $posted_token ) ) {
 			return $posted_token;
@@ -618,7 +740,24 @@ final class RegistrationController {
 
 		$attempt = get_transient( $this->get_attempt_key( $token ) );
 
-		return is_array( $attempt ) ? $attempt : array();
+		if ( is_array( $attempt ) ) {
+			return $attempt;
+		}
+
+		$attempt = $this->attempt_store->get_by_token( $token );
+		if ( empty( $attempt ) ) {
+			$attempt = $this->attempt_store->get_by_resume_token( $token );
+		}
+		if ( empty( $attempt ) ) {
+			return array();
+		}
+
+		$attempt['email_hash']      = (string) ( $attempt['email_hash'] ?? '' );
+		$attempt['first_name_hash'] = (string) ( $attempt['first_name_hash'] ?? '' );
+		$attempt['last_name_hash']  = (string) ( $attempt['last_name_hash'] ?? '' );
+		$attempt['reference']       = (string) ( $attempt['provider_reference'] ?? '' );
+		$attempt['status']          = in_array( $attempt['status'] ?? '', array( 'verified_pending_registration', 'registration_failed' ), true ) ? 'verified' : (string) $attempt['status'];
+		return $attempt;
 	}
 
 	/**
@@ -640,9 +779,12 @@ final class RegistrationController {
 			! hash_equals( $attempt['reference'], $reference ) ||
 			! hash_equals( $attempt['email_hash'], $this->hash_email( $email ) ) ||
 			! hash_equals( $attempt['first_name_hash'], $this->hash_name( $first_name ) ) ||
-			! hash_equals( $attempt['last_name_hash'], $this->hash_name( $last_name ) ) ||
-			! $this->identity_reservation_matches( $attempt['identity_hash'], $token )
+			! hash_equals( $attempt['last_name_hash'], $this->hash_name( $last_name ) )
 		) {
+			return false;
+		}
+
+		if ( ! $this->identity_reservation_matches( $attempt['identity_hash'], $token ) && ! $this->reserve_identity( $attempt['identity_hash'], $token ) ) {
 			return false;
 		}
 
@@ -740,7 +882,7 @@ final class RegistrationController {
 
 		return 3 === count( $parts )
 			&& 'reserved' === $parts[0]
-			&& hash_equals( $parts[1], hash( 'sha256', $token ) )
+			&& hash_equals( $parts[1], $this->get_attempt_token_hash( $token ) )
 			&& (int) $parts[2] >= time();
 	}
 
@@ -765,7 +907,21 @@ final class RegistrationController {
 	 * @param string $token Registration attempt token.
 	 */
 	private function build_identity_reservation( string $token ): string {
-		return sprintf( 'reserved:%s:%d', hash( 'sha256', $token ), time() + self::ATTEMPT_TTL );
+		return sprintf( 'reserved:%s:%d', $this->get_attempt_token_hash( $token ), time() + self::ATTEMPT_TTL );
+	}
+
+	/**
+	 * Resolve a browser token or resume token to the canonical attempt hash.
+	 *
+	 * @param string $token Browser or email-resume token.
+	 */
+	private function get_attempt_token_hash( string $token ): string {
+		$attempt = $this->attempt_store->get_by_token( $token );
+		if ( empty( $attempt ) ) {
+			$attempt = $this->attempt_store->get_by_resume_token( $token );
+		}
+
+		return isset( $attempt['attempt_hash'] ) ? (string) $attempt['attempt_hash'] : hash( 'sha256', $token );
 	}
 
 	/**

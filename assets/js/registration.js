@@ -21,6 +21,7 @@
 			nonce: config.nonce,
 			reference: reference,
 			token: getFieldValue( '#trustgate_attempt_token' ),
+			username: getFieldValue( '#user_login' ),
 			email: getFieldValue( '#user_email' ),
 			firstName: getFieldValue( '#trustgate_first_name' ),
 			lastName: getFieldValue( '#trustgate_last_name' ),
@@ -30,7 +31,7 @@
 				const data = response && response.data ? response.data : {};
 
 				$( '#trustgate_reference' ).val( data.reference || reference );
-				setStatus( config.i18n.verified, 'verified' );
+				setStatus( data.resumeEmailSent ? config.i18n.verified : config.i18n.verifiedNoEmail, 'verified' );
 			} )
 			.fail( function ( xhr ) {
 				const data = xhr && xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data : {};
@@ -48,6 +49,32 @@
 	}
 
 	$( function () {
+		const resume = config.resume || {};
+		if ( resume.username && ! getFieldValue( '#user_login' ) ) {
+			$( '#user_login' ).val( resume.username );
+		}
+		if ( resume.email && ! getFieldValue( '#user_email' ) ) {
+			$( '#user_email' ).val( resume.email );
+		}
+		if ( resume.firstName && ! getFieldValue( '#trustgate_first_name' ) ) {
+			$( '#trustgate_first_name' ).val( resume.firstName );
+		}
+		if ( resume.lastName && ! getFieldValue( '#trustgate_last_name' ) ) {
+			$( '#trustgate_last_name' ).val( resume.lastName );
+		}
+		if ( resume.reference ) {
+			$( '#trustgate_reference' ).val( resume.reference );
+			setStatus( config.i18n.verified, 'verified' );
+		}
+
+		if ( window.history && window.history.replaceState ) {
+			const url = new URL( window.location.href );
+			if ( url.searchParams.has( 'trustgate_resume' ) ) {
+				url.searchParams.delete( 'trustgate_resume' );
+				window.history.replaceState( null, '', url.toString() );
+			}
+		}
+
 		$( '#user_email, #trustgate_first_name, #trustgate_last_name' ).on( 'change', function () {
 			$( '#trustgate_reference' ).val( '' );
 			setStatus( '', '' );

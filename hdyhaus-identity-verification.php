@@ -3,7 +3,7 @@
  * Plugin Name: HDYHaus Identity Verification
  * Plugin URI: https://github.com/HDYHaus/identity-verification
  * Description: Verify people during WordPress registration with pluggable identity verification providers. Prembly support is the first provider.
- * Version: 0.9.10
+ * Version: 0.10.0-beta.1
  * Requires at least: 6.4
  * Requires PHP: 8.1
  * Author: HDY Haus
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TRUSTGATE_REGISTRATION_VERSION', '0.9.10' );
+define( 'TRUSTGATE_REGISTRATION_VERSION', '0.10.0-beta.1' );
 define( 'TRUSTGATE_REGISTRATION_FILE', __FILE__ );
 define( 'TRUSTGATE_REGISTRATION_PATH', plugin_dir_path( __FILE__ ) );
 define( 'TRUSTGATE_REGISTRATION_URL', plugin_dir_url( __FILE__ ) );
@@ -32,7 +32,9 @@ require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Providers/prembly-provider.
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Providers/provider-registry.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Admin/settings-page.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Admin/user-verification-profile.php';
+require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Registration/verification-attempt-store.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Registration/registration-controller.php';
+require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Admin/verification-attempts.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/Privacy/privacy.php';
 require_once TRUSTGATE_REGISTRATION_PATH . 'includes/plugin.php';
 
@@ -41,5 +43,13 @@ add_action(
 	static function (): void {
 		$plugin = new HDYHaus\TrustGateRegistration\Plugin();
 		$plugin->register();
+	}
+);
+
+register_activation_hook(
+	__FILE__,
+	static function (): void {
+		$store = new HDYHaus\TrustGateRegistration\Registration\VerificationAttemptStore();
+		$store->install();
 	}
 );
