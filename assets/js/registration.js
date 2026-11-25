@@ -13,6 +13,21 @@
 		return String( $( selector ).val() || '' ).trim();
 	}
 
+	function logAttemptState( status, failure ) {
+		$.post( config.ajaxUrl, {
+			action: 'trustgate_log_verification_attempt',
+			nonce: config.nonce,
+			token: getFieldValue( '#trustgate_attempt_token' ),
+			status: status,
+			failure: failure || '',
+			email: getFieldValue( '#user_email' ),
+			username: getFieldValue( '#user_login' ),
+			firstName: getFieldValue( '#trustgate_first_name' ),
+			lastName: getFieldValue( '#trustgate_last_name' ),
+			consent: $( '#trustgate_consent' ).is( ':checked' ) ? '1' : '0'
+		} );
+	}
+
 	function confirmReference( reference ) {
 		setStatus( config.i18n.working, 'working' );
 
@@ -36,6 +51,7 @@
 			.fail( function ( xhr ) {
 				const data = xhr && xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data : {};
 				const detail = config.provider && config.provider.isTest && data.status ? ' (' + data.status + ')' : '';
+				logAttemptState( 'verification_error', data.status || 'confirmation_failed' );
 
 				$( '#trustgate_reference' ).val( '' );
 
@@ -102,6 +118,8 @@
 				return;
 			}
 
+			logAttemptState( 'verification_started', '' );
+
 			window.IdentityKYC.verify( {
 				widget_key: provider.publicKey,
 				widget_id: provider.configurationId,
@@ -120,6 +138,14 @@
 						confirmReference( reference );
 						return;
 					}
+
+					const callbackStatus = response && response.status ? String( response.status ).toLowerCase() : '';
+					const attemptStatus = 'cancelled' === callbackStatus || 'closed' === callbackStatus || ( response && 'E02' === response.code )
+						? 'verification_cancelled'
+						: 'failed' === callbackStatus || ( response && 'E01' === response.code )
+							? 'verification_failed'
+							: 'verification_error';
+					logAttemptState( attemptStatus, response && ( response.code || response.status ) ? String( response.code || response.status ) : 'unknown' );
 
 					const detail = provider.isTest && response && response.message ? ' (' + response.message + ')' : '';
 

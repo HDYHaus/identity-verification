@@ -38,7 +38,7 @@ This plugin connects to Prembly, an external identity verification service, when
 
 The Prembly browser SDK is loaded from `https://js.prembly.com/v1/inline/widget-v3.js` on the default WordPress registration page. When a registrant selects Verify Identity, HDYHaus Identity Verification sends their first name, last name, email address, a temporary user reference, the configured Widget Key, and Configuration ID to Prembly. Prembly's verification interface may collect identity document images, selfies, biometric information, device information, and IP-derived location information according to the checks selected by the site administrator.
 
-After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. HDYHaus Identity Verification uses that response to confirm the session status, email address, widget configuration, session ID, and verified document identity. The complete Prembly report remains available in the site owner's Prembly dashboard; HDYHaus Identity Verification stores only normalized verification metadata and site-specific one-way fingerprints in WordPress.
+When a registrant starts verification, HDYHaus Identity Verification records the username, email, first and last name, consent, environment, start time, and any result reported by the widget in a site-specific WordPress table. Unfinished records expire after seven days; verified records linked to accounts are retained for up to 90 days. After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. HDYHaus Identity Verification uses that response to confirm the session status, email address, widget configuration, session ID, and verified document identity. The complete Prembly report remains available in the site owner's Prembly dashboard. Identity document images, document numbers, selfies, biometric information, and raw Prembly responses are not copied into WordPress.
 
 This service is provided by Prembly Inc:
 
@@ -84,7 +84,7 @@ No. This integration uses Prembly's Widget Key and Configuration ID in the brows
 
 = Does HDYHaus Identity Verification store identity documents or selfies in WordPress? =
 
-No. For a successfully created account, HDYHaus Identity Verification stores whether verification succeeded, the normalized verification status, verification time, provider slug, Prembly session reference, site-specific one-way session and identity hashes, and the accepted consent time, wording, and version. Documents, document numbers, selfies, biometric information, raw Prembly responses, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
+No. WordPress stores registration details and consent for unfinished verification attempts for up to seven days, and keeps verified-attempt records for up to 90 days. A successfully created account also receives normalized verification metadata and site-specific one-way fingerprints in its user profile. Documents, document numbers, selfies, biometric information, raw Prembly responses, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
 
 = Can the same verified person create more than one account? =
 
@@ -117,6 +117,10 @@ No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verific
 3. Prembly settings keep Sandbox and Live widget credentials separate and control the active verification provider.
 
 == Changelog ==
+
+= 0.10.0-beta.3 =
+* Log verification starts and widget-reported failures, cancellations, or errors for admin review.
+* Keep account recovery limited to provider-verified attempts.
 
 = 0.10.0-beta.2 =
 * Register the Registration Attempts submenu after its parent admin menu.

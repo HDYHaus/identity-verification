@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.0-beta.3
+
+- Record verification starts and widget-reported failure, cancellation, and error states for administrator review.
+- Keep account recovery available only for provider-verified attempts.
+- Document retention of unfinished and verified registration-attempt records.
+
 ## 0.9.10
 
 - Include the declared languages directory in the release package.

@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Displays unresolved verified attempts and provides audited account recovery.
+ * Displays unresolved registration attempts and provides audited recovery for verified users.
  */
 final class VerificationAttempts {
 	/**
@@ -81,19 +81,19 @@ final class VerificationAttempts {
 		$notice   = isset( $_GET['trustgate_attempt_result'] ) ? sanitize_key( wp_unslash( $_GET['trustgate_attempt_result'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Verified Registration Attempts', 'hdyhaus-identity-verification' ); ?></h1>
-			<p><?php esc_html_e( 'These provider-verified attempts have not been linked to a WordPress account. Pending records expire after seven days. Identity conflicts require administrator review.', 'hdyhaus-identity-verification' ); ?></p>
+			<h1><?php esc_html_e( 'Registration Attempts', 'hdyhaus-identity-verification' ); ?></h1>
+			<p><?php esc_html_e( 'This page records when verification starts and any result Prembly reports. Only verified attempts can be recovered into WordPress accounts. Unfinished records expire after seven days.', 'hdyhaus-identity-verification' ); ?></p>
 			<?php if ( 'created' === $notice ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( 'The account was created and the verified attempt was linked. WordPress sent a password setup email.', 'hdyhaus-identity-verification' ); ?></p></div>
 			<?php elseif ( '' !== $notice ) : ?>
 				<div class="notice notice-error"><p><?php echo esc_html( $this->result_message( $notice ) ); ?></p></div>
 			<?php endif; ?>
 			<?php if ( empty( $attempts ) ) : ?>
-				<p><?php esc_html_e( 'There are no unresolved verified registration attempts.', 'hdyhaus-identity-verification' ); ?></p>
+				<p><?php esc_html_e( 'There are no unresolved registration attempts.', 'hdyhaus-identity-verification' ); ?></p>
 			<?php else : ?>
 				<table class="widefat striped">
 					<thead><tr>
-						<th><?php esc_html_e( 'Verified', 'hdyhaus-identity-verification' ); ?></th>
+						<th><?php esc_html_e( 'Started / verified', 'hdyhaus-identity-verification' ); ?></th>
 						<th><?php esc_html_e( 'Registrant', 'hdyhaus-identity-verification' ); ?></th>
 						<th><?php esc_html_e( 'Email', 'hdyhaus-identity-verification' ); ?></th>
 						<th><?php esc_html_e( 'Environment', 'hdyhaus-identity-verification' ); ?></th>
@@ -103,7 +103,7 @@ final class VerificationAttempts {
 					<tbody>
 					<?php foreach ( $attempts as $attempt ) : ?>
 						<tr>
-							<td><?php echo esc_html( (string) $attempt['verified_at'] ); ?></td>
+							<td><?php echo esc_html( '' !== (string) $attempt['verified_at'] ? (string) $attempt['verified_at'] : (string) $attempt['created_at'] ); ?></td>
 							<td><?php echo esc_html( trim( (string) $attempt['first_name'] . ' ' . (string) $attempt['last_name'] ) ); ?><br /><code><?php echo esc_html( (string) $attempt['username'] ); ?></code></td>
 							<td><details><summary><?php echo esc_html( $this->mask_email( (string) $attempt['email'] ) ); ?></summary><?php echo esc_html( (string) $attempt['email'] ); ?></details></td>
 							<td><?php echo esc_html( 'sandbox' === $attempt['environment'] ? __( 'Sandbox', 'hdyhaus-identity-verification' ) : __( 'Live', 'hdyhaus-identity-verification' ) ); ?></td>
@@ -233,7 +233,7 @@ final class VerificationAttempts {
 	 */
 	private function render_recovery_form( array $attempt ): void {
 		if ( ! in_array( $attempt['status'], array( 'verified_pending_registration', 'registration_failed', 'identity_conflict' ), true ) ) {
-			esc_html_e( 'Review required', 'hdyhaus-identity-verification' );
+			esc_html_e( 'Verification has not completed; account recovery is unavailable.', 'hdyhaus-identity-verification' );
 			return;
 		}
 		?>

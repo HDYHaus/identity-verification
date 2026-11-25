@@ -95,6 +95,59 @@ class VerificationAttemptStore {
 	}
 
 	/**
+	 * Record the start of a provider verification flow before opening its widget.
+	 *
+	 * @param array<string, mixed> $attempt Attempt fields.
+	 */
+	public function record_started( array $attempt ): bool {
+		global $wpdb;
+
+		$now        = gmdate( 'Y-m-d H:i:s' );
+		$token      = (string) ( $attempt['token'] ?? '' );
+		$email      = sanitize_email( (string) ( $attempt['email'] ?? '' ) );
+		$first      = sanitize_text_field( (string) ( $attempt['first_name'] ?? '' ) );
+		$last       = sanitize_text_field( (string) ( $attempt['last_name'] ?? '' ) );
+		$token_hash = '' !== $token ? hash( 'sha256', $token ) : '';
+
+		if ( '' === $token_hash || ! is_email( $email ) || '' === $first || '' === $last ) {
+			return false;
+		}
+
+		$existing = $this->get_by_token_hash( $token_hash );
+		if ( $existing && in_array( $existing['status'], array( 'verified_pending_registration', 'registration_failed', 'identity_conflict', 'reference_conflict', 'account_created' ), true ) ) {
+			return false;
+		}
+
+		$data = array(
+			'attempt_hash'    => $token_hash,
+			'provider'        => sanitize_key( (string) ( $attempt['provider'] ?? 'prembly' ) ),
+			'environment'     => 'sandbox' === ( $attempt['environment'] ?? '' ) ? 'sandbox' : 'live',
+			'email'           => $email,
+			'email_hash'      => hash( 'sha256', strtolower( $email ) ),
+			'username'        => sanitize_user( (string) ( $attempt['username'] ?? '' ), true ),
+			'first_name'      => $first,
+			'last_name'       => $last,
+			'first_name_hash' => hash( 'sha256', strtolower( trim( $first ) ) ),
+			'last_name_hash'  => hash( 'sha256', strtolower( trim( $last ) ) ),
+			'status'          => 'verification_started',
+			'failure_code'    => '',
+			'consent_at'      => $now,
+			'consent_text'    => sanitize_textarea_field( (string) ( $attempt['consent_text'] ?? '' ) ),
+			'consent_version' => sanitize_text_field( (string) ( $attempt['consent_version'] ?? '' ) ),
+			'updated_at'      => $now,
+			'expires_at'      => gmdate( 'Y-m-d H:i:s', time() + self::ATTEMPT_TTL ),
+		);
+
+		if ( $existing ) {
+			unset( $data['attempt_hash'] );
+			return false !== $wpdb->update( $this->table_name(), $data, array( 'attempt_hash' => $token_hash ) );
+		}
+
+		$data['created_at'] = $now;
+		return false !== $wpdb->insert( $this->table_name(), $data );
+	}
+
+	/**
 	 * Record a verified attempt, including identity conflicts that need review.
 	 *
 	 * @param array<string, mixed> $attempt Attempt fields.
@@ -293,11 +346,15 @@ class VerificationAttemptStore {
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT id, email, username, first_name, last_name, provider_reference, environment, status, failure_code, verified_at, expires_at FROM ' . $this->table_name() . ' WHERE user_id IS NULL AND status IN (%s, %s, %s, %s) AND expires_at >= %s ORDER BY verified_at DESC LIMIT 100', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is generated from the site prefix; variable values use placeholders.
+				'SELECT id, email, username, first_name, last_name, provider_reference, environment, status, failure_code, verified_at, created_at, expires_at FROM ' . $this->table_name() . ' WHERE user_id IS NULL AND status IN (%s, %s, %s, %s, %s, %s, %s, %s) AND expires_at >= %s ORDER BY created_at DESC LIMIT 100', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is generated from the site prefix; variable values use placeholders.
 				'verified_pending_registration',
 				'registration_failed',
 				'identity_conflict',
 				'reference_conflict',
+				'verification_started',
+				'verification_failed',
+				'verification_cancelled',
+				'verification_error',
 				gmdate( 'Y-m-d H:i:s' )
 			),
 			ARRAY_A

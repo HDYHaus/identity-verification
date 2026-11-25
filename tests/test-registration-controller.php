@@ -50,7 +50,7 @@ final class TrustGateTestDb {
 		}
 		if ( preg_match( "/resume_token_hash = '([a-f0-9]+)'/", $query, $matches ) ) {
 			foreach ( $this->rows as $row ) {
-				if ( $row['resume_token_hash'] === $matches[1] ) {
+				if ( ( $row['resume_token_hash'] ?? '' ) === $matches[1] ) {
 					return $row;
 				}
 			}
@@ -302,7 +302,7 @@ final class TrustGateTestProvider implements VerificationProvider {
 	}
 
 	public function get_public_config(): array {
-		return array();
+		return array( 'isTest' => true );
 	}
 
 	public function confirm_verification( string $reference, array $context = array() ): array {
@@ -349,7 +349,44 @@ $_POST = array(
 );
 
 $controller = new RegistrationController( 'trustgate_settings', new TrustGateTestProvider() );
+$confirmation_post = $_POST;
 
+$started_token = 'started-attempt-token';
+$started_key   = 'trustgate_attempt_' . hash( 'sha256', $started_token );
+$trustgate_test_transients[ $started_key ] = array( 'status' => 'issued' );
+$_POST = array(
+	'nonce'     => 'valid-nonce',
+	'token'     => $started_token,
+	'status'    => 'verification_started',
+	'email'     => 'started@example.com',
+	'username'  => 'sandbox-started',
+	'firstName' => 'Sandbox',
+	'lastName'  => 'Started',
+	'consent'   => '1',
+);
+
+try {
+	$controller->log_verification_attempt();
+} catch ( TrustGateJsonResponse $response ) {
+	trustgate_registration_assert_same( 'verification_started', $response->payload['status'] ?? '', 'A verification start is accepted and logged.' );
+}
+
+$started_record = $wpdb->rows[ hash( 'sha256', $started_token ) ] ?? array();
+trustgate_registration_assert_same( 'verification_started', $started_record['status'] ?? '', 'An unfinished provider session is durably recorded.' );
+trustgate_registration_assert_same( 'sandbox', $started_record['environment'] ?? '', 'The start record retains its sandbox environment.' );
+trustgate_registration_assert_same( 'started@example.com', $started_record['email'] ?? '', 'The start record retains the email needed to identify the registration.' );
+trustgate_registration_assert_same( '', $started_record['identity_hash'] ?? '', 'A start record does not claim an unverified identity.' );
+
+$_POST['status']  = 'verification_error';
+$_POST['failure'] = 'E00';
+try {
+	$controller->log_verification_attempt();
+} catch ( TrustGateJsonResponse $response ) {
+	trustgate_registration_assert_same( 'verification_error', $response->payload['status'] ?? '', 'A provider-reported error updates the attempt state.' );
+}
+trustgate_registration_assert_same( 'verification_error', $wpdb->rows[ hash( 'sha256', $started_token ) ]['status'] ?? '', 'The provider-reported failure remains available for admin review.' );
+
+$_POST = $confirmation_post;
 try {
 	$controller->confirm_verification();
 } catch ( TrustGateJsonResponse $response ) {

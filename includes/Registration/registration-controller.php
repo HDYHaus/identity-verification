@@ -117,6 +117,8 @@ final class RegistrationController {
 		add_action( 'user_register', array( $this, 'store_user_meta' ), 10, 1 );
 		add_action( 'wp_ajax_nopriv_trustgate_confirm_verification', array( $this, 'confirm_verification' ) );
 		add_action( 'wp_ajax_trustgate_confirm_verification', array( $this, 'confirm_verification' ) );
+		add_action( 'wp_ajax_nopriv_trustgate_log_verification_attempt', array( $this, 'log_verification_attempt' ) );
+		add_action( 'wp_ajax_trustgate_log_verification_attempt', array( $this, 'log_verification_attempt' ) );
 	}
 
 	/**
@@ -461,6 +463,65 @@ final class RegistrationController {
 		);
 
 		delete_transient( $this->get_attempt_key( $token ) );
+	}
+
+	/**
+	 * Record a verification start or a provider-reported end state.
+	 */
+	public function log_verification_attempt(): void {
+		check_ajax_referer( 'trustgate_registration', 'nonce' );
+
+		$token      = isset( $_POST['token'] ) ? sanitize_text_field( wp_unslash( $_POST['token'] ) ) : '';
+		$status     = isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : '';
+		$failure    = isset( $_POST['failure'] ) ? sanitize_key( wp_unslash( $_POST['failure'] ) ) : '';
+		$attempt    = $this->get_attempt( $token );
+		$valid      = 'issued' === ( $attempt['status'] ?? '' );
+		$end_states = array( 'verification_failed', 'verification_cancelled', 'verification_error' );
+
+		if ( ! $valid || ! in_array( $status, array_merge( array( 'verification_started' ), $end_states ), true ) ) {
+			wp_send_json_error( array( 'status' => 'invalid_attempt' ), 400 );
+		}
+
+		if ( 'verification_started' === $status ) {
+			$email      = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+			$first_name = isset( $_POST['firstName'] ) ? sanitize_text_field( wp_unslash( $_POST['firstName'] ) ) : '';
+			$last_name  = isset( $_POST['lastName'] ) ? sanitize_text_field( wp_unslash( $_POST['lastName'] ) ) : '';
+			$username   = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ), true ) : '';
+			$consent    = isset( $_POST['consent'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['consent'] ) );
+
+			if ( ! is_email( $email ) || '' === $first_name || '' === $last_name || ! $consent ) {
+				wp_send_json_error( array( 'status' => 'invalid_attempt' ), 400 );
+			}
+
+			$public_config = $this->provider->get_public_config();
+			$saved         = $this->attempt_store->record_started(
+				array(
+					'token'           => $token,
+					'provider'        => $this->provider->get_slug(),
+					'environment'     => ! empty( $public_config['isTest'] ) ? 'sandbox' : 'live',
+					'email'           => $email,
+					'username'        => $username,
+					'first_name'      => $first_name,
+					'last_name'       => $last_name,
+					'consent_text'    => $this->get_consent_text(),
+					'consent_version' => $this->get_consent_version(),
+				)
+			);
+		} else {
+			$saved = $this->attempt_store->update(
+				$token,
+				array(
+					'status'       => $status,
+					'failure_code' => $failure,
+				)
+			);
+		}
+
+		if ( ! $saved ) {
+			wp_send_json_error( array( 'status' => 'attempt_not_recorded' ), 500 );
+		}
+
+		wp_send_json_success( array( 'status' => $status ) );
 	}
 
 	/**
