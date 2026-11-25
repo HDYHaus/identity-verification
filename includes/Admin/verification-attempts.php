@@ -46,7 +46,8 @@ final class VerificationAttempts {
 	 * Register admin hooks.
 	 */
 	public function register(): void {
-		add_action( 'admin_menu', array( $this, 'add_page' ) );
+		// Register after the parent menu is added by SettingsPage.
+		add_action( 'admin_menu', array( $this, 'add_page' ), 99 );
 		add_action( 'admin_post_trustgate_recover_registration', array( $this, 'recover_registration' ) );
 		add_action( 'trustgate_prune_verification_attempts', array( $this->store, 'prune_expired' ) );
 		if ( ! wp_next_scheduled( 'trustgate_prune_verification_attempts' ) ) {

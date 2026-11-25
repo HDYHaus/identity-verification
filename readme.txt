@@ -118,6 +118,9 @@ No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verific
 
 == Changelog ==
 
+= 0.10.0-beta.2 =
+* Register the Registration Attempts submenu after its parent admin menu.
+
 = 0.10.0-beta.1 =
 * Keep provider-verified registration attempts in a dedicated WordPress table with bounded retention.
 * Email a secure, expiring link so users can finish registration without repeating verification.
