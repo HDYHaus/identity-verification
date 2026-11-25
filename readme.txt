@@ -4,7 +4,7 @@ Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.10.0-beta.4
+Stable tag: 0.10.0-beta.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,7 @@ HDYHaus Identity Verification is a verification gate, not a membership suite. It
 * Supports an optional same-site success redirect with email activation instructions.
 * Lets site owners customize the plain-text consent message, provider policy links, and a website terms/disclaimer page or URL.
 * Stores normalized verification metadata in the WordPress user account.
+* Lists recent attempts with outcome filters, linked WordPress accounts, and pagination.
 * Integrates with WordPress personal data export and erasure tools.
 * Uses a provider adapter architecture, with Prembly as the first provider.
 
@@ -117,6 +118,11 @@ No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verific
 3. Prembly settings keep Sandbox and Live widget credentials separate and control the active verification provider.
 
 == Changelog ==
+
+= 0.10.0-beta.5 =
+
+* Show completed and unresolved attempts on the Registration Attempts page.
+* Add successful, failed, and other/pending filters, pagination, and links to created WordPress accounts.
 
 = 0.10.0-beta.4 =
 

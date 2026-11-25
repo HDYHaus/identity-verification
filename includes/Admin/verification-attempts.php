@@ -18,13 +18,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Displays unresolved registration attempts and provides audited recovery for verified users.
+ * Displays recent registration attempts and provides audited recovery for eligible verified users.
  */
 final class VerificationAttempts {
 	/**
 	 * Admin page slug.
 	 */
 	private const PAGE_SLUG = 'hdyhaus-verification-attempts';
+
+	/**
+	 * Number of attempts shown per page.
+	 */
+	private const PAGE_SIZE = 25;
 
 	/**
 	 * Attempt repository.
@@ -70,26 +75,45 @@ final class VerificationAttempts {
 	}
 
 	/**
-	 * Render unresolved attempts.
+	 * Render recent attempts with filters and pagination.
 	 */
 	public function render(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		$attempts = $this->store->get_unresolved();
-		$notice   = isset( $_GET['trustgate_attempt_result'] ) ? sanitize_key( wp_unslash( $_GET['trustgate_attempt_result'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$filter       = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : 'all'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$valid_filter = in_array( $filter, array( 'all', 'successful', 'failed', 'other' ), true ) ? $filter : 'all';
+		$paged        = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$total        = $this->store->count_attempts( $valid_filter );
+		$total_pages  = (int) ceil( $total / self::PAGE_SIZE );
+		$paged        = min( $paged, max( 1, $total_pages ) );
+		$attempts     = $this->store->get_attempts( $valid_filter, $paged, self::PAGE_SIZE );
+		$notice       = isset( $_GET['trustgate_attempt_result'] ) ? sanitize_key( wp_unslash( $_GET['trustgate_attempt_result'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Registration Attempts', 'hdyhaus-identity-verification' ); ?></h1>
-			<p><?php esc_html_e( 'This page records when verification starts and any result Prembly reports. Only verified attempts can be recovered into WordPress accounts. Unfinished records expire after seven days.', 'hdyhaus-identity-verification' ); ?></p>
+			<p><?php esc_html_e( 'Review recent verification attempts and their WordPress account status. Successful shows created accounts; Failed shows verification or registration errors; Other includes unfinished, cancelled, or verified attempts without an account. Unfinished records expire after seven days, and completed records are retained for up to 90 days.', 'hdyhaus-identity-verification' ); ?></p>
 			<?php if ( 'created' === $notice ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( 'The account was created and the verified attempt was linked. WordPress sent a password setup email.', 'hdyhaus-identity-verification' ); ?></p></div>
 			<?php elseif ( '' !== $notice ) : ?>
 				<div class="notice notice-error"><p><?php echo esc_html( $this->result_message( $notice ) ); ?></p></div>
 			<?php endif; ?>
+			<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="tablenav top">
+				<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>" />
+				<label for="trustgate-attempt-status"><?php esc_html_e( 'Show', 'hdyhaus-identity-verification' ); ?></label>
+				<select name="status" id="trustgate-attempt-status">
+					<option value="all" <?php selected( $valid_filter, 'all' ); ?>><?php esc_html_e( 'All attempts', 'hdyhaus-identity-verification' ); ?></option>
+					<option value="successful" <?php selected( $valid_filter, 'successful' ); ?>><?php esc_html_e( 'Successful (account created)', 'hdyhaus-identity-verification' ); ?></option>
+					<option value="failed" <?php selected( $valid_filter, 'failed' ); ?>><?php esc_html_e( 'Failed', 'hdyhaus-identity-verification' ); ?></option>
+					<option value="other" <?php selected( $valid_filter, 'other' ); ?>><?php esc_html_e( 'Other / pending', 'hdyhaus-identity-verification' ); ?></option>
+				</select>
+				<button type="submit" class="button"><?php esc_html_e( 'Filter', 'hdyhaus-identity-verification' ); ?></button>
+				<?php // translators: %s: number of registration attempts. ?>
+				<span class="displaying-num"><?php echo esc_html( sprintf( _n( '%s attempt', '%s attempts', $total, 'hdyhaus-identity-verification' ), number_format_i18n( $total ) ) ); ?></span>
+			</form>
 			<?php if ( empty( $attempts ) ) : ?>
-				<p><?php esc_html_e( 'There are no unresolved registration attempts.', 'hdyhaus-identity-verification' ); ?></p>
+				<p><?php esc_html_e( 'There are no attempts matching this filter.', 'hdyhaus-identity-verification' ); ?></p>
 			<?php else : ?>
 				<table class="widefat striped">
 					<thead><tr>
@@ -98,6 +122,7 @@ final class VerificationAttempts {
 						<th><?php esc_html_e( 'Email', 'hdyhaus-identity-verification' ); ?></th>
 						<th><?php esc_html_e( 'Environment', 'hdyhaus-identity-verification' ); ?></th>
 						<th><?php esc_html_e( 'Status / reason', 'hdyhaus-identity-verification' ); ?></th>
+						<th><?php esc_html_e( 'WordPress account', 'hdyhaus-identity-verification' ); ?></th>
 						<th><?php esc_html_e( 'Recovery', 'hdyhaus-identity-verification' ); ?></th>
 					</tr></thead>
 					<tbody>
@@ -116,11 +141,33 @@ final class VerificationAttempts {
 								if ( '' !== (string) $attempt['provider_reference'] ) :
 									?>
 									<details><summary><?php esc_html_e( 'Provider session', 'hdyhaus-identity-verification' ); ?></summary><code><?php echo esc_html( (string) $attempt['provider_reference'] ); ?></code></details><?php endif; ?></td>
+							<td><?php $this->render_linked_user( $attempt ); ?></td>
 							<td><?php $this->render_recovery_form( $attempt ); ?></td>
 						</tr>
 					<?php endforeach; ?>
 					</tbody>
 				</table>
+				<?php if ( $total_pages > 1 ) : ?>
+					<?php
+					$base_url = add_query_arg( 'page', self::PAGE_SLUG, admin_url( 'admin.php' ) );
+					$base_url = add_query_arg( 'status', $valid_filter, $base_url );
+					$base_url = add_query_arg( 'paged', '%#%', $base_url );
+					$pages    = paginate_links(
+						array(
+							'base'      => $base_url,
+							'format'    => '',
+							'current'   => $paged,
+							'total'     => $total_pages,
+							'type'      => 'list',
+							'prev_text' => __( 'Previous', 'hdyhaus-identity-verification' ),
+							'next_text' => __( 'Next', 'hdyhaus-identity-verification' ),
+						)
+					);
+					?>
+					<nav class="tablenav bottom" aria-label="<?php esc_attr_e( 'Registration attempt pages', 'hdyhaus-identity-verification' ); ?>">
+						<?php echo wp_kses_post( $pages ); ?>
+					</nav>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 		<?php
@@ -227,13 +274,44 @@ final class VerificationAttempts {
 	}
 
 	/**
+	 * Render the WordPress account linked to an attempt, if one exists.
+	 *
+	 * @param array<string, mixed> $attempt Attempt row.
+	 */
+	private function render_linked_user( array $attempt ): void {
+		$user_id = absint( $attempt['user_id'] ?? 0 );
+		if ( 0 === $user_id ) {
+			esc_html_e( 'Not linked', 'hdyhaus-identity-verification' );
+			return;
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			// translators: %d: WordPress user ID.
+			echo esc_html( sprintf( __( 'User #%d not found', 'hdyhaus-identity-verification' ), $user_id ) );
+			return;
+		}
+
+		printf(
+			'<a href="%1$s">%2$s</a>',
+			esc_url( get_edit_user_link( $user_id ) ),
+			esc_html( $user->user_login )
+		);
+	}
+
+	/**
 	 * Render a guarded administrator recovery form.
 	 *
 	 * @param array<string, mixed> $attempt Attempt row.
 	 */
 	private function render_recovery_form( array $attempt ): void {
+		if ( ! empty( $attempt['user_id'] ) ) {
+			esc_html_e( 'Account created and linked.', 'hdyhaus-identity-verification' );
+			return;
+		}
+
 		if ( ! in_array( $attempt['status'], array( 'verified_pending_registration', 'registration_failed', 'identity_conflict' ), true ) ) {
-			esc_html_e( 'Verification has not completed; account recovery is unavailable.', 'hdyhaus-identity-verification' );
+			esc_html_e( 'This attempt is not eligible for account recovery.', 'hdyhaus-identity-verification' );
 			return;
 		}
 		?>

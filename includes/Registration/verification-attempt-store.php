@@ -337,31 +337,59 @@ class VerificationAttemptStore {
 	}
 
 	/**
-	 * List unresolved attempts for authorized administrators.
+	 * List unexpired attempts for authorized administrators.
 	 *
+	 * @param string $filter Attempt status group: all, successful, failed, or other.
+	 * @param int    $page Current result page.
+	 * @param int    $per_page Number of rows per page.
 	 * @return array<int, array<string, mixed>>
 	 */
-	public function get_unresolved(): array {
+	public function get_attempts( string $filter = 'all', int $page = 1, int $per_page = 25 ): array {
 		global $wpdb;
 
-		$rows = $wpdb->get_results(
+		$page     = max( 1, $page );
+		$per_page = min( 100, max( 1, $per_page ) );
+		$filter   = in_array( $filter, array( 'all', 'successful', 'failed', 'other' ), true ) ? $filter : 'all';
+		$rows     = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT id, email, username, first_name, last_name, provider_reference, environment, status, failure_code, verified_at, created_at, expires_at FROM %i WHERE user_id IS NULL AND status IN (%s, %s, %s, %s, %s, %s, %s, %s) AND expires_at >= %s ORDER BY created_at DESC LIMIT 100',
+				'SELECT id, email, username, first_name, last_name, provider_reference, environment, status, failure_code, verified_at, created_at, expires_at, user_id FROM %i WHERE expires_at >= %s AND (%s = \'all\' OR (%s = \'successful\' AND status = \'account_created\') OR (%s = \'failed\' AND status IN (\'verification_failed\', \'verification_error\', \'registration_failed\', \'identity_conflict\', \'reference_conflict\')) OR (%s = \'other\' AND status IN (\'verification_started\', \'verification_cancelled\', \'verified_pending_registration\', \'erased\'))) ORDER BY created_at DESC LIMIT %d OFFSET %d',
 				$this->table_name(),
-				'verified_pending_registration',
-				'registration_failed',
-				'identity_conflict',
-				'reference_conflict',
-				'verification_started',
-				'verification_failed',
-				'verification_cancelled',
-				'verification_error',
-				gmdate( 'Y-m-d H:i:s' )
+				gmdate( 'Y-m-d H:i:s' ),
+				$filter,
+				$filter,
+				$filter,
+				$filter,
+				$per_page,
+				( $page - 1 ) * $per_page
 			),
 			ARRAY_A
 		);
 
 		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * Count unexpired attempts for an administrator list filter.
+	 *
+	 * @param string $filter Attempt status group: all, successful, failed, or other.
+	 */
+	public function count_attempts( string $filter = 'all' ): int {
+		global $wpdb;
+
+		$filter = in_array( $filter, array( 'all', 'successful', 'failed', 'other' ), true ) ? $filter : 'all';
+		$count  = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE expires_at >= %s AND (%s = \'all\' OR (%s = \'successful\' AND status = \'account_created\') OR (%s = \'failed\' AND status IN (\'verification_failed\', \'verification_error\', \'registration_failed\', \'identity_conflict\', \'reference_conflict\')) OR (%s = \'other\' AND status IN (\'verification_started\', \'verification_cancelled\', \'verified_pending_registration\', \'erased\')))',
+				$this->table_name(),
+				gmdate( 'Y-m-d H:i:s' ),
+				$filter,
+				$filter,
+				$filter,
+				$filter
+			)
+		);
+
+		return max( 0, (int) $count );
 	}
 
 	/**

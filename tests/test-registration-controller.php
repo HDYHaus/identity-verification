@@ -32,6 +32,7 @@ $trustgate_test_options = array();
 final class TrustGateTestDb {
 	public string $prefix = 'wp_';
 	public array $rows = array();
+	public string $last_query = '';
 	private string $prepared_query = '';
 
 	public function prepare( string $query, mixed ...$args ): string {
@@ -66,6 +67,17 @@ final class TrustGateTestDb {
 			}
 		}
 		return null;
+	}
+
+	public function get_results( string $query, mixed $output = null ): array {
+		unset( $output );
+		$this->last_query = $query;
+		return array();
+	}
+
+	public function get_var( string $query ): int {
+		$this->last_query = $query;
+		return 0;
 	}
 
 	public function insert( string $table, array $data ): int|false {
@@ -359,6 +371,14 @@ $_POST = array(
 );
 
 $controller = new RegistrationController( 'trustgate_settings', new TrustGateTestProvider() );
+
+$attempt_store = new \HDYHaus\TrustGateRegistration\Registration\VerificationAttemptStore();
+$attempt_store->get_attempts( 'successful', 2, 25 );
+trustgate_registration_assert_same( true, str_contains( $wpdb->last_query, "status = 'account_created'" ), 'The successful filter includes only created accounts.' );
+trustgate_registration_assert_same( true, str_contains( $wpdb->last_query, 'LIMIT 25 OFFSET 25' ), 'Attempt pagination applies the requested page and page size.' );
+$attempt_store->count_attempts( 'failed' );
+trustgate_registration_assert_same( true, str_contains( $wpdb->last_query, "'verification_failed', 'verification_error', 'registration_failed'" ), 'The failed filter includes provider and account-creation failures.' );
+
 $confirmation_post = $_POST;
 
 $started_token = 'started-attempt-token';

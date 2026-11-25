@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.0-beta.5
+
+- Show completed and unresolved attempts on the Registration Attempts page.
+- Add successful, failed, and other/pending filters, pagination, and links to created WordPress accounts.
+
 ## 0.10.0-beta.4
 
 - Quote custom attempt-table identifiers with WordPress's `%i` placeholder in prepared queries.
