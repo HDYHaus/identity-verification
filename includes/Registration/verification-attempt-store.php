@@ -27,7 +27,81 @@ class VerificationAttemptStore {
 	/**
 	 * Pending attempt lifetime.
 	 */
-	public const ATTEMPT_TTL = 7 * DAY_IN_SECONDS;
+	public const DEFAULT_UNLINKED_RETENTION_DAYS = 7;
+	public const DEFAULT_LINKED_RETENTION_DAYS   = 90;
+	public const MAX_RETENTION_DAYS              = 365;
+	public const RESUME_LINK_TTL                 = 7 * DAY_IN_SECONDS;
+	/** Backward-compatible name for the seven-day resume-link window. */
+	public const ATTEMPT_TTL = self::RESUME_LINK_TTL;
+
+	/**
+	 * Settings option name.
+	 *
+	 * @var string
+	 */
+	private string $option_name;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param string $option_name Settings option name.
+	 */
+	public function __construct( string $option_name = 'trustgate_registration_settings' ) {
+		$this->option_name = $option_name;
+	}
+
+	/**
+	 * Normalize a retention value to the supported day range.
+	 *
+	 * @param mixed $value Raw setting value.
+	 * @param int   $fallback Default value.
+	 * @return int Normalized number of days.
+	 */
+	public static function normalize_retention_days( mixed $value, int $fallback ): int {
+		if ( ! is_scalar( $value ) || '' === trim( (string) $value ) || ! is_numeric( $value ) ) {
+			return $fallback;
+		}
+
+		return min( self::MAX_RETENTION_DAYS, max( 1, (int) $value ) );
+	}
+
+	/** Get configured retention for unlinked attempts. */
+	public function get_unlinked_retention_days(): int {
+		$settings = get_option( $this->option_name, array() );
+		return self::normalize_retention_days( is_array( $settings ) ? ( $settings['unlinked_attempt_retention_days'] ?? null ) : null, self::DEFAULT_UNLINKED_RETENTION_DAYS );
+	}
+
+	/** Get configured retention for linked attempts. */
+	public function get_linked_retention_days(): int {
+		$settings = get_option( $this->option_name, array() );
+		return self::normalize_retention_days( is_array( $settings ) ? ( $settings['linked_attempt_retention_days'] ?? null ) : null, self::DEFAULT_LINKED_RETENTION_DAYS );
+	}
+
+	/**
+	 * Recalculate expiry for records that have not expired under the previous policy.
+	 */
+	public function apply_retention_policy(): void {
+		global $wpdb;
+
+		$table = $this->table_name();
+		$now   = gmdate( 'Y-m-d H:i:s' );
+		$wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET expires_at = DATE_ADD(created_at, INTERVAL %d DAY) WHERE user_id IS NULL AND expires_at >= %s',
+				$table,
+				$this->get_unlinked_retention_days(),
+				$now
+			)
+		);
+		$wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET expires_at = DATE_ADD(updated_at, INTERVAL %d DAY) WHERE user_id IS NOT NULL AND expires_at >= %s',
+				$table,
+				$this->get_linked_retention_days(),
+				$now
+			)
+		);
+	}
 
 	/**
 	 * Get table name.
@@ -135,7 +209,7 @@ class VerificationAttemptStore {
 			'consent_text'    => sanitize_textarea_field( (string) ( $attempt['consent_text'] ?? '' ) ),
 			'consent_version' => sanitize_text_field( (string) ( $attempt['consent_version'] ?? '' ) ),
 			'updated_at'      => $now,
-			'expires_at'      => gmdate( 'Y-m-d H:i:s', time() + self::ATTEMPT_TTL ),
+			'expires_at'      => gmdate( 'Y-m-d H:i:s', time() + $this->get_unlinked_retention_days() * DAY_IN_SECONDS ),
 		);
 
 		if ( $existing ) {
@@ -193,7 +267,7 @@ class VerificationAttemptStore {
 			'resume_expires_at'  => sanitize_text_field( (string) ( $attempt['resume_expires_at'] ?? '' ) ),
 			'verified_at'        => sanitize_text_field( (string) ( $attempt['verified_at'] ?? $now ) ),
 			'updated_at'         => $now,
-			'expires_at'         => gmdate( 'Y-m-d H:i:s', time() + self::ATTEMPT_TTL ),
+			'expires_at'         => gmdate( 'Y-m-d H:i:s', time() + $this->get_unlinked_retention_days() * DAY_IN_SECONDS ),
 		);
 
 		if ( $existing ) {
@@ -277,12 +351,13 @@ class VerificationAttemptStore {
 			return '';
 		}
 
-		$token = wp_generate_password( 48, false, false );
+		$token          = wp_generate_password( 48, false, false );
+		$attempt_expiry = strtotime( (string) $attempt['expires_at'] . ' UTC' );
 		$this->update(
 			$attempt_token,
 			array(
 				'resume_token_hash' => hash( 'sha256', $token ),
-				'resume_expires_at' => $attempt['expires_at'],
+				'resume_expires_at' => gmdate( 'Y-m-d H:i:s', min( false !== $attempt_expiry ? $attempt_expiry : time(), time() + self::RESUME_LINK_TTL ) ),
 			)
 		);
 

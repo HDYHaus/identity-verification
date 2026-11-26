@@ -373,6 +373,12 @@ $_POST = array(
 $controller = new RegistrationController( 'trustgate_settings', new TrustGateTestProvider() );
 
 $attempt_store = new \HDYHaus\TrustGateRegistration\Registration\VerificationAttemptStore();
+$trustgate_test_options['trustgate_registration_settings'] = array(
+	'unlinked_attempt_retention_days' => '14',
+	'linked_attempt_retention_days'   => '120',
+);
+trustgate_registration_assert_same( 14, $attempt_store->get_unlinked_retention_days(), 'The attempt store reads the site owner’s unlinked retention setting.' );
+trustgate_registration_assert_same( 120, $attempt_store->get_linked_retention_days(), 'The attempt store reads the site owner’s linked retention setting.' );
 $attempt_store->get_attempts( 'successful', 2, 25 );
 trustgate_registration_assert_same( true, str_contains( $wpdb->last_query, "status = 'account_created'" ), 'The successful filter includes only created accounts.' );
 trustgate_registration_assert_same( true, str_contains( $wpdb->last_query, 'LIMIT 25 OFFSET 25' ), 'Attempt pagination applies the requested page and page size.' );
@@ -406,6 +412,7 @@ trustgate_registration_assert_same( 'verification_started', $started_record['sta
 trustgate_registration_assert_same( 'sandbox', $started_record['environment'] ?? '', 'The start record retains its sandbox environment.' );
 trustgate_registration_assert_same( 'started@example.com', $started_record['email'] ?? '', 'The start record retains the email needed to identify the registration.' );
 trustgate_registration_assert_same( '', $started_record['identity_hash'] ?? '', 'A start record does not claim an unverified identity.' );
+trustgate_registration_assert_same( 14 * DAY_IN_SECONDS, strtotime( $started_record['expires_at'] . ' UTC' ) - strtotime( $started_record['created_at'] . ' UTC' ), 'New unlinked attempts use the configured retention period.' );
 
 $_POST['status']  = 'verification_error';
 $_POST['failure'] = 'E00';

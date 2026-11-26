@@ -109,12 +109,14 @@ function apply_filters( string $hook_name, mixed $value, mixed ...$args ): mixed
 require_once dirname( __DIR__ ) . '/includes/Contracts/verification-provider.php';
 require_once dirname( __DIR__ ) . '/includes/Providers/provider-registry.php';
 require_once dirname( __DIR__ ) . '/includes/Registration/registration-controller.php';
+require_once dirname( __DIR__ ) . '/includes/Registration/verification-attempt-store.php';
 require_once dirname( __DIR__ ) . '/includes/Admin/settings-page.php';
 
 use HDYHaus\TrustGateRegistration\Admin\SettingsPage;
 use HDYHaus\TrustGateRegistration\Contracts\VerificationProvider;
 use HDYHaus\TrustGateRegistration\Providers\ProviderRegistry;
 use HDYHaus\TrustGateRegistration\Registration\RegistrationController;
+use HDYHaus\TrustGateRegistration\Registration\VerificationAttemptStore;
 
 final class TrustGateSettingsTestProvider implements VerificationProvider {
 	public function get_slug(): string {
@@ -186,6 +188,28 @@ trustgate_settings_assert_same( '', $clean['provider_privacy_url'], 'Unsafe prov
 trustgate_settings_assert_same( 'https://provider.example/consent', $clean['provider_terms_url'], 'A valid provider URL is retained.' );
 trustgate_settings_assert_same( '12', $clean['site_terms_page_id'], 'A published website page can be selected.' );
 trustgate_settings_assert_same( 'https://site.example/terms', $clean['site_terms_url'], 'The custom website URL is retained separately from provider links.' );
+trustgate_settings_assert_same( '7', $clean['unlinked_attempt_retention_days'] ?? '', 'The default unlinked attempt retention is preserved when saving other Registration settings.' );
+trustgate_settings_assert_same( '90', $clean['linked_attempt_retention_days'] ?? '', 'The default linked attempt retention is preserved when saving other Registration settings.' );
+
+$retention = $page->sanitize_settings(
+	array(
+		'settings_tab'                     => 'registration',
+		'unlinked_attempt_retention_days' => '30',
+		'linked_attempt_retention_days'   => '120',
+	)
+);
+trustgate_settings_assert_same( '30', $retention['unlinked_attempt_retention_days'], 'Site owners can configure unlinked attempt retention.' );
+trustgate_settings_assert_same( '120', $retention['linked_attempt_retention_days'], 'Site owners can configure linked attempt retention.' );
+
+$bounded_retention = $page->sanitize_settings(
+	array(
+		'settings_tab'                     => 'registration',
+		'unlinked_attempt_retention_days' => '900',
+		'linked_attempt_retention_days'   => '0',
+	)
+);
+trustgate_settings_assert_same( (string) VerificationAttemptStore::MAX_RETENTION_DAYS, $bounded_retention['unlinked_attempt_retention_days'], 'Retention cannot exceed the supported maximum.' );
+trustgate_settings_assert_same( '1', $bounded_retention['linked_attempt_retention_days'], 'Retention is kept at least one day.' );
 
 foreach ( array( 13, 14, 999 ) as $invalid_page_id ) {
 	$invalid = $page->sanitize_settings( array( 'settings_tab' => 'registration', 'site_terms_page_id' => $invalid_page_id, 'site_terms_url' => 'javascript:alert(1)' ) );

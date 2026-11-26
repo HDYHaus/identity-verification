@@ -93,7 +93,21 @@ final class VerificationAttempts {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Registration Attempts', 'hdyhaus-identity-verification' ); ?></h1>
-			<p><?php esc_html_e( 'Review recent verification attempts and their WordPress account status. Successful shows created accounts; Failed shows verification or registration errors; Other includes unfinished, cancelled, or verified attempts without an account. Unfinished records expire after seven days, and completed records are retained for up to 90 days.', 'hdyhaus-identity-verification' ); ?></p>
+			<?php
+			$unlinked_days = $this->store->get_unlinked_retention_days();
+			$linked_days   = $this->store->get_linked_retention_days();
+			printf(
+				'<p>%s</p>',
+				esc_html(
+					sprintf(
+						/* translators: 1: unlinked retention in days, 2: linked retention in days. */
+						__( 'Review recent verification attempts and their WordPress account status. Successful shows created accounts; Failed shows verification or registration errors; Other includes unfinished, cancelled, or verified attempts without an account. Unlinked attempts are retained for up to %1$d days and account-linked records for up to %2$d days. Change these periods in Identity Verification → Registration settings.', 'hdyhaus-identity-verification' ),
+						$unlinked_days,
+						$linked_days
+					)
+				)
+			);
+			?>
 			<?php if ( 'created' === $notice ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( 'The account was created and the verified attempt was linked. WordPress sent a password setup email.', 'hdyhaus-identity-verification' ); ?></p></div>
 			<?php elseif ( '' !== $notice ) : ?>
@@ -262,7 +276,7 @@ final class VerificationAttempts {
 				'username'          => $username,
 				'recovered_by'      => get_current_user_id(),
 				'recovered_at'      => gmdate( 'Y-m-d H:i:s' ),
-				'expires_at'        => gmdate( 'Y-m-d H:i:s', time() + 90 * DAY_IN_SECONDS ),
+				'expires_at'        => gmdate( 'Y-m-d H:i:s', time() + $this->store->get_linked_retention_days() * DAY_IN_SECONDS ),
 				'resume_token_hash' => '',
 				'resume_expires_at' => null,
 			)

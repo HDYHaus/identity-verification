@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0
+
+- Let site owners configure retention periods for unlinked and account-linked attempts, defaulting to 7 and 90 days.
+- Apply retention changes to currently retained records and show selected periods in the attempts screen and privacy guidance.
+- Keep verification resume links limited to seven days.
+
 ## 0.10.0-beta.6
 
 - Display attempt timestamps in the WordPress site's configured timezone and date/time format.

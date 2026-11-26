@@ -35,7 +35,7 @@ final class Plugin {
 	 * Register hooks.
 	 */
 	public function register(): void {
-		$attempt_store = new VerificationAttemptStore();
+		$attempt_store = new VerificationAttemptStore( self::OPTION_NAME );
 		$attempt_store->install();
 
 		$privacy = new Privacy( self::OPTION_NAME, $attempt_store );

@@ -72,7 +72,14 @@ final class Privacy {
 
 		$content  = '<p>' . esc_html__( 'When identity verification is enabled, the registrant\'s name and email address are sent to Prembly when the registrant starts verification. Prembly may then collect and process identity document images, selfies, biometric information, device information, and IP-derived location information to perform the checks configured by the site owner.', 'hdyhaus-identity-verification' ) . '</p>';
 		$content .= '<p>' . esc_html__( 'The registration form requires agreement to this statement:', 'hdyhaus-identity-verification' ) . ' &ldquo;' . esc_html( $consent ) . '&rdquo;</p>';
-		$content .= '<p>' . esc_html__( 'To allow a person to resume registration or an administrator to resolve a failed account creation, this site temporarily stores the registration email address, username, name, provider session reference, verification result, and consent record in WordPress. Unlinked verified attempts are kept for up to seven days; attempts linked to an account are kept for up to 90 days. The one-way reference and identity hashes may be retained after privacy erasure or account deletion to prevent reuse of a completed verification or identity.', 'hdyhaus-identity-verification' ) . '</p>';
+		$content .= '<p>' . esc_html(
+			sprintf(
+				/* translators: 1: number of days unlinked attempts are kept, 2: number of days linked records are kept. */
+				__( 'To allow a person to resume registration or an administrator to resolve a failed account creation, this site temporarily stores the registration email address, username, name, provider session reference, verification result, and consent record in WordPress. Unlinked attempts are kept for up to %1$d days; attempts linked to an account are kept for up to %2$d days. The one-way reference and identity hashes may be retained after privacy erasure or account deletion to prevent reuse of a completed verification or identity.', 'hdyhaus-identity-verification' ),
+				$this->attempt_store->get_unlinked_retention_days(),
+				$this->attempt_store->get_linked_retention_days()
+			)
+		) . '</p>';
 
 		$links = array();
 

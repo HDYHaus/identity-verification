@@ -4,7 +4,7 @@ Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.10.0-beta.6
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,7 +39,7 @@ This plugin connects to Prembly, an external identity verification service, when
 
 The Prembly browser SDK is loaded from `https://js.prembly.com/v1/inline/widget-v3.js` on the default WordPress registration page. When a registrant selects Verify Identity, HDYHaus Identity Verification sends their first name, last name, email address, a temporary user reference, the configured Widget Key, and Configuration ID to Prembly. Prembly's verification interface may collect identity document images, selfies, biometric information, device information, and IP-derived location information according to the checks selected by the site administrator.
 
-When a registrant starts verification, HDYHaus Identity Verification records the username, email, first and last name, consent, environment, start time, and any result reported by the widget in a site-specific WordPress table. Unfinished records expire after seven days; verified records linked to accounts are retained for up to 90 days. After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. HDYHaus Identity Verification uses that response to confirm the session status, email address, widget configuration, session ID, and verified document identity. The complete Prembly report remains available in the site owner's Prembly dashboard. Identity document images, document numbers, selfies, biometric information, and raw Prembly responses are not copied into WordPress.
+When a registrant starts verification, HDYHaus Identity Verification records the username, email, first and last name, consent, environment, start time, and any result reported by the widget in a site-specific WordPress table. Site owners choose how many days unlinked attempts and account-linked records are retained in Identity Verification > Registration settings (defaults: 7 and 90 days; maximum: 365 days). Resume links expire after up to seven days. After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. HDYHaus Identity Verification uses that response to confirm the session status, email address, widget configuration, session ID, and verified document identity. The complete Prembly report remains available in the site owner's Prembly dashboard. Identity document images, document numbers, selfies, biometric information, and raw Prembly responses are not copied into WordPress.
 
 This service is provided by Prembly Inc:
 
@@ -85,7 +85,7 @@ No. This integration uses Prembly's Widget Key and Configuration ID in the brows
 
 = Does HDYHaus Identity Verification store identity documents or selfies in WordPress? =
 
-No. WordPress stores registration details and consent for unfinished verification attempts for up to seven days, and keeps verified-attempt records for up to 90 days. A successfully created account also receives normalized verification metadata and site-specific one-way fingerprints in its user profile. Documents, document numbers, selfies, biometric information, raw Prembly responses, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
+No. WordPress stores registration details and consent for the retention periods selected by the site owner (defaults: seven days for unlinked attempts and 90 days for linked records). A successfully created account also receives normalized verification metadata and site-specific one-way fingerprints in its user profile. Documents, document numbers, selfies, biometric information, raw Prembly responses, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
 
 = Can the same verified person create more than one account? =
 
@@ -118,6 +118,12 @@ No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verific
 3. Prembly settings keep Sandbox and Live widget credentials separate and control the active verification provider.
 
 == Changelog ==
+
+= 1.0.0 =
+
+* Let site owners configure how long unlinked and account-linked verification attempts are retained, with defaults of 7 and 90 days.
+* Apply retention changes to currently retained records and show the selected periods in the attempts screen and privacy-policy guidance.
+* Keep verification resume links limited to seven days.
 
 = 0.10.0-beta.6 =
 

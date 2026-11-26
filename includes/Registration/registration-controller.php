@@ -456,7 +456,7 @@ final class RegistrationController {
 				'status'            => 'account_created',
 				'failure_code'      => '',
 				'user_id'           => $user_id,
-				'expires_at'        => gmdate( 'Y-m-d H:i:s', time() + 90 * DAY_IN_SECONDS ),
+				'expires_at'        => gmdate( 'Y-m-d H:i:s', time() + $this->attempt_store->get_linked_retention_days() * DAY_IN_SECONDS ),
 				'resume_token_hash' => '',
 				'resume_expires_at' => null,
 			)
@@ -653,7 +653,7 @@ final class RegistrationController {
 					str_replace( '\\n', "\n", __( 'Your identity verification is complete. Finish creating your account on %1$s by opening this secure link: %2$s\n\nThis link expires in %3$s. If you did not request this, you can ignore this email.', 'hdyhaus-identity-verification' ) ),
 					sanitize_text_field( (string) get_option( 'blogname', '' ) ),
 					$resume_url,
-					human_time_diff( time(), time() + VerificationAttemptStore::ATTEMPT_TTL )
+					human_time_diff( time(), time() + VerificationAttemptStore::RESUME_LINK_TTL )
 				)
 			);
 		}

@@ -12,6 +12,7 @@ namespace HDYHaus\TrustGateRegistration\Admin;
 use HDYHaus\TrustGateRegistration\Contracts\VerificationProvider;
 use HDYHaus\TrustGateRegistration\Providers\ProviderRegistry;
 use HDYHaus\TrustGateRegistration\Registration\RegistrationController;
+use HDYHaus\TrustGateRegistration\Registration\VerificationAttemptStore;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -86,6 +87,9 @@ final class SettingsPage {
 			add_option( $this->option_name, $submitted, '', false );
 		} else {
 			update_option( $this->option_name, $submitted, false );
+		}
+		if ( isset( $submitted['settings_tab'] ) && 'registration' === sanitize_key( (string) $submitted['settings_tab'] ) ) {
+			( new VerificationAttemptStore( $this->option_name ) )->apply_retention_policy();
 		}
 
 		$tabs = $this->get_tabs();
@@ -280,13 +284,15 @@ final class SettingsPage {
 			$page,
 			'trustgate_registration_flow',
 			array(
-				'consent_text'         => __( 'Consent message', 'hdyhaus-identity-verification' ),
-				'provider_privacy_url' => __( 'Verification Provider Privacy / Data Protection Policy URL', 'hdyhaus-identity-verification' ),
-				'provider_terms_url'   => __( 'Verification Provider Terms / Consent URL', 'hdyhaus-identity-verification' ),
-				'site_privacy_policy'  => __( 'Website Privacy Policy', 'hdyhaus-identity-verification' ),
-				'site_terms_page_id'   => __( 'Website Terms / Disclaimer Page', 'hdyhaus-identity-verification' ),
-				'site_terms_url'       => __( 'Website Terms / Disclaimer URL', 'hdyhaus-identity-verification' ),
-				'success_redirect'     => __( 'Success Redirect URL', 'hdyhaus-identity-verification' ),
+				'consent_text'                    => __( 'Consent message', 'hdyhaus-identity-verification' ),
+				'provider_privacy_url'            => __( 'Verification Provider Privacy / Data Protection Policy URL', 'hdyhaus-identity-verification' ),
+				'provider_terms_url'              => __( 'Verification Provider Terms / Consent URL', 'hdyhaus-identity-verification' ),
+				'site_privacy_policy'             => __( 'Website Privacy Policy', 'hdyhaus-identity-verification' ),
+				'site_terms_page_id'              => __( 'Website Terms / Disclaimer Page', 'hdyhaus-identity-verification' ),
+				'site_terms_url'                  => __( 'Website Terms / Disclaimer URL', 'hdyhaus-identity-verification' ),
+				'success_redirect'                => __( 'Success Redirect URL', 'hdyhaus-identity-verification' ),
+				'unlinked_attempt_retention_days' => __( 'Unlinked attempt retention (days)', 'hdyhaus-identity-verification' ),
+				'linked_attempt_retention_days'   => __( 'Linked attempt retention (days)', 'hdyhaus-identity-verification' ),
 			)
 		);
 	}
@@ -360,6 +366,14 @@ final class SettingsPage {
 
 			if ( array_key_exists( 'success_redirect', $settings ) ) {
 				$clean['success_redirect'] = esc_url_raw( (string) $settings['success_redirect'] );
+			}
+
+			foreach ( array(
+				'unlinked_attempt_retention_days' => VerificationAttemptStore::DEFAULT_UNLINKED_RETENTION_DAYS,
+				'linked_attempt_retention_days'   => VerificationAttemptStore::DEFAULT_LINKED_RETENTION_DAYS,
+			) as $retention_key => $default_days ) {
+				$submitted_value         = $settings[ $retention_key ] ?? $clean[ $retention_key ] ?? $default_days;
+				$clean[ $retention_key ] = (string) VerificationAttemptStore::normalize_retention_days( $submitted_value, $default_days );
 			}
 
 			return $clean;
@@ -549,21 +563,23 @@ final class SettingsPage {
 		}
 
 		$url_fields = array( 'provider_privacy_url', 'provider_terms_url', 'site_terms_url', 'success_redirect' );
-		$type       = in_array( $key, $url_fields, true ) ? 'url' : 'text';
+		$type       = in_array( $key, $url_fields, true ) ? 'url' : ( str_ends_with( $key, '_retention_days' ) ? 'number' : 'text' );
 
 		if ( str_contains( $key, 'secret_key' ) ) {
 			$type = 'password';
 		}
 
 		$descriptions = array(
-			'test_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Sandbox is selected.', 'hdyhaus-identity-verification' ),
-			'test_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Sandbox widget.', 'hdyhaus-identity-verification' ),
-			'live_public_key'       => __( 'Prembly SDK Setup > Integration > Widget Key while Production is selected.', 'hdyhaus-identity-verification' ),
-			'live_configuration_id' => __( 'Prembly SDK Setup > Copy Config ID for the Live widget.', 'hdyhaus-identity-verification' ),
-			'provider_privacy_url'  => __( 'Recommended: enter the privacy or data protection policy URL of the verification provider you use. This link appears below the registration consent message.', 'hdyhaus-identity-verification' ),
-			'provider_terms_url'    => __( 'Optional: enter a working terms or consent URL supplied by your verification provider. This is the provider\'s policy, not your website\'s terms.', 'hdyhaus-identity-verification' ),
-			'site_terms_url'        => __( 'Enter your website\'s terms or disclaimer URL when using a custom URL instead of a WordPress page. This link appears separately from the verification provider\'s policies.', 'hdyhaus-identity-verification' ),
-			'success_redirect'      => __( 'Optional same-site URL visited after WordPress successfully creates the verified account.', 'hdyhaus-identity-verification' ),
+			'test_public_key'                 => __( 'Prembly SDK Setup > Integration > Widget Key while Sandbox is selected.', 'hdyhaus-identity-verification' ),
+			'test_configuration_id'           => __( 'Prembly SDK Setup > Copy Config ID for the Sandbox widget.', 'hdyhaus-identity-verification' ),
+			'live_public_key'                 => __( 'Prembly SDK Setup > Integration > Widget Key while Production is selected.', 'hdyhaus-identity-verification' ),
+			'live_configuration_id'           => __( 'Prembly SDK Setup > Copy Config ID for the Live widget.', 'hdyhaus-identity-verification' ),
+			'provider_privacy_url'            => __( 'Recommended: enter the privacy or data protection policy URL of the verification provider you use. This link appears below the registration consent message.', 'hdyhaus-identity-verification' ),
+			'provider_terms_url'              => __( 'Optional: enter a working terms or consent URL supplied by your verification provider. This is the provider\'s policy, not your website\'s terms.', 'hdyhaus-identity-verification' ),
+			'site_terms_url'                  => __( 'Enter your website\'s terms or disclaimer URL when using a custom URL instead of a WordPress page. This link appears separately from the verification provider\'s policies.', 'hdyhaus-identity-verification' ),
+			'success_redirect'                => __( 'Optional same-site URL visited after WordPress successfully creates the verified account.', 'hdyhaus-identity-verification' ),
+			'unlinked_attempt_retention_days' => __( 'How many days to retain attempts that are not linked to a WordPress account. Default: 7 days. Resume links expire after up to 7 days regardless of this setting.', 'hdyhaus-identity-verification' ),
+			'linked_attempt_retention_days'   => __( 'How many days to retain attempts linked to a WordPress account. Default: 90 days.', 'hdyhaus-identity-verification' ),
 		);
 		$description  = $descriptions[ $key ] ?? '';
 		?>
@@ -573,6 +589,7 @@ final class SettingsPage {
 			name="<?php echo esc_attr( $name ); ?>"
 			value="<?php echo esc_attr( $value ); ?>"
 			class="regular-text"
+			<?php echo str_ends_with( $key, '_retention_days' ) ? 'min="1" max="365" step="1"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<?php echo 'password' === $type ? ' autocomplete="new-password"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 		/>
 		<?php if ( '' !== $description ) : ?>
@@ -594,9 +611,11 @@ final class SettingsPage {
 		}
 
 		$defaults = array(
-			'consent_text'         => RegistrationController::get_default_consent_text(),
-			'provider_privacy_url' => RegistrationController::DEFAULT_PROVIDER_PRIVACY_URL,
-			'provider_terms_url'   => RegistrationController::DEFAULT_PROVIDER_TERMS_URL,
+			'consent_text'                    => RegistrationController::get_default_consent_text(),
+			'provider_privacy_url'            => RegistrationController::DEFAULT_PROVIDER_PRIVACY_URL,
+			'provider_terms_url'              => RegistrationController::DEFAULT_PROVIDER_TERMS_URL,
+			'unlinked_attempt_retention_days' => (string) VerificationAttemptStore::DEFAULT_UNLINKED_RETENTION_DAYS,
+			'linked_attempt_retention_days'   => (string) VerificationAttemptStore::DEFAULT_LINKED_RETENTION_DAYS,
 		);
 
 		if ( isset( $defaults[ $key ] ) ) {
