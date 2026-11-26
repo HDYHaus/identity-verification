@@ -128,7 +128,7 @@ final class VerificationAttempts {
 					<tbody>
 					<?php foreach ( $attempts as $attempt ) : ?>
 						<tr>
-							<td><?php echo esc_html( '' !== (string) $attempt['verified_at'] ? (string) $attempt['verified_at'] : (string) $attempt['created_at'] ); ?></td>
+							<td><?php echo esc_html( $this->format_site_datetime( '' !== (string) $attempt['verified_at'] ? (string) $attempt['verified_at'] : (string) $attempt['created_at'] ) ); ?></td>
 							<td><?php echo esc_html( trim( (string) $attempt['first_name'] . ' ' . (string) $attempt['last_name'] ) ); ?><br /><code><?php echo esc_html( (string) $attempt['username'] ); ?></code></td>
 							<td><details><summary><?php echo esc_html( $this->mask_email( (string) $attempt['email'] ) ); ?></summary><?php echo esc_html( (string) $attempt['email'] ); ?></details></td>
 							<td><?php echo esc_html( 'sandbox' === $attempt['environment'] ? __( 'Sandbox', 'hdyhaus-identity-verification' ) : __( 'Live', 'hdyhaus-identity-verification' ) ); ?></td>
@@ -297,6 +297,24 @@ final class VerificationAttempts {
 			esc_url( get_edit_user_link( $user_id ) ),
 			esc_html( $user->user_login )
 		);
+	}
+
+	/**
+	 * Convert a stored UTC timestamp to the WordPress site's configured timezone.
+	 *
+	 * @param string $datetime UTC datetime stored in the attempts table.
+	 */
+	private function format_site_datetime( string $datetime ): string {
+		$timestamp = strtotime( $datetime . ' UTC' );
+
+		if ( false === $timestamp ) {
+			return $datetime;
+		}
+
+		$date_format = (string) get_option( 'date_format', 'Y-m-d' );
+		$time_format = (string) get_option( 'time_format', 'H:i:s' );
+
+		return wp_date( $date_format . ' ' . $time_format, $timestamp, wp_timezone() );
 	}
 
 	/**

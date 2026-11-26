@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0-beta.6
+
+- Display attempt timestamps in the WordPress site's configured timezone and date/time format.
+
 ## 0.10.0-beta.5
 
 - Show completed and unresolved attempts on the Registration Attempts page.
