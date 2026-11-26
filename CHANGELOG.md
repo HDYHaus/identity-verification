@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1
+
+- Expand the WordPress.org description and FAQ with administrator recovery, registration-attempt retention, email storage, and provider-report location details.
+- Bump the plugin version for the refreshed WordPress.org listing and aligned release package; no verification behavior changed.
+
 ## 1.0.0
 
 - Let site owners configure retention periods for unlinked and account-linked attempts, defaulting to 7 and 90 days.
