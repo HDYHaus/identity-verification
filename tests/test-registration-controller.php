@@ -10,6 +10,7 @@ declare(strict_types=1);
 define( 'ABSPATH', __DIR__ . '/' );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'DAY_IN_SECONDS', 86400 );
+define( 'ARRAY_A', 'ARRAY_A' );
 
 /** @var array<string, mixed> */
 $trustgate_test_transients = array();
@@ -27,6 +28,84 @@ $trustgate_test_settings = array(
 
 /** @var array<string, mixed> */
 $trustgate_test_options = array();
+
+final class TrustGateTestDb {
+	public string $prefix = 'wp_';
+	public array $rows = array();
+	public string $last_query = '';
+	private string $prepared_query = '';
+
+	public function prepare( string $query, mixed ...$args ): string {
+		$this->prepared_query = $query;
+		foreach ( $args as $value ) {
+			$this->prepared_query = preg_replace_callback(
+				'/%[sdi]/',
+				static function ( array $matches ) use ( $value ): string {
+					if ( 'i' === $matches[0][1] ) {
+						return '`' . str_replace( '`', '``', (string) $value ) . '`';
+					}
+
+					return is_int( $value ) ? (string) $value : "'" . addslashes( (string) $value ) . "'";
+				},
+				$this->prepared_query,
+				1
+			) ?? $this->prepared_query;
+		}
+		return $this->prepared_query;
+	}
+
+	public function get_row( string $query, mixed $output = null ): array|null {
+		unset( $output );
+		if ( preg_match( "/attempt_hash = '([a-f0-9]+)'/", $query, $matches ) ) {
+			return $this->rows[ $matches[1] ] ?? null;
+		}
+		if ( preg_match( "/resume_token_hash = '([a-f0-9]+)'/", $query, $matches ) ) {
+			foreach ( $this->rows as $row ) {
+				if ( ( $row['resume_token_hash'] ?? '' ) === $matches[1] ) {
+					return $row;
+				}
+			}
+		}
+		return null;
+	}
+
+	public function get_results( string $query, mixed $output = null ): array {
+		unset( $output );
+		$this->last_query = $query;
+		return array();
+	}
+
+	public function get_var( string $query ): int {
+		$this->last_query = $query;
+		return 0;
+	}
+
+	public function insert( string $table, array $data ): int|false {
+		unset( $table );
+		$this->rows[ $data['attempt_hash'] ] = $data;
+		return 1;
+	}
+
+	public function update( string $table, array $data, array $where ): int|false {
+		unset( $table );
+		$key = $where['attempt_hash'] ?? '';
+		if ( '' === $key && isset( $where['id'] ) ) {
+			foreach ( $this->rows as $row_key => $row ) {
+				if ( (int) ( $row['id'] ?? 1 ) === (int) $where['id'] ) {
+					$key = $row_key;
+					break;
+				}
+			}
+		}
+		if ( ! isset( $this->rows[ $key ] ) ) {
+			return 0;
+		}
+		$this->rows[ $key ] = array_merge( $this->rows[ $key ], $data );
+		return 1;
+	}
+}
+
+$wpdb = new TrustGateTestDb();
 
 final class TrustGateJsonResponse extends RuntimeException {
 	/**
@@ -129,6 +208,11 @@ function sanitize_key( string $value ): string { // phpcs:ignore WordPress.Namin
 	return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $value ) ) ?? '';
 }
 
+function sanitize_user( string $value, bool $strict = false ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	unset( $strict );
+	return preg_replace( '/[^a-zA-Z0-9_.@-]/', '', $value ) ?? '';
+}
+
 function is_email( string $email ): bool { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	return false !== filter_var( $email, FILTER_VALIDATE_EMAIL );
 }
@@ -161,6 +245,28 @@ function wp_send_json_success( array $data ): never { // phpcs:ignore WordPress.
 function wp_send_json_error( array $data, int $status_code = 400 ): never { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	unset( $status_code );
 	throw new TrustGateJsonResponse( $data );
+}
+
+function wp_generate_password( int $length, bool $special_chars = true, bool $extra_special_chars = false ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	unset( $special_chars, $extra_special_chars );
+	return str_repeat( 'x', $length );
+}
+
+function add_query_arg( string $key, string $value, string $url ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return $url . '?' . rawurlencode( $key ) . '=' . rawurlencode( $value );
+}
+
+function wp_registration_url(): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return 'https://site.example/wp-login.php?action=register';
+}
+
+function wp_mail( string $to, string $subject, string $message ): bool { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	unset( $to, $subject, $message );
+	return true;
+}
+
+function human_time_diff( int $from, int $to ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return (string) ( $to - $from ) . ' seconds';
 }
 
 function get_transient( string $key ): mixed { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
@@ -202,6 +308,7 @@ function update_user_meta( int $user_id, string $key, mixed $value ): bool { // 
 }
 
 require_once dirname( __DIR__ ) . '/includes/Contracts/verification-provider.php';
+require_once dirname( __DIR__ ) . '/includes/Registration/verification-attempt-store.php';
 require_once dirname( __DIR__ ) . '/includes/Registration/registration-controller.php';
 
 use HDYHaus\TrustGateRegistration\Contracts\VerificationProvider;
@@ -217,7 +324,7 @@ final class TrustGateTestProvider implements VerificationProvider {
 	}
 
 	public function get_public_config(): array {
-		return array();
+		return array( 'isTest' => true );
 	}
 
 	public function confirm_verification( string $reference, array $context = array() ): array {
@@ -265,6 +372,58 @@ $_POST = array(
 
 $controller = new RegistrationController( 'trustgate_settings', new TrustGateTestProvider() );
 
+$attempt_store = new \HDYHaus\TrustGateRegistration\Registration\VerificationAttemptStore();
+$trustgate_test_options['trustgate_registration_settings'] = array(
+	'unlinked_attempt_retention_days' => '14',
+	'linked_attempt_retention_days'   => '120',
+);
+trustgate_registration_assert_same( 14, $attempt_store->get_unlinked_retention_days(), 'The attempt store reads the site owner’s unlinked retention setting.' );
+trustgate_registration_assert_same( 120, $attempt_store->get_linked_retention_days(), 'The attempt store reads the site owner’s linked retention setting.' );
+$attempt_store->get_attempts( 'successful', 2, 25 );
+trustgate_registration_assert_same( true, str_contains( $wpdb->last_query, "status = 'account_created'" ), 'The successful filter includes only created accounts.' );
+trustgate_registration_assert_same( true, str_contains( $wpdb->last_query, 'LIMIT 25 OFFSET 25' ), 'Attempt pagination applies the requested page and page size.' );
+$attempt_store->count_attempts( 'failed' );
+trustgate_registration_assert_same( true, str_contains( $wpdb->last_query, "'verification_failed', 'verification_error', 'registration_failed'" ), 'The failed filter includes provider and account-creation failures.' );
+
+$confirmation_post = $_POST;
+
+$started_token = 'started-attempt-token';
+$started_key   = 'trustgate_attempt_' . hash( 'sha256', $started_token );
+$trustgate_test_transients[ $started_key ] = array( 'status' => 'issued' );
+$_POST = array(
+	'nonce'     => 'valid-nonce',
+	'token'     => $started_token,
+	'status'    => 'verification_started',
+	'email'     => 'started@example.com',
+	'username'  => 'sandbox-started',
+	'firstName' => 'Sandbox',
+	'lastName'  => 'Started',
+	'consent'   => '1',
+);
+
+try {
+	$controller->log_verification_attempt();
+} catch ( TrustGateJsonResponse $response ) {
+	trustgate_registration_assert_same( 'verification_started', $response->payload['status'] ?? '', 'A verification start is accepted and logged.' );
+}
+
+$started_record = $wpdb->rows[ hash( 'sha256', $started_token ) ] ?? array();
+trustgate_registration_assert_same( 'verification_started', $started_record['status'] ?? '', 'An unfinished provider session is durably recorded.' );
+trustgate_registration_assert_same( 'sandbox', $started_record['environment'] ?? '', 'The start record retains its sandbox environment.' );
+trustgate_registration_assert_same( 'started@example.com', $started_record['email'] ?? '', 'The start record retains the email needed to identify the registration.' );
+trustgate_registration_assert_same( '', $started_record['identity_hash'] ?? '', 'A start record does not claim an unverified identity.' );
+trustgate_registration_assert_same( 14 * DAY_IN_SECONDS, strtotime( $started_record['expires_at'] . ' UTC' ) - strtotime( $started_record['created_at'] . ' UTC' ), 'New unlinked attempts use the configured retention period.' );
+
+$_POST['status']  = 'verification_error';
+$_POST['failure'] = 'E00';
+try {
+	$controller->log_verification_attempt();
+} catch ( TrustGateJsonResponse $response ) {
+	trustgate_registration_assert_same( 'verification_error', $response->payload['status'] ?? '', 'A provider-reported error updates the attempt state.' );
+}
+trustgate_registration_assert_same( 'verification_error', $wpdb->rows[ hash( 'sha256', $started_token ) ]['status'] ?? '', 'The provider-reported failure remains available for admin review.' );
+
+$_POST = $confirmation_post;
 try {
 	$controller->confirm_verification();
 } catch ( TrustGateJsonResponse $response ) {
@@ -298,6 +457,11 @@ trustgate_registration_assert_same(
 	'The configured consent wording is preserved in the attempt.'
 );
 trustgate_registration_assert_same( false, isset( $attempt['raw'] ), 'The raw provider response is not stored in the attempt.' );
+$persistent_attempt = $wpdb->rows[ hash( 'sha256', $token ) ] ?? array();
+trustgate_registration_assert_same( 'verified_pending_registration', $persistent_attempt['status'] ?? '', 'The verified registration attempt is durably recorded.' );
+trustgate_registration_assert_same( 'person@example.com', $persistent_attempt['email'] ?? '', 'The pending attempt retains the email needed to resume registration.' );
+trustgate_registration_assert_same( hash( 'sha256', str_repeat( 'x', 48 ) ), $persistent_attempt['resume_token_hash'] ?? '', 'Only a hash of the emailed resume token is stored.' );
+unset( $trustgate_test_transients[ $attempt_key ] );
 
 $_POST = array(
 	'trustgate_first_name'    => 'Maria',
@@ -305,7 +469,7 @@ $_POST = array(
 	'trustgate_consent'       => '1',
 	'trustgate_last_name'     => 'Job',
 	'trustgate_reference'     => $reference,
-	'trustgate_attempt_token' => $token,
+	'trustgate_attempt_token' => str_repeat( 'x', 48 ),
 );
 
 $valid_post = $_POST;
@@ -326,7 +490,7 @@ trustgate_registration_assert_same( array(), $controller->validate_registration(
 $controller->store_user_meta( 42 );
 
 trustgate_registration_assert_same( 'verified', $trustgate_test_user_meta['trustgate_verification_status'] ?? '', 'The normalized status is stored for the user.' );
-trustgate_registration_assert_same( $attempt['consent_at'], $trustgate_test_user_meta['trustgate_consent_at'] ?? '', 'The accepted consent time is stored for the user.' );
+trustgate_registration_assert_same( $persistent_attempt['consent_at'], $trustgate_test_user_meta['trustgate_consent_at'] ?? '', 'The accepted consent time is stored for the user.' );
 trustgate_registration_assert_same( $attempt['consent_text'], $trustgate_test_user_meta['trustgate_consent_text'] ?? '', 'The accepted consent wording is stored for the user.' );
 trustgate_registration_assert_same( $attempt['consent_version'], $trustgate_test_user_meta['trustgate_consent_version'] ?? '', 'The accepted consent version is stored for the user.' );
 trustgate_registration_assert_same( $attempt['identity_hash'], $trustgate_test_user_meta['trustgate_identity_hash'] ?? '', 'The identity fingerprint is stored for the user.' );
@@ -337,6 +501,7 @@ trustgate_registration_assert_same(
 	$trustgate_test_options[ RegistrationController::IDENTITY_OPTION_PREFIX . hash( 'sha256', 'identity-1' ) ] ?? '',
 	'The identity fingerprint becomes a permanent uniqueness record.'
 );
+trustgate_registration_assert_same( 'account_created', $wpdb->rows[ hash( 'sha256', $token ) ]['status'] ?? '', 'Completing registration from the emailed resume link links the persistent attempt to the account.' );
 
 trustgate_registration_assert_same( true, isset( $controller->validate_registration( new WP_Error(), 'person', 'person@example.com' )->errors['trustgate_verification_required'] ), 'A consumed verification attempt cannot register again.' );
 $saved_meta = $trustgate_test_user_meta;

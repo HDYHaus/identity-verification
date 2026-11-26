@@ -4,7 +4,7 @@ Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.9.10
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,7 @@ HDYHaus Identity Verification is a verification gate, not a membership suite. It
 * Supports an optional same-site success redirect with email activation instructions.
 * Lets site owners customize the plain-text consent message, provider policy links, and a website terms/disclaimer page or URL.
 * Stores normalized verification metadata in the WordPress user account.
+* Lists recent attempts with outcome filters, linked WordPress accounts, and pagination.
 * Integrates with WordPress personal data export and erasure tools.
 * Uses a provider adapter architecture, with Prembly as the first provider.
 
@@ -38,7 +39,7 @@ This plugin connects to Prembly, an external identity verification service, when
 
 The Prembly browser SDK is loaded from `https://js.prembly.com/v1/inline/widget-v3.js` on the default WordPress registration page. When a registrant selects Verify Identity, HDYHaus Identity Verification sends their first name, last name, email address, a temporary user reference, the configured Widget Key, and Configuration ID to Prembly. Prembly's verification interface may collect identity document images, selfies, biometric information, device information, and IP-derived location information according to the checks selected by the site administrator.
 
-After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. HDYHaus Identity Verification uses that response to confirm the session status, email address, widget configuration, session ID, and verified document identity. The complete Prembly report remains available in the site owner's Prembly dashboard; HDYHaus Identity Verification stores only normalized verification metadata and site-specific one-way fingerprints in WordPress.
+When a registrant starts verification, HDYHaus Identity Verification records the username, email, first and last name, consent, environment, start time, and any result reported by the widget in a site-specific WordPress table. Site owners choose how many days unlinked attempts and account-linked records are retained in Identity Verification > Registration settings (defaults: 7 and 90 days; maximum: 365 days). Resume links expire after up to seven days. After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. HDYHaus Identity Verification uses that response to confirm the session status, email address, widget configuration, session ID, and verified document identity. The complete Prembly report remains available in the site owner's Prembly dashboard. Identity document images, document numbers, selfies, biometric information, and raw Prembly responses are not copied into WordPress.
 
 This service is provided by Prembly Inc:
 
@@ -84,7 +85,7 @@ No. This integration uses Prembly's Widget Key and Configuration ID in the brows
 
 = Does HDYHaus Identity Verification store identity documents or selfies in WordPress? =
 
-No. For a successfully created account, HDYHaus Identity Verification stores whether verification succeeded, the normalized verification status, verification time, provider slug, Prembly session reference, site-specific one-way session and identity hashes, and the accepted consent time, wording, and version. Documents, document numbers, selfies, biometric information, raw Prembly responses, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
+No. WordPress stores registration details and consent for the retention periods selected by the site owner (defaults: seven days for unlinked attempts and 90 days for linked records). A successfully created account also receives normalized verification metadata and site-specific one-way fingerprints in its user profile. Documents, document numbers, selfies, biometric information, raw Prembly responses, and detailed reports are processed by Prembly and are not copied into WordPress by this plugin.
 
 = Can the same verified person create more than one account? =
 
@@ -117,6 +118,39 @@ No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verific
 3. Prembly settings keep Sandbox and Live widget credentials separate and control the active verification provider.
 
 == Changelog ==
+
+= 1.0.0 =
+
+* Let site owners configure how long unlinked and account-linked verification attempts are retained, with defaults of 7 and 90 days.
+* Apply retention changes to currently retained records and show the selected periods in the attempts screen and privacy-policy guidance.
+* Keep verification resume links limited to seven days.
+
+= 0.10.0-beta.6 =
+
+* Display attempt timestamps in the WordPress site's configured timezone and date/time format.
+
+= 0.10.0-beta.5 =
+
+* Show completed and unresolved attempts on the Registration Attempts page.
+* Add successful, failed, and other/pending filters, pagination, and links to created WordPress accounts.
+
+= 0.10.0-beta.4 =
+
+* Quote custom attempt-table identifiers with WordPress's `%i` placeholder in prepared queries.
+* Align the prerelease stable tag with the plugin header for development Plugin Check runs.
+
+= 0.10.0-beta.3 =
+* Log verification starts and widget-reported failures, cancellations, or errors for admin review.
+* Keep account recovery limited to provider-verified attempts.
+
+= 0.10.0-beta.2 =
+* Register the Registration Attempts submenu after its parent admin menu.
+
+= 0.10.0-beta.1 =
+* Keep provider-verified registration attempts in a dedicated WordPress table with bounded retention.
+* Email a secure, expiring link so users can finish registration without repeating verification.
+* Add an administrator review screen to create and link accounts for eligible verified attempts.
+* Export and erase registration-attempt personal data through WordPress privacy tools.
 
 = 0.9.10 =
 * Include the declared languages directory in the release package.

@@ -13,6 +13,21 @@
 		return String( $( selector ).val() || '' ).trim();
 	}
 
+	function logAttemptState( status, failure ) {
+		$.post( config.ajaxUrl, {
+			action: 'trustgate_log_verification_attempt',
+			nonce: config.nonce,
+			token: getFieldValue( '#trustgate_attempt_token' ),
+			status: status,
+			failure: failure || '',
+			email: getFieldValue( '#user_email' ),
+			username: getFieldValue( '#user_login' ),
+			firstName: getFieldValue( '#trustgate_first_name' ),
+			lastName: getFieldValue( '#trustgate_last_name' ),
+			consent: $( '#trustgate_consent' ).is( ':checked' ) ? '1' : '0'
+		} );
+	}
+
 	function confirmReference( reference ) {
 		setStatus( config.i18n.working, 'working' );
 
@@ -21,6 +36,7 @@
 			nonce: config.nonce,
 			reference: reference,
 			token: getFieldValue( '#trustgate_attempt_token' ),
+			username: getFieldValue( '#user_login' ),
 			email: getFieldValue( '#user_email' ),
 			firstName: getFieldValue( '#trustgate_first_name' ),
 			lastName: getFieldValue( '#trustgate_last_name' ),
@@ -30,11 +46,12 @@
 				const data = response && response.data ? response.data : {};
 
 				$( '#trustgate_reference' ).val( data.reference || reference );
-				setStatus( config.i18n.verified, 'verified' );
+				setStatus( data.resumeEmailSent ? config.i18n.verified : config.i18n.verifiedNoEmail, 'verified' );
 			} )
 			.fail( function ( xhr ) {
 				const data = xhr && xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data : {};
 				const detail = config.provider && config.provider.isTest && data.status ? ' (' + data.status + ')' : '';
+				logAttemptState( 'verification_error', data.status || 'confirmation_failed' );
 
 				$( '#trustgate_reference' ).val( '' );
 
@@ -48,6 +65,32 @@
 	}
 
 	$( function () {
+		const resume = config.resume || {};
+		if ( resume.username && ! getFieldValue( '#user_login' ) ) {
+			$( '#user_login' ).val( resume.username );
+		}
+		if ( resume.email && ! getFieldValue( '#user_email' ) ) {
+			$( '#user_email' ).val( resume.email );
+		}
+		if ( resume.firstName && ! getFieldValue( '#trustgate_first_name' ) ) {
+			$( '#trustgate_first_name' ).val( resume.firstName );
+		}
+		if ( resume.lastName && ! getFieldValue( '#trustgate_last_name' ) ) {
+			$( '#trustgate_last_name' ).val( resume.lastName );
+		}
+		if ( resume.reference ) {
+			$( '#trustgate_reference' ).val( resume.reference );
+			setStatus( config.i18n.verified, 'verified' );
+		}
+
+		if ( window.history && window.history.replaceState ) {
+			const url = new URL( window.location.href );
+			if ( url.searchParams.has( 'trustgate_resume' ) ) {
+				url.searchParams.delete( 'trustgate_resume' );
+				window.history.replaceState( null, '', url.toString() );
+			}
+		}
+
 		$( '#user_email, #trustgate_first_name, #trustgate_last_name' ).on( 'change', function () {
 			$( '#trustgate_reference' ).val( '' );
 			setStatus( '', '' );
@@ -75,6 +118,8 @@
 				return;
 			}
 
+			logAttemptState( 'verification_started', '' );
+
 			window.IdentityKYC.verify( {
 				widget_key: provider.publicKey,
 				widget_id: provider.configurationId,
@@ -93,6 +138,14 @@
 						confirmReference( reference );
 						return;
 					}
+
+					const callbackStatus = response && response.status ? String( response.status ).toLowerCase() : '';
+					const attemptStatus = 'cancelled' === callbackStatus || 'closed' === callbackStatus || ( response && 'E02' === response.code )
+						? 'verification_cancelled'
+						: 'failed' === callbackStatus || ( response && 'E01' === response.code )
+							? 'verification_failed'
+							: 'verification_error';
+					logAttemptState( attemptStatus, response && ( response.code || response.status ) ? String( response.code || response.status ) : 'unknown' );
 
 					const detail = provider.isTest && response && response.message ? ' (' + response.message + ')' : '';
 

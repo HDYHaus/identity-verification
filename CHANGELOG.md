@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.0.0
+
+- Let site owners configure retention periods for unlinked and account-linked attempts, defaulting to 7 and 90 days.
+- Apply retention changes to currently retained records and show selected periods in the attempts screen and privacy guidance.
+- Keep verification resume links limited to seven days.
+
+## 0.10.0-beta.6
+
+- Display attempt timestamps in the WordPress site's configured timezone and date/time format.
+
+## 0.10.0-beta.5
+
+- Show completed and unresolved attempts on the Registration Attempts page.
+- Add successful, failed, and other/pending filters, pagination, and links to created WordPress accounts.
+
+## 0.10.0-beta.4
+
+- Quote custom attempt-table identifiers with WordPress's `%i` placeholder in prepared queries.
+- Align the prerelease stable tag with the plugin header for development Plugin Check runs.
+
+## 0.10.0-beta.3
+
+- Record verification starts and widget-reported failure, cancellation, and error states for administrator review.
+- Keep account recovery available only for provider-verified attempts.
+- Document retention of unfinished and verified registration-attempt records.
+
 ## 0.9.10
 
 - Include the declared languages directory in the release package.

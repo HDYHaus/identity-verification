@@ -8,6 +8,7 @@
 declare(strict_types=1);
 
 define( 'ABSPATH', __DIR__ . '/' );
+define( 'DAY_IN_SECONDS', 86400 );
 
 /** @var array<string, array<int, mixed>> */
 $trustgate_test_hooks = array();
@@ -102,6 +103,10 @@ function get_user_by( string $field, string $value ): object|false { // phpcs:ig
 	return false;
 }
 
+function get_userdata( int $user_id ): object|false { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	return 42 === $user_id ? (object) array( 'ID' => 42, 'user_email' => 'person@example.com' ) : false;
+}
+
 function get_user_meta( int $user_id, string $key, bool $single = false ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	unset( $user_id, $single );
 	global $trustgate_test_user_meta;
@@ -128,6 +133,7 @@ function update_option( string $option_name, mixed $value, bool $autoload = true
 	return true;
 }
 
+require_once dirname( __DIR__ ) . '/includes/Registration/verification-attempt-store.php';
 require_once dirname( __DIR__ ) . '/includes/Registration/registration-controller.php';
 require_once dirname( __DIR__ ) . '/includes/Privacy/privacy.php';
 
