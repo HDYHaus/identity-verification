@@ -4,7 +4,7 @@ Tags: identity verification, kyc, registration, security, prembly
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,7 +27,9 @@ HDYHaus Identity Verification is a verification gate, not a membership suite. It
 * Supports an optional same-site success redirect with email activation instructions.
 * Lets site owners customize the plain-text consent message, provider policy links, and a website terms/disclaimer page or URL.
 * Stores normalized verification metadata in the WordPress user account.
-* Lists recent attempts with outcome filters, linked WordPress accounts, and pagination.
+* Records successful and failed registration attempts for administrator review, with masked email, outcome filters, and pagination.
+* Lets administrators recover an eligible verified registration by creating and linking the WordPress account and sending a password-setup email, without asking the person to verify again.
+* Lets site owners choose how long unlinked attempts and account-linked records are retained (defaults: 7 and 90 days; configurable from 1 to 365 days).
 * Integrates with WordPress personal data export and erasure tools.
 * Uses a provider adapter architecture, with Prembly as the first provider.
 
@@ -39,7 +41,7 @@ This plugin connects to Prembly, an external identity verification service, when
 
 The Prembly browser SDK is loaded from `https://js.prembly.com/v1/inline/widget-v3.js` on the default WordPress registration page. When a registrant selects Verify Identity, HDYHaus Identity Verification sends their first name, last name, email address, a temporary user reference, the configured Widget Key, and Configuration ID to Prembly. Prembly's verification interface may collect identity document images, selfies, biometric information, device information, and IP-derived location information according to the checks selected by the site administrator.
 
-When a registrant starts verification, HDYHaus Identity Verification records the username, email, first and last name, consent, environment, start time, and any result reported by the widget in a site-specific WordPress table. Site owners choose how many days unlinked attempts and account-linked records are retained in Identity Verification > Registration settings (defaults: 7 and 90 days; maximum: 365 days). Resume links expire after up to seven days. After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. HDYHaus Identity Verification uses that response to confirm the session status, email address, widget configuration, session ID, and verified document identity. The complete Prembly report remains available in the site owner's Prembly dashboard. Identity document images, document numbers, selfies, biometric information, and raw Prembly responses are not copied into WordPress.
+When a registrant starts verification, HDYHaus Identity Verification records the username, email, first and last name, consent, environment, start time, and any result reported by the widget in a site-specific WordPress table. The full email address is kept in that table because it is needed to resume registration, create an account, and send account emails; the administrator list masks it. Site owners choose how many days unlinked attempts and account-linked records are retained under **Identity Verification > Registration** (defaults: 7 and 90 days; configurable from 1 to 365 days). Resume links expire after up to seven days. After the verification interface reports completion, the site's WordPress server requests the corresponding session from `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{session_id}/`. HDYHaus Identity Verification uses that response to confirm the session status, email address, widget configuration, session ID, and verified document identity. The complete Prembly report remains available in the site owner's Prembly dashboard. Identity document images, document numbers, selfies, biometric information, raw Prembly responses, and detailed provider reports are not copied into WordPress.
 
 This service is provided by Prembly Inc:
 
@@ -66,6 +68,26 @@ For a field-by-field widget walkthrough, see https://github.com/HDYHaus/identity
 No Prembly Secret API Key, Organisation ID, or App ID is required for the SDK session confirmation used by this plugin.
 
 == Frequently Asked Questions ==
+
+= Where can I see verification reports and registration attempts? =
+
+The complete identity verification report is available in your Prembly dashboard. In WordPress, open **Identity Verification > Registration Attempts** to review the local registration record, including its outcome/reason, environment, account-link status, and recovery status. The page supports outcome filters and pagination. WordPress stores registration and consent details needed to resume or resolve the signup; it does not copy the full Prembly report or identity documents.
+
+= Can an administrator finish creating an account after successful verification? =
+
+Yes, when the attempt is eligible. Open **Identity Verification > Registration Attempts**, review the attempt, and confirm that no existing WordPress account should be used for that person. The administrator can then create and link the account and send the WordPress password-setup email. Recovery uses the already confirmed verification and does not ask the person to verify again. It is unavailable for failed or expired attempts, attempts already linked to an account, or identities/sessions already associated with an account. Existing username or email conflicts should be resolved using the existing account where appropriate.
+
+= Does the user need to repeat verification if account creation did not finish? =
+
+After a successful server-confirmed verification where WordPress account creation fails, the plugin records the attempt and emails a secure resume link. The link can restore the registration details without repeating verification and expires after at most seven days. If the link expires, an administrator may still recover the account while the attempt remains eligible and retained.
+
+= How long are registration attempts retained? =
+
+The site owner controls retention under **Identity Verification > Registration**. Defaults are 7 days for unlinked attempts and 90 days for account-linked records. Each setting can be configured from 1 to 365 days. Resume links are limited to seven days even when the unlinked retention period is longer. One-way session and identity hashes used to prevent replay may remain after the attempt record is deleted.
+
+= Does WordPress store the registrant's email address? =
+
+Yes. The email is stored in the plugin's WordPress attempt table while the record is retained because the plugin needs it to resume registration, create or link the account, and send the relevant emails. The email is masked in the administrator attempt list. The plugin does not store identity document images, document numbers, selfies, biometric information, raw provider responses, or detailed Prembly reports.
 
 = Does HDYHaus Identity Verification replace the WordPress registration form? =
 
@@ -118,6 +140,10 @@ No plugin can guarantee legal or regulatory compliance. HDYHaus Identity Verific
 3. Prembly settings keep Sandbox and Live widget credentials separate and control the active verification provider.
 
 == Changelog ==
+
+= 1.0.1 =
+
+* Clarify registration-attempt recovery, attempt retention, email storage, and where to find provider reports in the plugin description and FAQ.
 
 = 1.0.0 =
 
