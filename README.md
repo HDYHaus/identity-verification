@@ -12,15 +12,11 @@ HDYHaus Identity Verification is a WordPress plugin for verified account registr
 
 ## Current Status
 
-Version 0.9.10 displays the site-specific Prembly SDK Redirect URL and clarifies widget setup, environment selection, and post-registration redirects. The plugin includes the settings interface, native registration hooks, provider registry, Prembly widget integration, fail-closed server-side session confirmation, explicit registrant consent, session and identity replay protection, WordPress privacy tool integration, and read-only verification details on administrator user-profile screens.
+Version 1.0.0 adds a durable registration-attempt record and an administrator recovery path for verified registrations where WordPress account creation did not complete. Site owners can review completed and failed attempts, filter the list, recover eligible verified attempts by creating the account and sending a password-setup email, and set retention for unlinked and account-linked records (defaults: 7 and 90 days). The release also includes the settings interface, native registration hooks, Prembly widget integration, fail-closed server-side session confirmation, explicit registrant consent, session and identity replay protection, WordPress privacy tools, and read-only verification details on administrator user-profile screens.
 
 Identity fingerprints use a persistent site-specific plugin secret. Keep this option with database backups; WordPress authentication salt changes do not affect it. Version 0.9.8 preserves existing settings but does not migrate earlier development fingerprints. Retest using fresh verification records. When installing the renamed package over a development installation, deactivate the old TrustGate package before activating the new one.
 
-Sandbox and Production flows have both completed end-to-end smoke tests on the HTTPS development site. Prembly completed document verification, WordPress created the verified Subscriber account, a submission without verification was blocked, and the configured post-registration redirect displayed the email activation instructions. See [the release checklist](docs/release-checklist.md) for the remaining clean-install and compatibility checks before a public 1.0 release.
-
-The 0.9.7 submission candidate passed the official Plugin Check and clean-install integration checks on WordPress 6.4.12 / PHP 8.1 and WordPress 7.1.2 / PHP 8.4 and 8.5. See [submission check results](docs/submission-checks.md) for the exact checks and remaining final live-provider test.
-
-The 0.9.8 review fixes and updated package passed local tests, Plugin Check, and WordPress integration checks. See [0.9.8 review checks](docs/review-checks-0.9.8.md) for results and the remaining live-provider test.
+The 1.0.0 release passed the automated PHP checks and CI, and the exact release ZIP passed WordPress Plugin Check on the development site. The owner also confirmed a successful Live-mode verification and account creation. See [1.0.0 release verification](docs/release-verification-1.0.0.md) for the scope and evidence.
 
 ## Prembly Settings
 
@@ -32,6 +28,8 @@ The Prembly provider uses the widget key and configuration ID in the browser to 
 HDYHaus Identity Verification has its own top-level WordPress admin menu. Open **HDYHaus Identity Verification > Registration** for global registration settings, or **HDYHaus Identity Verification > Settings** for verification provider tabs. Enable Prembly from its tab to require KYC during registration. Only one provider can be active at a time; disabling every provider restores normal WordPress registration without deleting saved widget settings. Sandbox and Live widget settings are stored independently.
 
 The Registration page applies to the active provider and lets the site owner replace the plain-text consent message and separate verification provider privacy-policy and terms/consent URLs. These links are recommended. Existing sites use the documented Prembly wording and links until they are changed. HDYHaus Identity Verification automatically includes the website's WordPress Privacy Policy when configured under **Settings > Privacy**. For website terms or a disclaimer, choose a published WordPress page or enter a custom URL; a selected published page takes precedence. Successful accounts retain the exact accepted wording plus a version fingerprint derived from the complete disclosure, including the website terms link.
+
+Registration attempts are available under **HDYHaus Identity Verification > Registration Attempts**. For eligibility rules, recovery steps, privacy details, and retention behavior, see [Registration attempts and account recovery](docs/registration-attempts.md).
 
 Prembly support confirmed that the fixed SDK session endpoint at `https://backend.prembly.com/api/v1/checker-widget/sdk/sessions/{id}/` uses the session ID in the URL and does not require a Secret API Key, Organisation ID, or App ID. HDYHaus Identity Verification therefore sends no authentication headers to that endpoint.
 

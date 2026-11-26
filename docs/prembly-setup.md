@@ -65,6 +65,20 @@ The Success Redirect URL must be on an allowed WordPress host. WordPress uses it
 
 Consent wording and provider legal links are managed on the **Registration** tab. HDYHaus Identity Verification sanitizes the statement as plain text and the links as URLs. Empty provider links are omitted, while the site's WordPress Privacy Policy is appended automatically when configured. Changing the wording or any displayed policy URL produces a new stored consent-version fingerprint for subsequent successful registrations.
 
+## Registration Attempts and Account Recovery
+
+Open **HDYHaus Identity Verification > Registration Attempts** to review registration activity. Use the status filter and pagination to find an attempt. Email addresses are masked in the list; expand a row to inspect its recorded details. An attempt can be linked to a WordPress user, remain unlinked after an account-creation failure, or show a verification/registration failure reason.
+
+An administrator can recover an eligible attempt only after reviewing it and confirming that no existing account should be used for that person. The recovery action creates the WordPress account using the entered username, the recorded name and email, links the attempt to the new user, and sends WordPress's password-setup email. It is limited to provider-verified attempts that have not already been linked and whose identity/session is not already associated with an account. Attempts that failed verification or have expired are not eligible. Recovery does not repeat the identity check.
+
+On **HDYHaus Identity Verification > Registration**, site owners choose how many days attempt records remain:
+
+- **Unlinked attempts:** 7 days by default. This includes failed or verified attempts not linked to an account. A user resume link is valid for at most 7 days, even if the retention setting is longer.
+- **Account-linked records:** 90 days by default.
+- Both retention settings accept 1–365 days. Changing a setting updates expiry for records still retained in that category. One-way replay-prevention hashes are retained separately as described in the privacy section.
+
+The attempt table records registration details and consent needed to resume or resolve registration, including the email address. It does not store uploaded identity documents, document numbers, selfies, biometric data, raw provider responses, or detailed verification reports. See [Registration attempts and account recovery](registration-attempts.md) for the full administrator and privacy workflow.
+
 The Widget Key begins with `wdgt_`. Prembly's API Integrations public key begins with a different prefix and cannot initialize an SDK widget; using it produces an `Invalid widget ID or key` error.
 
 ## Local Camera Testing
